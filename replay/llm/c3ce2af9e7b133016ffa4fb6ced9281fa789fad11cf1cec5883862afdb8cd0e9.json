@@ -1,0 +1,9 @@
+{
+  "key": "c3ce2af9e7b133016ffa4fb6ced9281fa789fad11cf1cec5883862afdb8cd0e9",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T03:53:40.296Z",
+  "promptPreview": "USER GOAL:\nSubmit a lead through the form at /app/form?mode=broken and confirm it was saved.",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Submit lead form\",\"tool\":\"browser.act\",\"args\":{\"url\":\"http://fixture.local/app/form?mode=broken\",\"fields\":{\"name\":\"Ada Lovelace\",\"email\":\"ada.lovelace@example.test\",\"company\":\"Analytical Engines Ltd\"},\"submit\":true},\"dependsOn\":[],\"suggestedRisk\":\"write_local\"},{\"id\":\"s2\",\"title\":\"Confirm lead was saved in leads list\",\"tool\":\"browser.read_page\",\"args\":{\"urls\":[\"http://fixture.local/app/leads\"]},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"}]}"
+}

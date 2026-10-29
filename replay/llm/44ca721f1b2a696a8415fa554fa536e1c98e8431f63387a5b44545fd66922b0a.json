@@ -1,0 +1,9 @@
+{
+  "key": "44ca721f1b2a696a8415fa554fa536e1c98e8431f63387a5b44545fd66922b0a",
+  "role": "vision",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T03:53:47.480Z",
+  "promptPreview": "Question: This is the \"Saved leads\" page of a small lead-management app. Is there a table row whose Email column shows exactly \"ada.lovelace@example.test\"? Answer yes only if you can read that exact email in a row of the table.",
+  "response": "{\"answer\":\"no\",\"reason\":\"The table is empty and contains no data rows.\"}"
+}

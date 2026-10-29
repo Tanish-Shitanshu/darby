@@ -1,0 +1,9 @@
+{
+  "key": "6388c679f1f17e5a6378523527334d7c6641c97dae6e1df8a815dc4cc9d43dde",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T03:53:53.113Z",
+  "promptPreview": "USER GOAL:\nSubmit a lead through the form at /app/form?mode=broken and confirm it was saved.",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Submit lead via LeadDesk API\",\"tool\":\"http.request\",\"args\":{\"method\":\"POST\",\"url\":\"http://fixture.local/api/leads\",\"body\":{\"name\":\"Ada Lovelace\",\"email\":\"ada.lovelace@example.test\",\"company\":\"Analytical Engines Ltd\"}},\"dependsOn\":[],\"suggestedRisk\":\"write_local\"}]}"
+}
