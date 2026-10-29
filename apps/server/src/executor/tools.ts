@@ -8,7 +8,7 @@ import { readPage } from '../reader/reader';
 import { slugOf } from '../tools/registry';
 import { isPublicWebUrl, labelOf, searchOnce, type Hit } from './websearch';
 import { codeFix, codeTest } from './code-tools';
-import { checkClaim } from '../verifier/verifier';
+import { checkClaim, parsePrices } from '../verifier/verifier';
 import { pMap } from '../util/pmap';
 import { readPageText } from './browser';
 import type { RunContext } from './context';
@@ -22,6 +22,25 @@ export function focusPriceText(text: string): string {
   lines.forEach((l, i) => { if (/(\$\s?\d|USD|per (month|user|seat|member)|\/\s?(mo|month|user|seat)\b|monthly|billed (annually|monthly)|\bfree\b|\bplans?\b)/i.test(l)) for (let k = Math.max(0, i - 2); k <= Math.min(lines.length - 1, i + 2); k++) keep.add(k); });
   const picked = [...keep].sort((a, b) => a - b).map((i) => lines[i]!).join('\n');
   return (picked.length > 200 ? picked : text).slice(0, 11_000);
+}
+
+/**
+ * A rule, not a model: the cheapest paid monthly price that the page itself states next to a "per month" wording, with the exact line as its quote.
+ * Used on the open web only, when the reader model found nothing or named a number the page does not support. The verifier still re-checks the quote.
+ */
+export function fallbackPrice(text: string): { price: number; quote: string } | null {
+  const lines = text.split('\n').map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+  let best: { price: number; quote: string } | null = null;
+  for (let i = 0; i < lines.length; i++) {
+    const window = `${lines[i]}${/\$\s?\d[\d,.]*\s*$/.test(lines[i]!) || lines[i]!.length < 18 ? ` ${lines[i + 1] ?? ''}` : ''}`.trim();
+    if (window.length > 200 || !/(\/\s?mo\b|per month|\/\s?month|monthly|a month|\bmo\b)/i.test(window)) continue;
+    if (/(% off|first month|free credits|\bcredits?\b|trial|was \$|save \$|annually only)/i.test(window)) continue;
+    const prices = parsePrices(window).filter((p) => p > 0 && p < 100_000);
+    if (!prices.length || parsePrices(window)[0]! <= 0) continue;   // the quote must start with a paid price, not a $0 plan
+    const price = parsePrices(window)[0]!;
+    if (!best || price < best.price) best = { price, quote: window };
+  }
+  return best;
 }
 
 export class ToolError extends Error {
@@ -190,7 +209,13 @@ async function extract(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
       r = await readPage(ctx.deps.llm, p.label ? focusPriceText(p.text) : p.text, ctx.signal);
     } catch (e) {
       if (ctx.signal.aborted) throw e;
-      if (p.label) {   // open web: one page the reader model could not answer must not sink the other companies; it becomes a MISSING row
+      if (p.label) {   // open web: one page the reader model could not answer must not sink the other companies
+        const fb = fallbackPrice(p.text);
+        if (fb && checkClaim(p.text, { field: 'priceUsd', value: String(fb.price), quote: fb.quote }).status === 'pass') {
+          ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${p.label}: the reader model did not answer; a plain rule found “${fb.quote.slice(0, 70)}” on the page → $${fb.price}` });
+          return { url: p.url, slug: p.slug, record: { name: p.label, priceUsd: fb.price, quote: fb.quote.slice(0, 200) } };
+        }
+        // otherwise it becomes a MISSING row
         ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${p.label}: the reader model did not answer for this page (${(e as Error).message.slice(0, 80)}). Marked MISSING, nothing guessed.` });
         if (!ctx.gapSlugs.includes(p.label)) ctx.gapSlugs.push(p.label);
         return { unread: true, url: p.url, slug: p.label, record: { name: p.label, priceUsd: null, quote: null, note: 'The page was read but the reader model gave no answer for it.' } };
@@ -200,11 +225,25 @@ async function extract(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
     if (r.llm) ctx.noteLlm(r.llm, 'reader');
     await ctx.checkpoint();
     if (!r.ok) {
+      if (p.label) {
+        const fb = fallbackPrice(p.text);
+        if (fb && checkClaim(p.text, { field: 'priceUsd', value: String(fb.price), quote: fb.quote }).status === 'pass') {
+          ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${p.label}: the reader gave no usable answer; a plain rule found “${fb.quote.slice(0, 70)}” on the page → $${fb.price}` });
+          return { url: p.url, slug: p.slug, record: { name: p.label, priceUsd: fb.price, quote: fb.quote.slice(0, 200) } };
+        }
+      }
       ctx.ledger('reader.rejected', { slug: p.slug, reason: r.reason }, step.id);
       ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Reader output for ${p.slug} was REJECTED (${r.reason}) — recorded as a gap, nothing from it was used` });
       return { url: p.url, slug: p.slug, record: { name: p.label ?? ctx.deps.catalog.names[p.slug] ?? p.slug, priceUsd: null, quote: null }, rejected: r.reason };
     }
-    const rec = p.label ? { ...r.record, name: p.label } : r.record;   // on the open web the name is the company the user asked about, not whatever the page calls itself
+    let rec: { name: string; priceUsd: number | null; quote: string | null; note?: string } = p.label ? { ...r.record, name: p.label } : r.record;   // on the open web the name is the company the user asked about, not whatever the page calls itself
+    if (p.label && (rec.priceUsd === null || checkClaim(p.text, { field: 'priceUsd', value: String(rec.priceUsd), quote: rec.quote }).status === 'fail')) {
+      const fb = fallbackPrice(p.text);
+      if (fb && checkClaim(p.text, { field: 'priceUsd', value: String(fb.price), quote: fb.quote }).status === 'pass') {
+        ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${p.label}: ${rec.priceUsd === null ? 'the reader found no price' : 'the reader’s price did not match the page'}; a plain rule found “${fb.quote.slice(0, 70)}” on the page → $${fb.price}` });
+        rec = { name: rec.name, priceUsd: fb.price, quote: fb.quote.slice(0, 200) };
+      }
+    }
     if (rec.priceUsd !== null) {   // the maker checks the reader's claim against the text it read before anything is written; the independent verifier still re-checks later
       const own = checkClaim(p.text, { field: 'priceUsd', value: String(rec.priceUsd), quote: rec.quote });
       if (own.status === 'fail') {

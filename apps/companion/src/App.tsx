@@ -158,7 +158,7 @@ export function App() {
     <div className="app">
       <aside className="side">
         <div className="brand">
-          <span className="logo" aria-hidden="true">{Icon.shield}</span>
+          <span className="logo" aria-hidden="true"><img src="/darby-logo.svg" alt="" width="38" height="38" /></span>
           <div><h1>Darby</h1><p className="tagline">“Done” means proven</p></div>
         </div>
         <nav className="nav" aria-label="Sections">

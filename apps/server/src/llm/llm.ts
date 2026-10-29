@@ -172,11 +172,34 @@ export function createLlm(cfg: Config): Llm {
       raw = { name: 'sarvam', model: sar.model, generate: (req, signal) => (req.images?.length && gem ? gem.generate(req, signal) : sar.generate(req, signal)) };
       break;
     }
+    case 'auto': {
+      // Best available live model: Gemini first (reads pages best, handles images and audio); if it is out of quota or down, Sarvam's chat model takes over for text.
+      const gem = e.GEMINI_API_KEY ? geminiProvider(e.GEMINI_API_KEY, [cfg.llm.geminiModel, ...cfg.llm.geminiFallbacks.filter((m) => m !== cfg.llm.geminiModel)]) : null;
+      const sar = e.SARVAM_API_KEY ? sarvamChatProvider(e.SARVAM_API_KEY, e.SARVAM_MODEL || 'sarvam-105b') : null;
+      if (!gem && !sar) throw new Error('LLM_PROVIDER=auto needs GEMINI_API_KEY and/or SARVAM_API_KEY in .env');
+      let gemDownUntil = 0;
+      raw = {
+        name: 'auto', model: (gem ?? sar)!.model,
+        async generate(req, signal) {
+          const hasMedia = !!req.images?.length;
+          if (gem && (hasMedia || !sar || Date.now() > gemDownUntil)) {
+            try { return await gem.generate(req, signal); }
+            catch (err) {
+              if (signal?.aborted || !sar || hasMedia) throw err;
+              gemDownUntil = Date.now() + 5 * 60_000;   // quota or outage: do not knock on Gemini again for five minutes
+            }
+          }
+          if (!sar) throw new Error('no live model is available');
+          return sar.generate(req, signal);
+        },
+      };
+      break;
+    }
     case 'replay':
       raw = null;
       break;
     default:
-      throw new Error(`Unknown LLM_PROVIDER "${cfg.llm.provider}" (gemini | sarvam | openai | azure | replay)`);
+      throw new Error(`Unknown LLM_PROVIDER "${cfg.llm.provider}" (auto | gemini | sarvam | openai | azure | replay)`);
   }
   return new Llm(cfg.llm.provider, raw?.model ?? 'recorded', raw, store, opts);
 }

@@ -104,7 +104,8 @@ Reply with ONLY one JSON object, no explanation.` }, { role: 'user', content: re
         signal,
         [apiKey],
       );
-      const text = String(body?.choices?.[0]?.message?.content ?? '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      const m0 = body?.choices?.[0]?.message;
+      const text = String(m0?.content || m0?.reasoning_content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
       if (!text) throw new TransientError('Sarvam returned no text');
       return { text, model };
     },

@@ -99,7 +99,7 @@ export async function runEngine(ctx: RunContext): Promise<void> {
       }
     } catch (e) {
       if (ctx.signal.aborted || isAbort(e)) throw e;
-      cause = e instanceof PlanningError ? `${e.message} ${e.problems.slice(0, 2).join('; ')}` : `Planning failed: ${(e as Error).message.slice(0, 200)}`;
+      cause = e instanceof PlanningError ? `${e.message} ${e.problems.slice(0, 2).join('; ')}` : (/No recorded response/.test((e as Error).message) ? 'Offline mode can only run the recorded example goals. For your own goal, switch to a live model: put GEMINI_API_KEY or SARVAM_API_KEY in .env, set LLM_PROVIDER=auto and restart (npm run demo).' : `Planning failed: ${(e as Error).message.slice(0, 200)}`);
       throw new Error(cause);
     }
 
