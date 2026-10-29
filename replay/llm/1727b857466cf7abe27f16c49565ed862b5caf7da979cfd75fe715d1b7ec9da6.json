@@ -1,0 +1,9 @@
+{
+  "key": "1727b857466cf7abe27f16c49565ed862b5caf7da979cfd75fe715d1b7ec9da6",
+  "role": "coder",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T09:37:34.466Z",
+  "promptPreview": "PRODUCT: StudyLoop\nTONE: friendly, confident, student-first\nCOPY (JSON): {\"headline\":\"Stop manual typing. Start mastering your lectures.\",\"subhead\":\"StudyLoop instantly transforms your lecture slides into smart spaced-repetition flashcards ",
+  "response": "{\n  \"html\": \"<!DOCTYPE html>\\n<html lang=\\\"en\\\">\\n<head>\\n    <meta charset=\\\"UTF-8\\\">\\n    <meta name=\\\"viewport\\\" content=\\\"width=device-width, initial-scale=1.0\\\">\\n    <title>StudyLoop - Master Your Lectures</title>\\n    <style>\\n        body {\\n            font-family: system-ui, -apple-system, sans-serif;\\n            font-size: 18px;\\n            line-height: 1.6;\\n            color: #1a202c;\\n            margin: 0;\\n            padding: 0;\\n            background-color: #f7fafc;\\n        }\\n        .container {\\n            max-width: 900px;\\n            margin: 0 auto;\\n            padding: 2rem;\\n        }\\n        header {\\n            padding: 1rem 0;\\n            border-bottom: 1px solid #e2e8f0;\\n            margin-bottom: 3rem;\\n        }\\n        .logo {\\n            font-weight: 800;\\n            font-size: 1.5rem;\\n            color: #2b6cb0;\\n        }\\n        #headline {\\n            font-size: 3rem;\\n            line-height: 1.1;\\n            color: #"
+}

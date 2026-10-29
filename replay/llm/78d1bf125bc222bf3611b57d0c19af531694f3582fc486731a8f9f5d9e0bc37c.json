@@ -1,0 +1,9 @@
+{
+  "key": "78d1bf125bc222bf3611b57d0c19af531694f3582fc486731a8f9f5d9e0bc37c",
+  "role": "vision",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T09:38:14.941Z",
+  "promptPreview": "Question: This is a screenshot of a product landing page. Does it show a large headline containing \"Stop manual typing. Start mastering your lectures.\", a picture, and a button labelled \"Start Studying for Free\"? Answer yes only if all thre",
+  "response": "{\"answer\":\"yes\",\"reason\":\"The screenshot visibly shows the headline 'Stop manual typing. Start mastering your lectures.', an image card on the right, and a 'Start Studying for Free' button.\"}"
+}

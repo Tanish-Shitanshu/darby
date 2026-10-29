@@ -1,0 +1,9 @@
+{
+  "key": "40d1515bb69c3494f8e6fb25da7db826dc7396689440944e39ad42409c78ca95",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T09:36:42.905Z",
+  "promptPreview": "<<<PAGE\nStudyNest\nStudyNest\nFlashcards from typed notes, no PDF import\nPricing\nPremium: $8 per month\nStrengths\nLarge template library\nMobile app\nKnown gaps\nNo lecture-slide import\nNo spaced-repetition tuning\nPAGE>>>",
+  "response": "{\"name\": \"StudyNest\", \"priceUsd\": 8, \"quote\": \"Premium: $8 per month\"}"
+}

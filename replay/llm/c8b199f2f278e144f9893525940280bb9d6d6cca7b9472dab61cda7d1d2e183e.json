@@ -1,0 +1,9 @@
+{
+  "key": "c8b199f2f278e144f9893525940280bb9d6d6cca7b9472dab61cda7d1d2e183e",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T09:36:44.168Z",
+  "promptPreview": "<<<PAGE\nCardCraft\nCardCraft\nManual card editor with community decks\nPricing\nPremium: $5 per month\nStrengths\nCommunity decks\nCheap\nKnown gaps\nEverything is manual\nDated UI\nPAGE>>>",
+  "response": "{\n  \"name\": \"CardCraft\",\n  \"priceUsd\": 5,\n  \"quote\": \"Premium: $5 per month\"\n}"
+}

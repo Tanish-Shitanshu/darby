@@ -1,0 +1,9 @@
+{
+  "key": "42642616f9d937fd923abb3a9df3dfbb173bad41b4ad8ff3345b762df0484d31",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T09:36:45.510Z",
+  "promptPreview": "<<<PAGE\nRecallr\nRecallr\nAI card generation for medical students\nPricing\nPremium: $15 per month\nStrengths\nAI generation\nMedical decks\nKnown gaps\nNiche focus\nExpensive for general students\nPAGE>>>",
+  "response": "{\"name\": \"Recallr\", \"priceUsd\": 15, \"quote\": \"Premium: $15 per month\"}"
+}
