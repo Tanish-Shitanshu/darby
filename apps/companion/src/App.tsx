@@ -63,6 +63,8 @@ export function App() {
   const hasReceipt = !!run?.receipt;
   const live = !!run && ['planning', 'running', 'paused', 'awaiting_approval'].includes(run.phase);
   const allUp = d.server === 'up' && d.socket === 'up' && d.echo === 'ok';
+  const total = run?.plan?.steps.length ?? 0;
+  const doneN = run ? Object.values(run.steps).filter((s) => ['passed', 'passed_with_gaps', 'failed', 'blocked', 'cancelled'].includes(s.status)).length : 0;
 
   // reset per-run UI state when the run changes
   useEffect(() => { setVerify(null); setTamper(null); setRemembered(false); setDrawer(null); setDetail(null); }, [runId]);
@@ -78,27 +80,31 @@ export function App() {
     <div className="shell">
       <header className="top">
         <div className="brand">
-          <span className="logo" aria-hidden="true">✓</span>
-          <div><h1>Darby</h1><p className="tagline">The AI-native browser where “done” means proven.</p></div>
+          <span className="logo" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" /><path d="M8.5 12.2l2.4 2.4 4.6-4.9" /></svg></span>
+          <div><h1>Darby</h1><p className="tagline">“Done” means proven.</p></div>
         </div>
         <nav className="tabs" aria-label="Sections">
           {(['run', 'history', 'memory', 'hub'] as Tab[]).map((t) => (
             <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => go(t)} aria-current={tab === t ? 'page' : undefined} data-testid={`tab-${t}`}>{t === 'run' ? 'Run' : t === 'history' ? 'History' : t === 'memory' ? 'Memory' : 'Hub'}</button>
           ))}
         </nav>
+        <details className={`status ${allUp ? 'ok' : d.server === 'down' ? 'bad' : ''}`}>
+          <summary aria-label="System status"><span className="pulse" aria-hidden="true" />{allUp ? (d.config?.llm.replayOnly ? 'Ready · offline replay' : 'Ready · live model') : d.server === 'down' ? 'Server offline' : 'Connecting…'}</summary>
         <ul className="leds">
           <Led name="Server" link={d.server} />
           <Led name="Live updates" link={d.socket} />
           <Led name="Self-check" link={d.echo === 'ok' ? 'up' : d.echo === 'failed' ? 'down' : 'connecting'} detail={d.echo === 'ok' ? 'validated' : undefined} />
           {d.config && <Led name="Model" link="up" detail={d.config.llm.replayOnly ? 'REPLAY (recorded)' : `${d.config.llm.provider}/${d.config.llm.model}`} />}
         </ul>
+        </details>
       </header>
       <div data-testid="overall" className="sr">{allUp ? 'Connected to Darby server' : 'Waiting for server'}</div>
 
       {/* always-visible run controls */}
       {run && tab === 'run' && (
         <div className={`runbar phase-${run.phase}`} data-testid="runbar">
-          <div className="runbar-text"><span className="eyebrow">{PHASE_TEXT[run.phase] ?? run.phase}</span><span className="runbar-goal" data-testid="run-goal">{run.goal || '…'}</span></div>
+          <span className="progress" style={{ width: `${total ? Math.round((doneN / total) * 100) : run.phase === 'planning' ? 4 : 0}%` }} aria-hidden="true" />
+          <div className="runbar-text"><span className="eyebrow">{run.phase === 'planning' || run.phase === 'running' ? <span className="spinner" aria-hidden="true" /> : null}{PHASE_TEXT[run.phase] ?? run.phase}{total > 0 ? ` · ${doneN} of ${total} steps` : ''}</span><span className="runbar-goal" data-testid="run-goal">{run.goal || '…'}</span></div>
           <div className="row tight">
             {live && <button className="btn danger" onClick={() => void d.cancel(run.id)} data-testid="cancel-btn">Cancel</button>}
             {live && run.phase !== 'paused' && <button className="btn ghost" onClick={() => void d.takeover(run.id)} data-testid="takeover-btn">Take over</button>}
@@ -111,6 +117,10 @@ export function App() {
 
       {tab === 'run' && !run && (
         <main className="stack">
+          <section className="lede" aria-label="What Darby is">
+            <h2>Delegate web work. <em>Get proof,</em> not promises.</h2>
+            <p>Darby plans the job, does it in real browser tabs, then independently re-checks every claim and hands you a signed receipt with an honest verdict.</p>
+          </section>
           <section className="card hero" aria-labelledby="goal-h">
             <h2 id="goal-h">What should Darby get done?</h2>
             <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} rows={4} placeholder="Describe your goal in plain language…" aria-label="Your goal" />
@@ -128,6 +138,12 @@ export function App() {
             </div>
             {d.error && <p className="error" role="alert">{d.error}</p>}
           </section>
+          <ul className="trust" aria-label="What you can rely on">
+            <li><b>Proof per step</b>Every step names what would prove it</li>
+            <li><b>Isolated reader</b>Web pages never reach the planner</li>
+            <li><b>You approve</b>Sends, shares and posts always wait</li>
+            <li><b>Signed receipt</b>Tamper-evident, verifiable by anyone</li>
+          </ul>
           <section className="how" aria-label="How Darby works">
             <ol>
               <li><span className="how-n">1</span><div><strong>Plans with proof</strong><p>Every step names what would prove it, before anything runs.</p></div></li>
@@ -171,6 +187,10 @@ export function App() {
 
       {run && tab === 'run' && <EvidenceDrawer run={run} stepId={drawer} detail={detail} onClose={() => setDrawer(null)} onShot={setShot} />}
       <Lightbox src={shot} onClose={() => setShot(null)} />
+      <footer className="footer">
+        <span><strong>Darby</strong> · runs on your computer; your files and receipts stay here.</span>
+        <span>{d.config ? `Receipts signed with key ${String(d.config.signerFingerprint).slice(0, 12)}…` : ''} · <a href="https://github.com/Tanish-Shitanshu/darby" target="_blank" rel="noreferrer">Source</a></span>
+      </footer>
     </div>
   );
 }

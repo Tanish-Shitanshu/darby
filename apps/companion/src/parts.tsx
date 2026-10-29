@@ -106,7 +106,7 @@ export function ApprovalCard({ run, onResolve, onTakeover }: { run: RunView; onR
   if (!a) return null;
   const d = a.details as Record<string, unknown>;
   const rows: [string, string][] = ([['Target', 'target'], ['Role', 'role'], ['Document', 'document'], ['Content', 'contentSummary']] as [string, string][])
-    .filter(([, k]) => d[k] !== undefined).map(([l, k]) => [l, k === 'document' ? String(d[k]).split(/[\/]/).pop() ?? String(d[k]) : String(d[k])]);
+    .filter(([, k]) => d[k] !== undefined).map(([l, k]) => [l, k === 'document' ? String(d[k]).split(/[\\/]/).pop() ?? String(d[k]) : String(d[k])]);
   return (
     <section className="approval" data-testid="approval-card" role="alert" aria-label="Approval needed">
       <div className="approval-tag">Needs your approval</div>
@@ -397,8 +397,8 @@ export function History({ items, onOpen }: { items: RunSummary[]; onOpen: (id: s
   const shown = items.filter((h) => !q || h.goal.toLowerCase().includes(q.toLowerCase()) || (h.verdict ?? '').toLowerCase().includes(q.toLowerCase()));
   return (
     <section className="card" aria-labelledby="hist-h">
-      <div className="card-head"><h2 id="hist-h">Task history</h2><input className="search" placeholder="Filter by goal or verdict" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter history" /></div>
-      {shown.length === 0 ? <p className="muted">No runs yet.</p> : (
+      <div className="card-head"><h2 id="hist-h">Recent runs</h2><input className="search" placeholder="Filter by goal or verdict" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter history" /></div>
+      {shown.length === 0 ? <div className="empty"><b>{q ? 'No matching runs' : 'No runs yet'}</b>{q ? 'Try a different word.' : 'Pick an example above or describe a goal. Finished runs and their receipts appear here.'}</div> : (
         <ul className="history" data-testid="history">
           {shown.map((h) => (
             <li key={h.id}>
