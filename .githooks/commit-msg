@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Commits on this project are authored by the repo owner only: no AI/tool names, no co-author or session trailers.
+if grep -qiE '^(co-authored-by|claude-session|generated with):|noreply@anthropic\.com|claude' "$1"; then
+  echo "commit-msg: remove AI/tool attribution (Co-Authored-By, Claude-Session, 'Generated with', 'Built-with', or any Claude mention) from the commit message." >&2
+  exit 1
+fi

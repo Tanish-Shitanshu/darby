@@ -10,7 +10,7 @@ import { Llm, ReplayStore } from '../../apps/server/src/llm/llm';
 import type { RawProvider } from '../../apps/server/src/llm/types';
 import { verifyBundle, type SignedReceipt } from '../../apps/server/src/ledger/receipt';
 import { htmlToText } from '../../apps/server/src/verifier/verifier';
-import { expected, readSheetRows, startHarness, type Check, type Harness } from './harness';
+import { ACCEPT_PORT, expected, readSheetRows, startHarness, type Check, type Harness } from './harness';
 
 const args = process.argv.slice(2);
 const live = args.includes('--live');
@@ -20,7 +20,7 @@ const wanted = args.filter((a) => !a.startsWith('--'));
 const GOAL_NO_SHARE = 'Research the 10 AI startups on the fixture site and record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors.';
 export const CASE1_GOAL = 'Research the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email.';
 
-type Scenario = { id: string; title: string; group?: 'redteam'; stub?: boolean; run?: (h: Harness) => Promise<Check[]> };
+type Scenario = { id: string; title: string; group?: 'redteam'; stub?: boolean | 'lead'; run?: (h: Harness) => Promise<Check[]> };
 
 const mk = () => {
   const checks: Check[] = [];
@@ -63,6 +63,26 @@ function hostileReader(): Llm {
     },
   };
   return new Llm('hostile-stub', 'stub-1', raw, new ReplayStore({ curated: path.join(tmpdir(), 'darby-none-curated'), record: mkdtempSync(path.join(tmpdir(), 'darby-hostile-')) }), { rpm: 1000, concurrency: 3 });
+}
+
+/** Scripted stand-in for the model roles in Case 4 (planner, replanner, vision). It tests the plumbing deterministically and offline; the real-model run is `case4` (replay/live). */
+function leadStub(): Llm {
+  let visionCalls = 0;
+  const raw: RawProvider = {
+    name: 'lead-stub', model: 'stub-1',
+    async generate(req) {
+      const out = (o: unknown) => ({ text: JSON.stringify(o), model: 'stub-1' });
+      if (req.role === 'vision') { visionCalls++; return out(visionCalls === 1 ? { answer: 'no', reason: 'The saved-leads table is empty.' } : { answer: 'yes', reason: 'A row shows the exact email.' }); }
+      const lead = { name: 'Ada Lovelace', email: 'ada.lovelace@example.test', company: 'Analytical Engines Ltd' };
+      if (/REPAIR MODE/.test(req.system)) {
+        const api = /POST (\S+)\s+body/.exec(req.system)?.[1] ?? '';
+        return out({ steps: [{ id: 's1', title: 'Save the lead through the documented API', tool: 'http.request', args: { method: 'POST', url: api, body: lead }, dependsOn: [], suggestedRisk: 'write_local' }] });
+      }
+      const form = /"(http[^"]*\/app\/form\?mode=broken)"/.exec(req.system)?.[1] ?? '';
+      return out({ steps: [{ id: 's1', title: 'Fill in and submit the lead form', tool: 'browser.act', args: { url: form, fields: lead, submit: true }, dependsOn: [], suggestedRisk: 'write_local' }] });
+    },
+  };
+  return new Llm('lead-stub', 'stub-1', raw, new ReplayStore({ curated: path.join(tmpdir(), 'darby-none-curated'), record: mkdtempSync(path.join(tmpdir(), 'darby-lead-')) }), { rpm: 1000, concurrency: 3, fixtureBase: `http://localhost:${ACCEPT_PORT}` });
 }
 
 const step = (id: string, tool: string, a: Record<string, unknown>, deps: string[] = [], contract: unknown = null) => ({ id, title: `Step ${id}: ${tool}`, tool, args: a, dependsOn: deps, suggestedRisk: 'read' as const, contract });
@@ -322,7 +342,15 @@ const scenarios: Scenario[] = [
   {
     id: 'case4',
     title: 'Failure then fixed — "Saved ✓" is a claim; the read-back finds nothing; the repair uses POST /api/leads',
-    async run(h) {
+    run: (h) => case4Run(h),
+  },
+  { id: 'case4-stub', stub: 'lead', title: 'Case 4 plumbing with a scripted model (deterministic, offline): failure, plain cause, repair, verified', run: (h) => case4Run(h) },
+  { id: 'case3', title: 'GTM Studio launch assets (M6)' },
+];
+
+async function case4Run(h: Harness): Promise<Check[]> {
+  {
+    {
       const { checks, ok } = mk();
       await h.resetFixtures();
       const goal = 'Submit a lead through the form at /app/form?mode=broken and confirm it was saved.';
@@ -355,10 +383,9 @@ const scenarios: Scenario[] = [
       try { await h.manager.repair(idB); } catch (e) { limit = (e as Error).message; }
       ok('a VERIFIED run cannot be "repaired"', /FAILED/.test(limit), limit);
       return checks;
-    },
-  },
-  { id: 'case3', title: 'GTM Studio launch assets (M6)' },
-];
+    }
+  }
+}
 
 async function main() {
   const todo = scenarios.filter((s) => s.run && (redteam ? s.group === 'redteam' : wanted.length === 0 || wanted.includes(s.id)));
@@ -369,17 +396,19 @@ async function main() {
   let failed = 0;
   let h: Harness | null = null;
   let hStub: Harness | null = null;
+  let stubKind: string | null = null;
   let first = true;
-  const swap = async (stub: boolean) => {
-    const wantStub = stub;
-    if (wantStub && hStub) return hStub;
-    if (!wantStub && h) return h;
-    await (wantStub ? h : hStub)?.stop();
-    if (wantStub) h = null; else hStub = null;
+  const swap = async (stub: boolean | 'lead') => {
+    const kind = stub === 'lead' ? 'lead' : stub ? 'hostile' : null;
+    if (kind && hStub && stubKind === kind) return hStub;
+    if (!kind && h) return h;
+    await (kind ? h : hStub)?.stop();
+    if (kind && hStub) { await hStub.stop(); hStub = null; }
+    if (kind) h = null; else { hStub = null; stubKind = null; }
     await new Promise((r) => setTimeout(r, 400));
-    const made = await startHarness({ replay: wantStub ? true : !live, keepState: !first, ...(wantStub ? { llm: hostileReader() } : {}) });
+    const made = await startHarness({ replay: kind ? true : !live, keepState: !first, ...(kind ? { llm: kind === 'lead' ? leadStub() : hostileReader() } : {}) });
     first = false;
-    if (wantStub) hStub = made; else h = made;
+    if (kind) { hStub = made; stubKind = kind; } else h = made;
     return made;
   };
   try {
@@ -387,7 +416,7 @@ async function main() {
       console.log(`\n▶ ${s.id} — ${s.title}`);
       let checks: Check[];
       try {
-        checks = await s.run!(await swap(!!s.stub));
+        checks = await s.run!(await swap(s.stub ?? false));
       } catch (e) { checks = [{ name: 'scenario crashed', ok: false, detail: (e as Error).stack?.split('\n').slice(0, 3).join(' ') ?? String(e) }]; }
       for (const c of checks) console.log(`   ${c.ok ? 'PASS' : 'FAIL'}  ${c.name}: ${c.detail}`);
       if (checks.some((c) => !c.ok)) failed++;

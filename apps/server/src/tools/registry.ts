@@ -169,9 +169,11 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
 export const isRegistered = (tool: string): boolean => Object.prototype.hasOwnProperty.call(TOOLS, tool) || /^gtm\./.test(tool) && Object.prototype.hasOwnProperty.call(TOOLS, tool);
 export const riskOf = (tool: string): Risk => (isRegistered(tool) ? TOOLS[tool]!.risk : 'forbidden');
 
-export function describeToolsForPlanner(): string {
+/** Form/API tools are only offered to the planner when the goal is about submitting data to an app (keeps research prompts, and their recordings, stable). */
+export const LEAD_TOOLS = new Set(['browser.act', 'http.request']);
+export function describeToolsForPlanner(leadScope = true): string {
   return Object.values(TOOLS)
-    .filter((t) => t.implemented)
+    .filter((t) => t.implemented && (leadScope || !LEAD_TOOLS.has(t.name)))
     .map((t) => `- ${t.name} [${t.risk}] ${t.description}\n    args: ${t.argsHelp}`)
     .join('\n');
 }

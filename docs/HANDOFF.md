@@ -8,7 +8,7 @@ Tagline: *the AI-native browser where "done" means proven.* Read `AGENTS.md` fir
 git clone https://github.com/Tanish-Shitanshu/darby.git   # needs collaborator access; or unzip the project folder
 cd darby
 ```
-Pushing to `main` and tags is how work is shared. Commits are authored by whoever is configured in `git config user.name/user.email` on that machine; trailer `Built-with: AdaL`; never add co-author lines.
+Pushing to `main` and tags is how work is shared. Commits are authored by the repo owner only (`Tanish Shitanshu <tanish.shitanshu@gmail.com>`); never add co-author lines, session links or tool names. `git config core.hooksPath .githooks` enables a commit-msg hook that rejects attribution. Publish with `bash scripts/ship.sh "message"`.
 
 ## 2. Tools you need
 | tool | why | check |
@@ -49,7 +49,7 @@ Local state lives in `.darby/` (db, signing keys, browser profile, runs, screens
 ## 5. Where to continue
 - `docs/PROGRESS.md` — current milestone, what passed, what is next, known issues, pending human steps.
 - `docs/MILESTONES.md` — build order and acceptance checks. `docs/SPEC.md` — architecture and rules.
-- `docs/RESUME_PROMPT.md` — paste into a fresh AdaL session to continue with the same rules.
+- `docs/RESUME_PROMPT.md` — paste into a fresh AI coding-assistant session to continue with the same rules.
 - `docs/ADAL_EVIDENCE.md` — log of AdaL usage (PS1 mandatory); append an entry for every milestone.
 
 ## 6. Hard rules (same as AGENTS.md)

@@ -3,7 +3,8 @@
 _Last updated: 2026-10-29_
 
 ## Current state
-- **M3 (companion UI) done**, tag `m3-ui`. M1 `m1-core-loop`, M2 `m2-policy` done. Next: intro video (Video Producer), then M5 (failure + repair, Case 4), M6 (GTM Studio), M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists, M8.
+- **M5 done** (tag `m5-repair`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next, in order: M6 (GTM Studio, Case 3), M8-lite (one-command demo + offline replay), M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists. Intro video (Video Producer) stays an AdaL step.
+- Who built what (kept honest for PS1 evidence): M0-M3, the red-team pass and the evidence screenshots were built with AdaL. From M5 onward the build continues with a second AI coding assistant (not AdaL) because the AdaL weekly credits ran out; those commits are authored by the repo owner only and are listed in `docs/ADAL_EVIDENCE.md` as NOT AdaL work.
 - Step 0 (LLM provider) done: Gemini provider verified live (`gemini-3.5-flash`, JSON + image input), fallback chain `gemini-3-flash-preview`, `gemini-3.8-flash`; free-tier limiter (sliding-window RPM, concurrency 2, backoff on 429/503/timeouts); every response cached in the replay store.
 
 ## Milestones
@@ -13,14 +14,14 @@ _Last updated: 2026-10-29_
 | M1 core loop | done | m1-core-loop | |
 | M2 policy/approvals/control | done | m2-policy | |
 | M3 companion UI | done | m3-ui | |
-| M5 failure + repair | todo | | |
+| M5 failure + repair | done (code + tests); real-model replay recordings for Case 4 still to be curated on the owner's machine | m5-repair | `case4` (replay/live) and `case4-stub` (scripted model, deterministic, runs anywhere) |
 | M6 GTM Studio | todo | | |
 | M7 Playbooks + Hub | todo | | |
 | M4 Google Sheets | skipped unless `secrets/google-oauth.json` exists | | SHEET_ADAPTER=local |
 | M8 demo hardening | todo | | |
 
 ## Commands that pass
-`npm run check` (83 tests) · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
+`npm run check` (88 tests) · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
 
 ## M3 notes
 - UI: Run / History / Memory tabs; sticky run bar (Cancel, Take over, Resume); approval card on top; plan as clickable tickets -> evidence drawer (contract, policy decision, verification results, screenshots, files with sha256, stored result); lightbox; receipt with stamp, labels, CONTAINED badge, server-verified "chain valid", tamper test, download JSON, "Remember this run".
@@ -53,6 +54,13 @@ _Last updated: 2026-10-29_
 | Google OAuth JSON (M4, optional) | pending / may be skipped |
 | Demo video recording | pending |
 
+## M5 notes
+- `browser.act` fills a real form and treats the page's "Saved ✓" as an unverified claim; the verifier reads `GET /api/leads` fresh and an independent vision check looks at the "Saved leads" page (it never sees the agent's claim). Broken form => FAILED with a plain-language cause, a recovery is offered, nothing is retried by itself.
+- Repair (max 2 per chain) is a new run with its own signed receipt (`repairOf` = failed run). The replanner must use the documented `POST /api/leads` (`http.request`); code pins the lead to the one the failed attempt used.
+- The planner prompt only offers `browser.act`/`http.request` and the lead rule when the goal is about submitting a lead/form (`isLeadGoal`). This keeps the Case 1/2 prompts identical to the ones recorded in `replay/llm/`. **If you change planner/tool prompt text, the replay key changes and recordings go stale: re-record with `LLM_PROVIDER=gemini npm run test:acceptance -- --live` and `npm run replay:curate`.**
+- TODO (needs the owner's machine, real Gemini): `npm run replay:curate` after a live Case 4 run so `case4` also passes offline. `case4-stub` already proves the plumbing offline.
+
 ## Handover note (Tanish, 29 Oct)
-- M1, M2, M3 done, tagged and pushed. M5 (failure + repair, Case 4) is in progress: Case 4 passed live once; vision check, tools, policy wiring and the UI repair button were being finished and are NOT tagged. Run npm run check first and fix whatever is red, then finish M5, tag m5-repair.
-- Tanish's AdaL credits are exhausted; work continues with a second engineer's own AdaL and his own Gemini key.
+- M1, M2, M3, M5 done. Pending: M6, M8-lite, M7, (M4 optional). Run `npm run check` and `npm run test:acceptance` first (headless: `DARBY_HEADLESS=1`).
+- Publishing: `bash scripts/ship.sh "message"` (checks, secret guard, author check, push main + tags). Commits must carry no AI attribution; `.githooks/commit-msg` enforces it.
+- Tanish's AdaL credits are exhausted; work continues with another coding assistant and his own Gemini key.

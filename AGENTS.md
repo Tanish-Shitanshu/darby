@@ -27,7 +27,7 @@ Node 20+, TypeScript everywhere. `apps/server`: Express + ws, Playwright, better
 ## How to work
 - Work milestone by milestone (docs/MILESTONES.md). Finish and verify one before starting the next.
 - After each milestone: run the checks listed for it, then use **Browser Use** to open the running companion UI and capture a screenshot into `docs/evidence/`, then append an entry to `docs/ADAL_EVIDENCE.md`.
-- Small commits. End each commit message with the trailer `Built-with: AdaL`. Tag each finished milestone (`git tag m1-core-loop`). Commits are authored only by Tanish Shitanshu <tanish.shitanshu@gmail.com>; never add co-author lines. Repo `darby` is owned by him; collaborators (write access): CipherEnigma, mohit4learning@gmail.com, pghana365@gmail.com. Push main and tags after each milestone.
+- Small commits. When AdaL did the work, end the commit message with the trailer `Built-with: AdaL`; never add any other tool or assistant attribution (the `.githooks/commit-msg` hook rejects it). Tag each finished milestone (`git tag m1-core-loop`). Commits are authored only by Tanish Shitanshu <tanish.shitanshu@gmail.com>; never add co-author lines. Repo `darby` is owned by him; collaborators (write access): CipherEnigma, mohit4learning@gmail.com, pghana365@gmail.com. Push main and tags after each milestone.
 - When something fails, debug from evidence (logs, screenshots, failing test), fix the root cause, and note it in docs/ADAL_EVIDENCE.md.
 - Keep README.md accurate: setup, env vars, how to run the demo, how to run tests.
 

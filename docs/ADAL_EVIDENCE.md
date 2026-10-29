@@ -14,6 +14,13 @@ Fill one entry per AdaL session. Attach screenshot/recording paths from `docs/ev
 | 8 | 2026-10-29 | M2 | build + tests | Cases 2, 2b, 2c, 2d, cancel, cancel-during-approval, takeover, tamper as acceptance scenarios | `npm run test:acceptance` (replay, no key, offline): all scenarios PASS; `npm run redteam` PASS; `npm run check`: 83 unit tests | tests/acceptance/run.ts |
 | 9 | 2026-10-29 | M3 | skills + Browser Use + Review (sub-agent) | Read the `frontend-design` skill, designed the "paper receipt" UI (serif display, stamped verdicts, perforated plan tickets, evidence drawer, sticky run bar, approval at top, memory, history), walked Case 1 through it | Walkthrough screenshots + a 16 s captioned video. Review pass found 3 UI issues (unvalidated screenshot src, history/live race, dialog focus) and my unit test found an empty-evidence reducer bug: all fixed and re-verified live | docs/evidence/m3-0*.png, docs/evidence/m3-case1-walkthrough.mp4, docs/evidence/m3-review.md |
 
+## Work NOT done with AdaL (kept honest)
+AdaL's weekly credits ran out after M3. From 29 Oct (about 12:30 IST) the remaining milestones are built with a second AI coding assistant (not AdaL). Those commits are marked in this table as `other assistant`, carry no `Built-with: AdaL` trailer, and their evidence is not claimed as AdaL usage. AdaL-specific evidence still to be produced in AdaL sessions: Browser Use QA of the final UI (Q1), Video Producer intro (Q2), a Playbook installed in AdaL, and any further debugging story.
+
+| # | Time | Milestone | Tool | What | Evidence |
+|---|------|-----------|------|------|----------|
+| 10 | 2026-10-29 | M5 | other assistant (not AdaL) | Failure + repair (Case 4): `browser.act` / `http.request`, vision check, replanner, UI repair button; scoped the lead tools into the planner prompt so Case 1/2 recordings stay valid; scripted-model Case 4 plumbing test | `npm run test:acceptance -- case4-stub` PASS; Case 4 passed live against Gemini once before the handover |
+
 ## Required evidence by the end
 - [ ] Build: commit log with `Built-with: AdaL` trailers and milestone tags m0..m8
 - [ ] Browser Use: recording of AdaL testing the companion UI (Case 1) and the poisoned page (Case 2)
