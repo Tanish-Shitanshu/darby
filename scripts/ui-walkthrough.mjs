@@ -62,7 +62,7 @@ const waitVerdict = (ms = 240_000) => tid('verdict').first().waitFor({ state: 'v
 const newGoal = async () => { if (await tid('new-goal').count()) await tid('new-goal').click(); await tid('goal-box').waitFor(); };
 const startExample = async (key) => {
   await newGoal();
-  await page.getByRole('button', { name: new RegExp(goals[key].label.replace(/[·]/g, '.'), 'i') }).first().click();
+  await tid(`example-${key}`).click();
   await tid('run-btn').click();
 };
 

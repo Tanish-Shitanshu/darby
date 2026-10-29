@@ -6,6 +6,7 @@ import { writeLocalSheet, type SheetRow } from '../adapters/sheets-local';
 import { grantLocalShare } from '../adapters/share-local';
 import { readPage } from '../reader/reader';
 import { slugOf } from '../tools/registry';
+import { isPublicWebUrl, searchOnce, type Hit } from './websearch';
 import { pMap } from '../util/pmap';
 import { readPageText } from './browser';
 import type { RunContext } from './context';
@@ -46,12 +47,49 @@ export function detectInjection(text: string): string | null {
   return m ? m[0] : null;
 }
 
+/** web.search: one query per company/topic in a real tab; hits are untrusted and tainted, and can only be read by browser.read_page. */
+async function webSearch(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
+  const { queries, perQuery } = step.args as { queries: string[]; perQuery: number };
+  const hits: Hit[] = [];
+  const shots: { rel: string }[] = [];
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Searching the public web for ${queries.length} topics (one real tab, results are untrusted)` });
+  let n = 0;
+  for (const q of queries) {
+    await ctx.checkpoint();
+    n++;
+    const page = await ctx.deps.browser.newPage();
+    try {
+      const found = await searchOnce(page, q, perQuery, ctx.deps.cfg.searchUrl);
+      const shot = await ctx.screenshot(page, step.id, `search-${n}`);
+      shots.push({ rel: shot.rel });
+      found.forEach((h) => { hits.push(h); ctx.taint.addValue(h.url); });
+      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: found.length ? `Search “${q}” → ${found.map((h) => new URL(h.url).hostname.replace(/^www\./, '')).join(', ')}` : `Search “${q}” → no usable result (skipped, not guessed)`, screenshotPath: shot.url });
+    } catch (e) {
+      if (ctx.signal.aborted) throw e;
+      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Search “${q}” failed (${(e as Error).message.split('\n')[0]?.slice(0, 100)}); skipped` });
+    } finally {
+      await page.close().catch(() => undefined);
+    }
+  }
+  if (!hits.length) throw new ToolError('The web search returned no usable pages (the search engine may be blocking automated searches). Nothing was guessed.', 'needs_you');
+  ctx.outputs.set(step.id, { hits });
+  return {
+    summary: `${hits.length} pages found for ${queries.length} searches`,
+    contracts: shots.map((s) => ({ kind: 'file_exists' as const, path: s.rel, minBytes: 2000, mime: 'image/png' })),
+    result: { queries, hits: hits.map((h) => ({ query: h.query, host: new URL(h.url).hostname })) },
+  };
+}
+
 async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
-  const urls = (step.args.urls as string[]) ?? [];
+  const fromSearch = typeof step.args.fromStep === 'string' ? (ctx.outputs.get(step.args.fromStep) as { hits?: Hit[] } | undefined) : undefined;
+  const fixtureOrigin = ctx.deps.cfg.searchUrl ? new URL(ctx.deps.cfg.searchUrl).origin : null;
+  const okUrl = (u: string) => ctx.deps.cfg.allowedOrigins.includes(new URL(u).origin) || isPublicWebUrl(u) || (fixtureOrigin !== null && new URL(u).origin === fixtureOrigin);
+  const urls = fromSearch ? [...new Set((fromSearch.hits ?? []).map((h) => h.url))].filter(okUrl).slice(0, 12) : ((step.args.urls as string[]) ?? []);
   if (!urls.length) throw new ToolError('No URLs to read.', 'failed');
   ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Opening ${urls.length} pages in real browser tabs (${Math.min(MAX_TABS, urls.length)} at a time)` });
-  const pages = await pMap(urls, MAX_TABS, async (url): Promise<PageData> => {
-    const slug = slugOf(url);
+  const skipped: string[] = [];
+  const pagesAll = await pMap(urls, MAX_TABS, async (url): Promise<PageData | null> => {
+    const slug = fromSearch ? new URL(url).hostname.replace(/^www\./, '') : slugOf(url);
     let lastErr: unknown;
     for (let attempt = 1; attempt <= 2; attempt++) {
       await ctx.checkpoint();
@@ -61,7 +99,7 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
         const read = await readPageText(page, url, ctx.signal);
         if (!read.httpStatus || read.httpStatus >= 400) throw new ToolError(`${url} answered HTTP ${read.httpStatus}`, 'failed');
         // redirects are followed by the browser: the FINAL origin must still be allowlisted (READ-001), otherwise nothing from it is used
-        if (!ctx.deps.cfg.allowedOrigins.includes(new URL(read.finalUrl).origin)) throw new ToolError(`${url} redirected to ${new URL(read.finalUrl).origin}, which is not on the allowlist; its content was discarded`, 'failed');
+        if (!(fromSearch ? okUrl(read.finalUrl) : ctx.deps.cfg.allowedOrigins.includes(new URL(read.finalUrl).origin))) throw new ToolError(`${url} redirected to ${new URL(read.finalUrl).origin}, which is not on the allowlist; its content was discarded`, 'failed');
         const shot = await ctx.screenshot(page, step.id, `read-${slug}`);
         ctx.taint.addPageText(read.text);
         await ctx.checkpoint(); // a takeover pauses before the next visible action, not after
@@ -79,13 +117,22 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
         await page.close().catch(() => undefined);
       }
     }
-    throw lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
+    const err = lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
+    if (fromSearch) {   // on the open web some sites refuse automated readers: that one page becomes a gap, the others carry on
+      const host = new URL(url).hostname.replace(/^www\./, '');
+      skipped.push(host);
+      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Skipped ${host}: ${err.message.slice(0, 120)} (recorded as a gap, nothing guessed)` });
+      return null;
+    }
+    throw err;
   });
+  const pages = pagesAll.filter((p): p is PageData => p !== null);
+  if (!pages.length) throw new ToolError('None of the found pages could be read (sites may be blocking automated readers). Nothing was guessed.', 'needs_you');
   ctx.outputs.set(step.id, { pages });
   return {
     summary: `${pages.length} pages read in real tabs`,
     contracts: pages.map((p) => ({ kind: 'file_exists', path: p.shotRel, minBytes: 2000, mime: 'image/png' })),
-    result: { pages: pages.map((p) => ({ url: p.url, httpStatus: p.httpStatus, chars: p.text.length, screenshot: p.shotRel })) },
+    result: { pages: pages.map((p) => ({ url: p.url, httpStatus: p.httpStatus, chars: p.text.length, screenshot: p.shotRel })), skipped },
   };
 }
 
@@ -255,6 +302,7 @@ async function httpRequest(ctx: RunContext, step: PlanStep): Promise<ToolResult>
 export async function runTool(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   switch (step.tool) {
     case 'browser.read_page': return readPages(ctx, step);
+    case 'web.search': return webSearch(ctx, step);
     case 'reader.extract': return extract(ctx, step);
     case 'sheet.write': return writeSheet(ctx, step);
     case 'share.grant': return shareGrant(ctx, step);

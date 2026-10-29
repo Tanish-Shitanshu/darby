@@ -1,5 +1,6 @@
 import express, { type NextFunction, type Request, type Response, type Router } from 'express';
-import { existsSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import ExcelJS from 'exceljs';
 import path from 'node:path';
 import { z } from 'zod';
 import type { LedgerEntry } from '@darby/contracts';
@@ -112,6 +113,30 @@ export function createApi(manager: RunManager): Router {
     target.payload = { ...target.payload, tampered: 'edited after the fact' };
     const tampered = verifyBundle(copy);
     res.json({ original, tampered, edit: { index: target.index, type: target.type, before, after: 'added field "tampered"' } });
+  }));
+
+  /** The spreadsheet a run produced (the artifact): its rows for the in-app preview, and the real .xlsx for download. Confined to workspace/<run>. */
+  const sheetFile = (id: string): string | null => {
+    const dir = path.join(cfg.workspaceDir, path.basename(id));
+    if (!existsSync(dir)) return null;
+    const f = readdirSync(dir).find((x) => /\.xlsx$/i.test(x));
+    return f ? path.join(dir, f) : null;
+  };
+  r.get('/runs/:id/sheet', wrap(async (req, res) => {
+    const file = sheetFile(String(req.params.id));
+    if (!file) throw new HttpError(404, 'not_found', 'This run did not produce a spreadsheet');
+    const wb = new ExcelJS.Workbook();
+    await wb.xlsx.readFile(file);
+    const ws = wb.worksheets[0]!;
+    const cell = (v: ExcelJS.CellValue): string => (v === null || v === undefined ? '' : typeof v === 'object' ? String((v as { text?: string; result?: unknown }).text ?? (v as { result?: unknown }).result ?? '') : String(v));
+    const rows: string[][] = [];
+    ws.eachRow({ includeEmpty: false }, (row) => { if (rows.length < 201) rows.push((row.values as ExcelJS.CellValue[]).slice(1).map(cell)); });
+    res.json({ name: path.basename(file, '.xlsx'), sheet: ws.name, rows });
+  }));
+  r.get('/runs/:id/sheet.xlsx', wrap((req, res) => {
+    const file = sheetFile(String(req.params.id));
+    if (!file) throw new HttpError(404, 'not_found', 'This run did not produce a spreadsheet');
+    res.download(file, path.basename(file));
   }));
 
   r.get('/runs/:id/shots/:file', wrap((req, res) => {

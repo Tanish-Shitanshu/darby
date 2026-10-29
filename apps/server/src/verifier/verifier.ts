@@ -86,6 +86,19 @@ export function checkClaim(pageText: string, item: ClaimItem): { status: 'pass' 
 
 const slugOfUrl = (url: string) => url.replace(/[?#].*$/, '').split('/').filter(Boolean).pop() ?? url;
 
+/** The verifier's own fresh tab: visible text of the page after scripts ran. Independent of the tab the maker used. */
+async function renderedText(url: string, ctx: VerifierCtx): Promise<string> {
+  const page = await ctx.openPage!();
+  try {
+    await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+    await page.waitForLoadState('load', { timeout: 8_000 }).catch(() => undefined);
+    await page.waitForTimeout(800);
+    return await page.evaluate(() => document.body?.innerText ?? '');
+  } finally {
+    await page.close().catch(() => undefined);
+  }
+}
+
 /* ---------------- contract kinds ---------------- */
 async function quoteInPage(c: Extract<EvidenceContract, { kind: 'quote_in_page' }>, ctx: VerifierCtx): Promise<CheckResult> {
   let html: string;
@@ -102,8 +115,13 @@ async function quoteInPage(c: Extract<EvidenceContract, { kind: 'quote_in_page' 
   const gaps: string[] = [];
   const notes: string[] = [];
   let failed = 0;
+  let rendered: string | null = null;   // the verifier's own fresh browser read, only used when the plain fetch lacks a claimed quote (script-built pages)
   for (const item of c.items) {
-    const r = checkClaim(text, item);
+    let r = checkClaim(text, item);
+    if (r.status === 'fail' && ctx.openPage && /quote not found/.test(r.note)) {
+      if (rendered === null) rendered = await renderedText(c.url, ctx).catch(() => '');
+      if (rendered) r = checkClaim(rendered, item);
+    }
     if (r.status === 'fail') failed++;
     if (r.status === 'gap') gaps.push(slug);
     notes.push(r.note);

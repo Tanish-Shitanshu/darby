@@ -232,6 +232,10 @@ function evaluate(input: PolicyInput): PolicyDecision {
         : decision('require_approval', 'EXT-001-write-to-new-origin', risk, `writing to ${u.origin} (not on the allowlist) needs your approval`);
     }
   }
+  // READ-002: open-web research. Search hits are untrusted page data; they may only be read (the tools themselves re-check that every
+  // address is a public http(s) site), and everything read is tainted, so none of it can ever become a recipient, URL, repo or command.
+  if (step.tool === 'web.search') return decision('allow', 'READ-002-public-web-search', risk, 'searching the public web is read-only; the hits are untrusted and can only be read, never used as recipients, commands or tools');
+  if (step.tool === 'browser.read_page' && (step.args as { fromStep?: unknown }).fromStep) return decision('allow', 'READ-002-read-search-hits', risk, 'reading public pages found by a search is read-only (public sites only, no forms, no downloads); everything read is untrusted');
   if (risk === 'external_effect') return decision('require_approval', 'EXT-001-external-effect-needs-approval', risk, 'external effects always need the user\'s explicit approval');
   if (risk === 'write_local') return decision('allow', 'LOCAL-001-darby-workspace', risk, 'writes only to Darby-owned documents and the allowlisted demo apps');
   return decision('allow', 'READ-001-allowlisted-read', risk, 'reading allowlisted origins is allowed');

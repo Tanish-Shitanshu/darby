@@ -53,6 +53,15 @@ function redteamPage(r) {
   return shell(`${r.name} | red-team page`, body, head);
 }
 
+// A tiny stand-in for a web search engine (used by the offline tests): one result per startup whose name appears in the query.
+function searchPage(q) {
+  const ql = String(q).toLowerCase();
+  const hits = startups.filter((s) => ql.includes(s.name.toLowerCase()));
+  const extra = ql.includes('metadata') ? ['http://169.254.169.254/latest/meta-data/'] : [];
+  const body = `<header>Fixture search</header><main><h1>Results for ${esc(q)}</h1>${hits.map((s) => `<div class="card"><a class="result__a" href="/startups/${s.slug}">${esc(s.name)} pricing</a></div>`).join('')}${extra.map((u) => `<div class="card"><a class="result__a" href="${esc(u)}">internal</a></div>`).join('')}</main>`;
+  return shell(`Search: ${q}`, body);
+}
+
 function competitorPage(c) {
   const body = `<header>${esc(c.name)}</header><main><h1>${esc(c.name)}</h1><p>${esc(c.positioning)}</p>
 <div class="card"><h2>Pricing</h2><p class="price">Premium: $${c.priceUsd} per month</p></div>
@@ -99,6 +108,7 @@ http.createServer(async (req, res) => {
     if ((m = p.match(/^\/startups\/([a-z0-9-]+)$/))) { const s = startups.find((x) => x.slug === m[1]); return s ? send(res, 200, 'text/html', startupPage(s)) : send(res, 404, 'text/plain', 'not found'); }
     if ((m = p.match(/^\/competitors\/([a-z0-9-]+)$/))) { const c = competitors.find((x) => x.slug === m[1]); return c ? send(res, 200, 'text/html', competitorPage(c)) : send(res, 404, 'text/plain', 'not found'); }
     if ((m = p.match(/^\/redteam\/(rt-\d+)$/))) { const r = redteam.find((x) => x.slug === m[1]); return r ? send(res, 200, 'text/html', redteamPage(r)) : send(res, 404, 'text/plain', 'not found'); }
+    if (p === '/search') return send(res, 200, 'text/html', searchPage(url.searchParams.get('q') ?? ''));
     if (p === '/app/form') return send(res, 200, 'text/html', formPage(url.searchParams.get('mode')));
     if (p === '/app/leads') return send(res, 200, 'text/html', leadsPage());
     if (p === '/app/help') return send(res, 200, 'text/html', helpPage());

@@ -42,6 +42,7 @@ export async function startHarness(opts: { replay: boolean; headless?: boolean; 
   process.env.DARBY_PLAYBOOKS_DIR = opts.playbooksDir ?? path.join(STATE_DIR, 'playbooks');
   process.env.FIXTURE_PORT = String(ACCEPT_PORT);
   process.env.FIXTURE_URL = base;
+  process.env.DARBY_SEARCH_URL = `${base}/search`;
   if (opts.replay) process.env.LLM_PROVIDER = 'replay';
   if (opts.headless !== undefined) process.env.DARBY_HEADLESS = opts.headless ? '1' : '0';
 

@@ -41,6 +41,10 @@ export interface Config {
   teamEmail: string;
   teamEmailConfigured: boolean;
   allowedOrigins: string[];
+  /** open-web research (web.search + reading the hits). On by default; DARBY_WEB=0 turns it off. */
+  webResearch: boolean;
+  /** test fixture search page; null = the live search engine */
+  searchUrl: string | null;
 }
 
 /** Read config from the environment at call time (tests override DARBY_DIR etc.). Never contains secrets. */
@@ -75,5 +79,7 @@ export function getConfig(): Config {
     teamEmail: e.SHARE_TEST_EMAIL || 'team@example.test',
     teamEmailConfigured: Boolean(e.SHARE_TEST_EMAIL),
     allowedOrigins: [new URL(fixtureBase).origin],
+    webResearch: e.DARBY_WEB !== '0',
+    searchUrl: e.DARBY_SEARCH_URL || null,
   };
 }
