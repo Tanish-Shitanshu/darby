@@ -1,0 +1,47 @@
+{
+  "at": "2026-10-29T13:36:19.686Z",
+  "passed": 8,
+  "failed": 0,
+  "results": [
+    {
+      "name": "voice chat is on by default",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sarvam heard Hindi and understood the request",
+      "ok": true,
+      "detail": "Heard (Hindi): “शीर्ष तीन एआई स्टार्टअप खोजो और उनकी कीमतें एक एक्सेल शीट में लिखो।” → understood as: “Find the top three AI startups and write down their price"
+    },
+    {
+      "name": "the spoken request started a run by itself (voice chat)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the summary is in Hindi (Devanagari)",
+      "ok": true,
+      "detail": "What Darby did and found Stop speaking डार्बी ने वेब पर खोज की, उसे मिले पृष्ठों को पढ़ा, और टॉप एआई स्टार्टअप्स स्प्रेड"
+    },
+    {
+      "name": "the summary reports key findings from the sheet",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the spreadsheet was produced and is shown",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Darby speaks the summary and a Stop button is on screen",
+      "ok": true,
+      "detail": "stop buttons: 1"
+    },
+    {
+      "name": "Stop speaking silences it",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

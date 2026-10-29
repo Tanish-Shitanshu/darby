@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { ZodType } from 'zod';
 import { canonicalJson, sha256 } from '../util/canonical';
 import type { Config } from '../config';
-import { azureProvider, geminiProvider, openaiProvider, redactSecrets } from './providers';
+import { azureProvider, geminiProvider, openaiProvider, redactSecrets, sarvamChatProvider } from './providers';
 import { RateLimitError, ReplayMissError, TransientError, type LlmRequest, type LlmResult, type RawProvider } from './types';
 
 /* ---------------- replay store ---------------- */
@@ -164,11 +164,19 @@ export function createLlm(cfg: Config): Llm {
       if (!e.AZURE_OPENAI_API_KEY || !e.AZURE_OPENAI_ENDPOINT || !e.AZURE_OPENAI_DEPLOYMENT) throw new Error('LLM_PROVIDER=azure but endpoint/key/deployment are not all set');
       raw = azureProvider(e.AZURE_OPENAI_ENDPOINT, e.AZURE_OPENAI_API_KEY, e.AZURE_OPENAI_DEPLOYMENT, e.AZURE_OPENAI_API_VERSION || '2024-10-21');
       break;
+    case 'sarvam': {
+      if (!e.SARVAM_API_KEY) throw new Error('LLM_PROVIDER=sarvam but SARVAM_API_KEY is empty');
+      const sar = sarvamChatProvider(e.SARVAM_API_KEY, e.SARVAM_MODEL || 'sarvam-105b');
+      const gem = e.GEMINI_API_KEY ? geminiProvider(e.GEMINI_API_KEY, [cfg.llm.geminiModel, ...cfg.llm.geminiFallbacks.filter((m) => m !== cfg.llm.geminiModel)]) : null;
+      // text goes to Sarvam; anything with an image or audio goes to Gemini when a key exists (Sarvam chat is text-only)
+      raw = { name: 'sarvam', model: sar.model, generate: (req, signal) => (req.images?.length && gem ? gem.generate(req, signal) : sar.generate(req, signal)) };
+      break;
+    }
     case 'replay':
       raw = null;
       break;
     default:
-      throw new Error(`Unknown LLM_PROVIDER "${cfg.llm.provider}" (gemini | openai | azure | replay)`);
+      throw new Error(`Unknown LLM_PROVIDER "${cfg.llm.provider}" (gemini | sarvam | openai | azure | replay)`);
   }
   return new Llm(cfg.llm.provider, raw?.model ?? 'recorded', raw, store, opts);
 }

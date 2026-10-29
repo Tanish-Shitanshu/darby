@@ -38,7 +38,10 @@ export function decodeBingUrl(href: string): string | null {
 
 const SEARCH_ENGINE_HOSTS = /(^|\.)(bing\.com|microsoft\.com|duckduckgo\.com|google\.[a-z.]+|yahoo\.com|baidu\.com)$/;
 
-export interface Hit { url: string; query: string }
+export interface Hit { url: string; query: string; label: string }
+
+/** "Anthropic Claude pricing" -> "Anthropic Claude": the company the query was about, used as the row name so a row exists for every company asked for. */
+export const labelOf = (query: string): string => query.replace(/\b(pricing|prices?|plans?|cost|costs|subscription|per month|official site)\b/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || query;
 
 /** Run one query in the given tab and return up to `perQuery` hits from distinct sites. `searchUrl` (a test fixture) replaces the live engine. */
 export async function searchOnce(page: Page, query: string, perQuery: number, searchUrl?: string | null): Promise<Hit[]> {
@@ -60,7 +63,7 @@ export async function searchOnce(page: Page, query: string, perQuery: number, se
     if (!allowedFixture && (!isPublicWebUrl(target) || SEARCH_ENGINE_HOSTS.test(host))) continue;
     if (seen.has(origin)) continue;
     seen.add(origin);
-    hits.push({ url: target, query });
+    hits.push({ url: target, query, label: labelOf(query) });
     if (hits.length >= perQuery) break;
   }
   return hits;

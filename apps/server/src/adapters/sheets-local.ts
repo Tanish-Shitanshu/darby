@@ -9,6 +9,8 @@ export interface SheetRow {
   priceUsd: number | null;
   quote: string | null;
   url: string;
+  /** why a row is empty when the page could not be read at all (otherwise the standard gap note is used) */
+  note?: string;
 }
 
 /** Spreadsheet formula injection guard: text from pages must never be interpreted as a formula. */
@@ -25,8 +27,8 @@ export function expectedMatrix(rows: SheetRow[]): string[][] {
       r.priceUsd === null ? 'NOT FOUND' : String(r.priceUsd),
       r.quote === null ? 'NOT FOUND' : safeCell(r.quote),
       r.url,
-      r.priceUsd === null ? 'GAP' : 'FOUND',
-      r.priceUsd === null ? 'Price not shown on the page; flagged, not guessed' : '',
+      r.priceUsd === null ? (r.note ? 'MISSING' : 'GAP') : 'FOUND',
+      r.priceUsd === null ? safeCell(r.note ?? 'Price not shown on the page; flagged, not guessed') : '',
     ]),
   ];
 }

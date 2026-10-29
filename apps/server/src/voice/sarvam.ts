@@ -82,8 +82,9 @@ export function chunkText(text: string, max: number): string[] {
 export async function sarvamTranslate(text: string, from: string, to: string): Promise<string> {
   if (!text.trim() || (from === to && from !== 'auto')) return text;
   if (to === 'auto') throw new SarvamError('a target language is required');
-  const model = byCode(from)?.mayura && byCode(to)?.mayura ? 'mayura:v1' : 'sarvam-translate:v1';
-  const pieces = chunkText(text, model === 'mayura:v1' ? 900 : 1800);
+  // Sarvam-Translate keeps brand names intact (Mayura turned "Perplexity" into the word "puzzle" in Hindi) and covers all 22 languages
+  const model = 'sarvam-translate:v1';
+  const pieces = chunkText(text, 1800);
   const out: string[] = [];
   for (const piece of pieces) {
     const b = await call('/translate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ input: piece, source_language_code: from, target_language_code: to, model, mode: 'formal' }) });

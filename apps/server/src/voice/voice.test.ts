@@ -25,10 +25,10 @@ describe('Sarvam client (fetch mocked, no network, no key spent)', () => {
     expect(calls[0]!.url).toBe('https://api.sarvam.ai/translate');
     expect((calls[0]!.init.headers as Record<string, string>)['api-subscription-key']).toBe('test-key-123');
     const sent = JSON.parse(String(calls[0]!.init.body));
-    expect(sent).toMatchObject({ input: 'Hello', source_language_code: 'en-IN', target_language_code: 'hi-IN', model: 'mayura:v1' });
+    expect(sent).toMatchObject({ input: 'Hello', source_language_code: 'en-IN', target_language_code: 'hi-IN', model: 'sarvam-translate:v1' });
   });
 
-  it('uses the wider model for languages Mayura does not cover, and skips same-language calls', async () => {
+  it('uses Sarvam-Translate (brand-safe, all 22 languages) and skips same-language calls', async () => {
     vi.stubGlobal('fetch', async (url: string, init: RequestInit) => { calls.push({ url, init }); return ok({ translated_text: 'x' }); });
     await sarvamTranslate('Hello', 'en-IN', 'ur-IN');
     expect(JSON.parse(String(calls[0]!.init.body)).model).toBe('sarvam-translate:v1');
@@ -87,8 +87,15 @@ describe('summary facts come from the sheet and the receipt, computed by code', 
     expect(text).toMatch(/Cheapest: Gizmo at \$19/);
     expect(text).toMatch(/Most expensive: Delta at \$99/);
     expect(text).toMatch(/average of the confirmed prices is \$49 per month/);
-    expect(text).toMatch(/No public paid price could be confirmed for Cobalt/);
+    expect(text).toMatch(/A public paid price could not be confirmed for Cobalt/);
     expect(text).toMatch(/blocked 1 unsafe attempt/);
+  });
+
+  it('does not call a single price both cheapest and most expensive', () => {
+    const one = { ...sheet, rows: [sheet.rows[1]!, sheet.rows[3]!] };
+    const t = factsFor(run as never, one).highlights.join(' ');
+    expect(t).toMatch(/Only Gizmo has a confirmed price: \$19 per month/);
+    expect(t).not.toMatch(/Cheapest/);
   });
 
   it('says what went wrong when a run failed', () => {

@@ -6,12 +6,23 @@ import { writeLocalSheet, type SheetRow } from '../adapters/sheets-local';
 import { grantLocalShare } from '../adapters/share-local';
 import { readPage } from '../reader/reader';
 import { slugOf } from '../tools/registry';
-import { isPublicWebUrl, searchOnce, type Hit } from './websearch';
+import { isPublicWebUrl, labelOf, searchOnce, type Hit } from './websearch';
 import { codeFix, codeTest } from './code-tools';
+import { checkClaim } from '../verifier/verifier';
 import { pMap } from '../util/pmap';
 import { readPageText } from './browser';
 import type { RunContext } from './context';
 import { githubCreatePr, gtmCopy, gtmHero, gtmLanding, gtmTeaser, gtmTestPage, gtmVoice } from './gtm-tools';
+
+/** Real pricing pages are long and mostly navigation. Keep the lines that talk about money (with one line of context each) so the reader's window holds the prices. */
+export function focusPriceText(text: string): string {
+  if (text.length <= 5000) return text;
+  const lines = text.split('\n');
+  const keep = new Set<number>();
+  lines.forEach((l, i) => { if (/(\$\s?\d|USD|per (month|user|seat|member)|\/\s?(mo|month|user|seat)\b|monthly|billed (annually|monthly)|\bfree\b|\bplans?\b)/i.test(l)) for (let k = Math.max(0, i - 2); k <= Math.min(lines.length - 1, i + 2); k++) keep.add(k); });
+  const picked = [...keep].sort((a, b) => a - b).map((i) => lines[i]!).join('\n');
+  return (picked.length > 200 ? picked : text).slice(0, 11_000);
+}
 
 export class ToolError extends Error {
   constructor(message: string, public kind: 'failed' | 'needs_you' = 'needs_you') {
@@ -28,8 +39,8 @@ export interface ToolResult {
   result: Record<string, unknown>;
 }
 
-export interface PageData { url: string; slug: string; text: string; shotRel: string; shotUrl: string; httpStatus: number | null }
-export interface ExtractedItem { url: string; slug: string; record: { name: string; priceUsd: number | null; quote: string | null; note?: string }; rejected?: string }
+export interface PageData { label?: string; url: string; slug: string; text: string; shotRel: string; shotUrl: string; httpStatus: number | null }
+export interface ExtractedItem { unread?: boolean; url: string; slug: string; record: { name: string; priceUsd: number | null; quote: string | null; note?: string }; rejected?: string }
 
 const MAX_TABS = 3;
 
@@ -52,6 +63,7 @@ export function detectInjection(text: string): string | null {
 async function webSearch(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   const { queries, perQuery } = step.args as { queries: string[]; perQuery: number };
   const hits: Hit[] = [];
+  const missed: string[] = [];
   const shots: { rel: string }[] = [];
   ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Searching the public web for ${queries.length} topics (one real tab, results are untrusted)` });
   let n = 0;
@@ -64,16 +76,18 @@ async function webSearch(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
       const shot = await ctx.screenshot(page, step.id, `search-${n}`);
       shots.push({ rel: shot.rel });
       found.forEach((h) => { hits.push(h); ctx.taint.addValue(h.url); });
+      if (!found.length) missed.push(labelOf(q));
       ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: found.length ? `Search “${q}” → ${found.map((h) => new URL(h.url).hostname.replace(/^www\./, '')).join(', ')}` : `Search “${q}” → no usable result (skipped, not guessed)`, screenshotPath: shot.url });
     } catch (e) {
       if (ctx.signal.aborted) throw e;
+      missed.push(labelOf(q));
       ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Search “${q}” failed (${(e as Error).message.split('\n')[0]?.slice(0, 100)}); skipped` });
     } finally {
       await page.close().catch(() => undefined);
     }
   }
   if (!hits.length) throw new ToolError('The web search returned no usable pages (the search engine may be blocking automated searches). Nothing was guessed.', 'needs_you');
-  ctx.outputs.set(step.id, { hits });
+  ctx.outputs.set(step.id, { hits, missed });
   return {
     summary: `${hits.length} pages found for ${queries.length} searches`,
     contracts: shots.map((s) => ({ kind: 'file_exists' as const, path: s.rel, minBytes: 2000, mime: 'image/png' })),
@@ -82,35 +96,41 @@ async function webSearch(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
 }
 
 async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
-  const fromSearch = typeof step.args.fromStep === 'string' ? (ctx.outputs.get(step.args.fromStep) as { hits?: Hit[] } | undefined) : undefined;
+  const fromSearch = typeof step.args.fromStep === 'string' ? (ctx.outputs.get(step.args.fromStep) as { hits?: Hit[]; missed?: string[] } | undefined) : undefined;
   const fixtureOrigin = ctx.deps.cfg.searchUrl ? new URL(ctx.deps.cfg.searchUrl).origin : null;
   const okUrl = (u: string) => ctx.deps.cfg.allowedOrigins.includes(new URL(u).origin) || isPublicWebUrl(u) || (fixtureOrigin !== null && new URL(u).origin === fixtureOrigin);
-  const urls = fromSearch ? [...new Set((fromSearch.hits ?? []).map((h) => h.url))].filter(okUrl).slice(0, 12) : ((step.args.urls as string[]) ?? []);
-  if (!urls.length) throw new ToolError('No URLs to read.', 'failed');
-  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Opening ${urls.length} pages in real browser tabs (${Math.min(MAX_TABS, urls.length)} at a time)` });
+  // one group per company (search query): its best hit first, the next hit as a fallback; on the fixture web every URL is its own group
+  const groups: { label?: string; urls: string[] }[] = fromSearch
+    ? [...new Map((fromSearch.hits ?? []).filter((h) => okUrl(h.url)).map((h) => [h.query, h] as const)).keys()].slice(0, 12).map((q) => ({ label: labelOf(q), urls: [...new Set((fromSearch.hits ?? []).filter((h) => h.query === q && okUrl(h.url)).map((h) => h.url))] }))
+    : ((step.args.urls as string[]) ?? []).map((u) => ({ urls: [u] }));
+  if (!groups.length) throw new ToolError('No URLs to read.', 'failed');
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Opening ${groups.length} pages in real browser tabs (${Math.min(MAX_TABS, groups.length)} at a time)` });
   const skipped: string[] = [];
+  const unread: { label: string; url: string; reason: string }[] = (fromSearch?.missed ?? []).map((label) => ({ label, url: '', reason: 'The web search found no usable page for this company.' }));
   // A search hit is usually a company's home page. The only address Darby derives from it is the same site's /pricing (a fixed path, never taken
   // from page text); it is tried first and the hit itself is the fallback. Both are public reads of the same origin.
   const PRICE_HINT = /\$\s?\d|\bUSD\b|per (user|seat|month)|\/\s?mo\b|monthly/i;
-  const readCandidates = async (url0: string): Promise<PageData | null> => {
-    const candidates = fromSearch ? [...new Set([`${new URL(url0).origin}/pricing`, url0])] : [url0];
+  const readCandidates = async (group: { label?: string; urls: string[] }): Promise<PageData | null> => {
+    const url0 = group.urls[0]!;
+    const candidates = fromSearch ? [...new Set(group.urls.flatMap((u) => [`${new URL(u).origin}/pricing`, u]))] : [url0];
     let first: PageData | null = null;
     let lastErr: unknown;
     for (const u of candidates) {
       try {
         const p = await readOne(u);
-        if (!fromSearch || PRICE_HINT.test(p.text) || u === candidates[candidates.length - 1]) return p;
+        if (!fromSearch || PRICE_HINT.test(p.text) || u === candidates[candidates.length - 1]) return { ...p, ...(group.label ? { label: group.label } : {}) };
         first ??= p;
       } catch (e) {
         if (ctx.signal.aborted) throw e;
         lastErr = e;
       }
     }
-    if (first) return first;
+    if (first) return { ...first, ...(group.label ? { label: group.label } : {}) };
     const err = lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url0}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
     if (fromSearch) {   // on the open web some sites refuse automated readers: that one page becomes a gap, the others carry on
       const host = new URL(url0).hostname.replace(/^www\./, '');
       skipped.push(host);
+      unread.push({ label: group.label ?? host, url: url0, reason: `The page could not be read (${err.message.replace(/https?:\/\/\S+/g, 'the page').slice(0, 70)}).` });
       ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Skipped ${host}: ${err.message.slice(0, 120)} (recorded as a gap, nothing guessed)` });
       return null;
     }
@@ -137,7 +157,8 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
           ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Warning: the page ${slug} contains hidden text that tries to give orders to an AI (“${hostile}”). It is untrusted data: only the quarantined reader sees it, no tool can be reached from it.` });
         }
         ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Read ${ctx.deps.catalog.names[slug] ?? slug} (${url.replace(/^https?:\/\//, '')}) — HTTP ${read.httpStatus}, ${read.text.length} characters of page text`, screenshotPath: shot.url });
-        return { url, slug, text: read.text, shotRel: shot.rel, shotUrl: shot.url, httpStatus: read.httpStatus };
+        // on the open web the page the maker really read is where the browser ended up (anthropic.com/pricing -> claude.com/pricing); the verifier re-reads exactly that public address
+        return { url: fromSearch ? read.finalUrl : url, slug, text: read.text, shotRel: shot.rel, shotUrl: shot.url, httpStatus: read.httpStatus };
       } catch (e) {
         if (ctx.signal.aborted) throw e;
         lastErr = e;
@@ -147,28 +168,33 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
     }
     throw lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
   };
-  const pagesAll = await pMap(urls, MAX_TABS, readCandidates);
+  const pagesAll = await pMap(groups, MAX_TABS, readCandidates);
   const pages = pagesAll.filter((p): p is PageData => p !== null);
   if (!pages.length) throw new ToolError('None of the found pages could be read (sites may be blocking automated readers). Nothing was guessed.', 'needs_you');
-  ctx.outputs.set(step.id, { pages });
+  ctx.outputs.set(step.id, { pages, unread });
   return {
-    summary: `${pages.length} pages read in real tabs`,
+    summary: `${pages.length} pages read in real tabs${unread.length ? `, ${unread.length} could not be read (kept as missing rows)` : ''}`,
     contracts: pages.map((p) => ({ kind: 'file_exists', path: p.shotRel, minBytes: 2000, mime: 'image/png' })),
     result: { pages: pages.map((p) => ({ url: p.url, httpStatus: p.httpStatus, chars: p.text.length, screenshot: p.shotRel })), skipped },
   };
 }
 
 async function extract(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
-  const src = ctx.outputs.get(String(step.args.fromStep)) as { pages: PageData[] } | undefined;
+  const src = ctx.outputs.get(String(step.args.fromStep)) as { pages: PageData[]; unread?: { label: string; url: string; reason: string }[] } | undefined;
   if (!src) throw new ToolError('The reader has no pages to read (the read step did not finish).', 'needs_you');
   ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Quarantined reader: ${src.pages.length} pages, schema-only output, no tools` });
   const items = await pMap(src.pages, 3, async (p): Promise<ExtractedItem> => {
     await ctx.checkpoint();
     let r;
     try {
-      r = await readPage(ctx.deps.llm, p.text, ctx.signal);
+      r = await readPage(ctx.deps.llm, p.label ? focusPriceText(p.text) : p.text, ctx.signal);
     } catch (e) {
       if (ctx.signal.aborted) throw e;
+      if (p.label) {   // open web: one page the reader model could not answer must not sink the other companies; it becomes a MISSING row
+        ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${p.label}: the reader model did not answer for this page (${(e as Error).message.slice(0, 80)}). Marked MISSING, nothing guessed.` });
+        if (!ctx.gapSlugs.includes(p.label)) ctx.gapSlugs.push(p.label);
+        return { unread: true, url: p.url, slug: p.label, record: { name: p.label, priceUsd: null, quote: null, note: 'The page was read but the reader model gave no answer for it.' } };
+      }
       throw new ToolError(`The reader model could not be reached: ${(e as Error).message.slice(0, 160)}`, 'needs_you');
     }
     if (r.llm) ctx.noteLlm(r.llm, 'reader');
@@ -176,18 +202,31 @@ async function extract(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
     if (!r.ok) {
       ctx.ledger('reader.rejected', { slug: p.slug, reason: r.reason }, step.id);
       ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Reader output for ${p.slug} was REJECTED (${r.reason}) — recorded as a gap, nothing from it was used` });
-      return { url: p.url, slug: p.slug, record: { name: ctx.deps.catalog.names[p.slug] ?? p.slug, priceUsd: null, quote: null }, rejected: r.reason };
+      return { url: p.url, slug: p.slug, record: { name: p.label ?? ctx.deps.catalog.names[p.slug] ?? p.slug, priceUsd: null, quote: null }, rejected: r.reason };
     }
-    const rec = r.record;
+    const rec = p.label ? { ...r.record, name: p.label } : r.record;   // on the open web the name is the company the user asked about, not whatever the page calls itself
+    if (rec.priceUsd !== null) {   // the maker checks the reader's claim against the text it read before anything is written; the independent verifier still re-checks later
+      const own = checkClaim(p.text, { field: 'priceUsd', value: String(rec.priceUsd), quote: rec.quote });
+      if (own.status === 'fail') {
+        ctx.ledger('reader.rejected', { slug: p.slug, reason: own.note }, step.id);
+        ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${rec.name}: the reader's price did not match the page text (${own.note.slice(0, 90)}). Kept as a gap, nothing guessed.` });
+        return { url: p.url, slug: p.slug, record: { name: rec.name, priceUsd: null, quote: null }, rejected: own.note };
+      }
+    }
     for (const v of [rec.name, rec.quote, rec.note]) ctx.taint.addValue(v);
     ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: rec.priceUsd === null ? `Reader: ${rec.name} — no paid monthly price shown → gap (not guessed)` : `Reader: ${rec.name} — $${rec.priceUsd} · “${rec.quote}”` });
     return { url: p.url, slug: p.slug, record: rec };
   });
+  for (const u of src.unread ?? []) {   // a company that could not be read is a MISSING row, never silently dropped and never invented
+    items.push({ unread: true, url: u.url, slug: u.label, record: { name: u.label, priceUsd: null, quote: null, note: u.reason } });
+    if (!ctx.gapSlugs.includes(u.label)) ctx.gapSlugs.push(u.label);
+    ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `${u.label}: ${u.reason} Added to the sheet as MISSING, nothing guessed.` });
+  }
   ctx.outputs.set(step.id, { items });
   const gaps = items.filter((i) => i.record.priceUsd === null).length;
   return {
     summary: `${items.length - gaps} prices extracted with quotes, ${gaps} gaps`,
-    contracts: items.map((i) => ({
+    contracts: items.filter((i) => !i.unread).map((i) => ({
       kind: 'quote_in_page',
       url: i.url,
       items: [{ field: 'priceUsd', value: i.record.priceUsd === null ? null : String(i.record.priceUsd), quote: i.record.quote }],
@@ -204,7 +243,7 @@ async function writeSheet(ctx: RunContext, step: PlanStep): Promise<ToolResult> 
   const runDir = path.join(ctx.deps.cfg.workspaceDir, ctx.runId);
   const file = path.join(runDir, `${name}.xlsx`);
   if (path.relative(runDir, file).startsWith('..')) throw new ToolError('The document path escapes the Darby workspace.', 'failed');
-  const rows: SheetRow[] = src.items.map((i) => ({ name: i.record.name, priceUsd: i.record.priceUsd, quote: i.record.quote, url: i.url }));
+  const rows: SheetRow[] = src.items.map((i) => ({ name: i.record.name, priceUsd: i.record.priceUsd, quote: i.record.quote, url: i.url, ...(i.unread && i.record.note ? { note: i.record.note } : {}) }));
   await ctx.checkpoint();
   const { matrix, range } = await writeLocalSheet(file, name, rows);
   const ref = ctx.relative(file);

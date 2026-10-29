@@ -59,6 +59,9 @@ export async function readPageText(page: Page, url: string, signal?: AbortSignal
   signal?.throwIfAborted();
   const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
   await page.waitForLoadState('load', { timeout: 8_000 }).catch(() => undefined);
+  await page.waitForLoadState('networkidle', { timeout: 5_000 }).catch(() => undefined);   // pricing tables on modern sites are drawn by scripts after the page loads
+  await page.evaluate(() => window.scrollTo(0, document.body?.scrollHeight ?? 0)).catch(() => undefined);
+  await page.waitForTimeout(500);
   signal?.throwIfAborted();
   const text = await page.evaluate(() => {
     const out: string[] = [];

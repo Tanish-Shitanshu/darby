@@ -202,9 +202,10 @@ export function App() {
 
         {tab === 'run' && !run && (
           <main className="home">
+            <div className="hero-glow" aria-hidden="true" />
             <section className="lede" aria-label="What Darby is">
-              <p className="kicker">Your AI browser workspace</p>
-              <h2>Delegate web work. <em>Get proof,</em> not promises.</h2>
+              <p className="kicker">The AI-native browser workspace</p>
+              <h2>Work done. <em>Proven</em> by Darby.</h2>
               <p>Darby plans the job, does it in real browser tabs, re-checks every claim on its own, and hands you a signed receipt with an honest verdict.</p>
             </section>
 
@@ -241,6 +242,8 @@ export function App() {
               {note && <p className="muted small note" role="status" data-testid="input-note">{note}</p>}
               {d.error && <p className="error" role="alert">{d.error}</p>}
             </section>
+
+            <p className="langs" aria-label="Languages you can speak or type"><b>Speak or type in</b>{voiceCfg.languages.slice(1, 9).map((l) => <span key={l.code}>{l.native}</span>)}<span>English</span></p>
 
             <section aria-label="Try an example">
               <h3 className="sec">Try an example</h3>
@@ -307,7 +310,7 @@ export function App() {
         {tab === 'memory' && (<main className="page"><PageHead title="Memory" sub="Preferences you control. View, add and delete." /><Memory items={d.memory} onAdd={(k, v) => void d.addMemory(k, v)} onDelete={(id) => void d.deleteMemory(id)} /></main>)}
 
         {run && tab === 'run' && <EvidenceDrawer run={run} stepId={drawer} detail={detail} onClose={() => setDrawer(null)} onShot={setShot} />}
-        {speaker.speaking && <button className="stop-fab btn danger" onClick={speaker.stop} data-testid="stop-speaking-global">Stop speaking</button>}
+        {speaker.speaking && !(tab === 'run' && rtab === 'result' && run?.receipt) && <button className="stop-fab btn danger" onClick={speaker.stop} data-testid="stop-speaking-global">Stop speaking</button>}
         <Lightbox src={shot} onClose={() => setShot(null)} />
       </div>
     </div>

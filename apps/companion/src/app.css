@@ -311,3 +311,5 @@ textarea:focus, input:focus { outline: none; border-color: var(--brand); box-sha
 .selectwrap select { width: 124px; text-overflow: ellipsis; }
 .composer-bar { gap: 8px; } .tools { gap: 4px; }
 .iconbtn { padding: 0 10px; }
+.stack { grid-template-columns: minmax(0, 1fr); } .stack > *, .main-col > * { min-width: 0; }
+.table-wrap { max-width: 100%; }

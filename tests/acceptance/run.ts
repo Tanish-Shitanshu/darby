@@ -407,7 +407,7 @@ const scenarios: Scenario[] = [
     async run(h) {
       const { checks, ok } = mk();
       h.approvals.length = 0;
-      const names = ['Acme AI', 'Beta Labs', 'Delta', 'Cobalt', 'Fathom'];
+      const names = ['Acme AI', 'Beta Labs', 'Delta', 'Cobalt', 'Fathom', 'Zeta Labs'];   // Zeta Labs has no result in the fixture search: it must still get a row
       const planOverride = async (goal: string): Promise<Plan> => Plan.parse({
         id: 'plan_web', goal, createdAt: new Date().toISOString(),
         steps: [
@@ -421,14 +421,16 @@ const scenarios: Scenario[] = [
       const run = await h.manager.wait(id);
       const r = receiptOf(run);
       ok('verdict VERIFIED_WITH_GAPS (one startup shows no paid price)', run.verdict === 'VERIFIED_WITH_GAPS', `got ${run.verdict}${r?.cause ? ` — ${r.cause}` : ''}`);
-      ok('gap is exactly cobalt, not guessed', JSON.stringify(r?.gaps ?? []) === JSON.stringify(['cobalt']), `got [${(r?.gaps ?? []).join(', ')}]`);
+      ok('the gaps are exactly cobalt (no price on its page) and Zeta Labs (nothing found), nothing guessed', JSON.stringify([...(r?.gaps ?? [])].sort()) === JSON.stringify(['Zeta Labs', 'cobalt']), `got [${(r?.gaps ?? []).join(', ')}]`);
       const decisions = eventsOf(h, id).filter((e) => e.type === 'policy.decision').map((e) => (e.payload.decision as { ruleId: string }).ruleId);
       ok('search and read were allowed by the open-web rule READ-002', decisions.includes('READ-002-public-web-search') && decisions.includes('READ-002-read-search-hits'), decisions.join(', '));
       ok('no approval card was needed for read-only research', h.approvals.length === 0, `approvals: ${h.approvals.join(', ') || 'none'}`);
       const rows = (await checkSheet(h, id, run.plan)).slice(1);
       const exp = expected().startups;
-      const bad = rows.filter((row) => { const e = exp.find((x: { url: string }) => row[3] === `${h.base}${x.url}`); return !e || row[1] !== (e.priceUsd === null ? 'NOT FOUND' : String(e.priceUsd)) || row[2] !== (e.quote ?? 'NOT FOUND'); });
-      ok('5 rows, each price and quote equal the pages (urls came from the search hits)', rows.length === 5 && bad.length === 0, `${rows.length} rows, ${bad.length} mismatches`);
+      const zeta = rows.find((row) => row[0] === 'Zeta Labs');
+      ok('every company asked for has a row: the one that could not be found is MISSING, not dropped and not invented', !!zeta && zeta[1] === 'NOT FOUND' && zeta[4] === 'MISSING' && /no usable page/i.test(zeta[5] ?? ''), zeta ? zeta.join(' | ') : 'no row for Zeta Labs');
+      const bad = rows.filter((row) => row[0] !== 'Zeta Labs').filter((row) => { const e = exp.find((x: { url: string }) => row[3] === `${h.base}${x.url}`); return !e || row[1] !== (e.priceUsd === null ? 'NOT FOUND' : String(e.priceUsd)) || row[2] !== (e.quote ?? 'NOT FOUND'); });
+      ok('6 rows: the 5 found equal the pages (urls came from the search hits) plus the missing one', rows.length === 6 && bad.length === 0, `${rows.length} rows, ${bad.length} mismatches`);
       ok('receipt verifies', verifyBundle(receiptBundle(h.manager.deps, id)!).valid, 'chain + signature');
       return checks;
     },

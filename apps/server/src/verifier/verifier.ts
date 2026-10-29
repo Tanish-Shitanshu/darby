@@ -84,7 +84,11 @@ export function checkClaim(pageText: string, item: ClaimItem): { status: 'pass' 
   return { status: 'pass', note: `exact quote on the page, $${want}` };
 }
 
-const slugOfUrl = (url: string) => url.replace(/[?#].*$/, '').split('/').filter(Boolean).pop() ?? url;
+const slugOfUrl = (url: string) => {
+  const last = url.replace(/[?#].*$/, '').split('/').filter(Boolean).pop() ?? url;
+  if (/^(pricing|plans?|prices?|index\.html?)$/i.test(last)) { try { return new URL(url).hostname.replace(/^www\./, ''); } catch { /* keep the path word */ } }   // "pricing" tells nobody which company a gap is about
+  return last;
+};
 
 /** The verifier's own fresh tab: visible text of the page after scripts ran. Independent of the tab the maker used. */
 async function renderedText(url: string, ctx: VerifierCtx): Promise<string> {

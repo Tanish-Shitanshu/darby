@@ -87,6 +87,30 @@ function openAiMessages(req: LlmRequest) {
   return [{ role: 'system', content: req.system }, { role: 'user', content }];
 }
 
+/**
+ * Sarvam AI chat models (sarvam-105b): a second, India-built brain for planning, reading and writing, so the whole voice pipeline can run on one key.
+ * Sarvam chat models read text only; requests with images or audio are handled by the caller (see llm.ts).
+ */
+export function sarvamChatProvider(apiKey: string, model: string): RawProvider {
+  return {
+    name: 'sarvam',
+    model,
+    async generate(req, signal) {
+      if (req.images?.length) throw new Error('Sarvam chat models read text only; image and audio steps need a Gemini key as well (GEMINI_API_KEY).');
+      const body = await call(
+        'https://api.sarvam.ai/v1/chat/completions',
+        { method: 'POST', headers: { 'content-type': 'application/json', 'api-subscription-key': apiKey }, body: JSON.stringify({ model, temperature: 0, max_tokens: 3000, messages: [{ role: 'system', content: `${req.system}
+Reply with ONLY one JSON object, no explanation.` }, { role: 'user', content: req.prompt }] }) },
+        signal,
+        [apiKey],
+      );
+      const text = String(body?.choices?.[0]?.message?.content ?? '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      if (!text) throw new TransientError('Sarvam returned no text');
+      return { text, model };
+    },
+  };
+}
+
 /** Kept working, not used by the project. */
 export function openaiProvider(apiKey: string, model: string, baseUrl = 'https://api.openai.com/v1'): RawProvider {
   return {
