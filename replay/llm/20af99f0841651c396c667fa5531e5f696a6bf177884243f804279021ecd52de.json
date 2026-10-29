@@ -1,0 +1,9 @@
+{
+  "key": "20af99f0841651c396c667fa5531e5f696a6bf177884243f804279021ecd52de",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T13:10:39.247Z",
+  "promptPreview": "<<<PAGE\n___\nWe value your privacy\nWe and our partners use cookies, scripts and certain similar technologies (“Cookies”) to collect data from visitors to this site, including IP address, clicks, and other details about them and their use of ",
+  "response": "{\n  \"name\": \"Cohere\",\n  \"priceUsd\": 2000,\n  \"quote\": \"$2,000\",\n  \"note\": \"Lowest monthly rate for Model Vault instances (Embed 5 Fast Small or Embed 5 Pro Small).\"\n}"
+}

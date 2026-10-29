@@ -1,0 +1,9 @@
+{
+  "key": "413e4d858476bc424d80b89aea6c27b9aa5effdf042471f10d504a4c0f8a2906",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T13:10:14.699Z",
+  "promptPreview": "USER GOAL:\nFind the top five AI startups and write down their prices in an Excel sheet.",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Search for pricing of top AI startups\",\n      \"tool\": \"web.search\",\n      \"args\": {\n        \"queries\": [\n          \"OpenAI pricing\",\n          \"Anthropic pricing\",\n          \"Cohere pricing\",\n          \"Mistral AI pricing\",\n          \"Perplexity AI pricing\"\n        ],\n        \"perQuery\": 1\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Read the pricing pages\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\n        \"s1\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Extract pricing details\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\n        \"s2\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s4\",\n      \"title\": \"Create a spreadsheet with the pricing data\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"AI Startup Pricing\",\n        \"fromStep\": \"s3\"\n      },\n      \"dependsOn\": [\n        \"s3\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "6c05b1aa85a77d39f959bfcadf80063f0b982a02d0b71b5395c7305532cdedf0",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:47:42.743Z",
+  "promptPreview": "<<<PAGE\nSorry, YouTube Music is not optimized for your browser. Check for updates or try Google Chrome.\nGet Chrome\nPAGE>>>",
+  "response": "{\"name\": \"YouTube Music\", \"priceUsd\": null, \"quote\": null, \"note\": \"Page shows a browser support message, no paid monthly prices are displayed.\"}"
+}

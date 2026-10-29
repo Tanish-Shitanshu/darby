@@ -1,0 +1,9 @@
+{
+  "key": "d45da6355ea59d2e4b529a7aebd45650e419e69821afdf0f1c0fdebf07a12cf7",
+  "role": "creative",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:55:05.416Z",
+  "promptPreview": "{\"goal\":\"Research 10 AI startups and write their name, lowest paid monthly price in USD and an evidence quote in an Excel sheet called Ten Startups.\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found an",
+  "response": "{\"summary\": \"Darby researched 10 AI startups, read the web pages it found, and created an Excel sheet called Ten Startups. It confirmed only one monthly price through multiple checks, and that belongs to Hugging Face at nine dollars per month. For the remaining companies like OpenAI, Cohere, and Scale AI, no public paid rate could be verified, so they are listed as not found.\"}"
+}

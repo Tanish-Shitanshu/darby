@@ -1,0 +1,9 @@
+{
+  "key": "15088046fe5fd1c98eb10e68843729c858d449e4e32af910e3beae850d5d937b",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:14:18.958Z",
+  "promptPreview": "<<<PAGE\nPricing\nLog In\nFree Trial\nGet a Demo\nPlatform\nGovernance\nPricing\nStart a free trial\nStart a free trial\nStart a free trial\nGet a Demo\nGet the AI built for better marketing results\nJasper’s plans & pricing are designed to meet your ne",
+  "response": "{\"name\":\"Jasper\",\"priceUsd\":69,\"quote\":\"$59/month billed yearly or $69/month billed monthly (cancel anytime).\",\"note\":\"Business plan pricing is custom; Pro has the only listed fixed monthly rate.\"}"
+}

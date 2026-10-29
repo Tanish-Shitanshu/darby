@@ -1,0 +1,9 @@
+{
+  "key": "2e72fc9b29606fdbb0a7f18923e6317fe09972472ffa0d8e8c07e5c9ca6cef60",
+  "role": "creative",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T13:11:00.624Z",
+  "promptPreview": "{\"goal\":\"Find the top five AI startups and write down their prices in an Excel sheet.\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found and wrote the spreadsheet. 4 of 4 steps were proven by independen",
+  "response": "{\n  \"summary\": \"Darby searched for top AI startups and created a spreadsheet with their pricing information. The agent found prices for Claude, Cohere, and Mistral AI, with Mistral AI being the most affordable at $14.99 per month. Cohere was the most expensive at $2,000 per month, while a public price for Perplexity could not be confirmed. Overall, the average monthly cost for the startups with confirmed pricing is $678.33.\"\n}"
+}

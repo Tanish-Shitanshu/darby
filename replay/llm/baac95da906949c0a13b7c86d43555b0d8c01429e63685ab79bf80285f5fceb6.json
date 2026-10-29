@@ -1,0 +1,9 @@
+{
+  "key": "baac95da906949c0a13b7c86d43555b0d8c01429e63685ab79bf80285f5fceb6",
+  "role": "creative",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:34:41.288Z",
+  "promptPreview": "{\"goal\":\"Find the top three AI startups and write down their prices in an Excel sheet.\",\"verdict\":\"NEEDS_YOU\",\"facts\":\"Darby searched the web, read the pages it found. 2 of 4 steps were proven by independent checks. Result: waiting for you.",
+  "response": "{\"summary\": \"Darby searched the web and read pricing pages for the top AI startups. It saved three search result screenshots and three page screenshots, but couldn't extract any prices because the Anthropic pricing link redirected to a different site and wasn't trusted. The tool is now waiting for your decision. Since nothing was extracted, the Excel sheet is empty.\"}"
+}

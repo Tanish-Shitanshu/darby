@@ -1,0 +1,9 @@
+{
+  "key": "caf71d95235d1a2c8e96bbdc06efef1a16fd8bbb466988cbc57077c8068480b7",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:48:11.603Z",
+  "promptPreview": "<<<PAGE\nNew\nJoin us for the Forge keynote livestream on November 3rd\nProducts\nModels\nResearch\nCustomers\nResources\nDocs\nLog in\nGet started\nPricing to seamlessly scale from idea to enterprise\nStart building in seconds, self-serve. Contact us ",
+  "response": "{\"name\":\"Fireworks AI\",\"priceUsd\":null,\"quote\":null,\"note\":\"No monthly subscription prices shown on this page; all pricing is pay-per-use.\"}"
+}

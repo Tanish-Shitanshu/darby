@@ -1,0 +1,9 @@
+{
+  "key": "fa96f59a40f2904b3ea7c7cf0afd874de18ff1fba9622fdf2aa5f9476e760124",
+  "role": "creative",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:36:15.489Z",
+  "promptPreview": "{\"goal\":\"Find the top three AI startups and write down their prices in an Excel sheet.\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found and wrote the spreadsheet. 4 of 4 steps were proven by independe",
+  "response": "{\"summary\": \"Darby searched the web, read the pages it found, and wrote the Top AI Startups spreadsheet, with all four steps independently verified. The only confirmed price is Claude at $20 per month, making it both the cheapest and most expensive option on the sheet. No public price could be confirmed for developers.openai.com or Cursor, so those rows remain marked NOT FOUND and were not guessed.\"}"
+}

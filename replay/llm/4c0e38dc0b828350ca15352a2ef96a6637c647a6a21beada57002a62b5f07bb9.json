@@ -1,0 +1,9 @@
+{
+  "key": "4c0e38dc0b828350ca15352a2ef96a6637c647a6a21beada57002a62b5f07bb9",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:01:33.989Z",
+  "promptPreview": "<<<PAGE\nConsent\nDetails\n[#IABV2SETTINGS#]\nAbout\nThis website uses cookies\nThe World Economic Forum uses necessary cookies to make our site work. We would also like to set optional \"marketing\" cookies to personalise content and ads and “perf",
+  "response": "{\n  \"name\": \"World Economic Forum\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"Page displays cookie consent details and contains no pricing information.\"\n}"
+}

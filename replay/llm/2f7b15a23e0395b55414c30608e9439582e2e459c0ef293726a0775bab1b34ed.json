@@ -1,0 +1,9 @@
+{
+  "key": "2f7b15a23e0395b55414c30608e9439582e2e459c0ef293726a0775bab1b34ed",
+  "role": "planner",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:56:26.503Z",
+  "promptPreview": "USER GOAL:\nResearch 10 AI startups and write their name, lowest paid monthly price in USD and an evidence quote in an Excel sheet called Ten Startups.",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Search for 10 AI startup pricing pages\",\"tool\":\"web.search\",\"args\":{\"queries\":[\"Jasper pricing\",\"Midjourney pricing\",\"Runway pricing\",\"ElevenLabs pricing\",\"Synthesia pricing\",\"Descript pricing\",\"Cursor pricing\",\"Perplexity pricing\",\"Copy.ai pricing\",\"Suno pricing\"],\"perQuery\":2},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Read the top pricing pages from the search results\",\"tool\":\"browser.read_page\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Extract startup prices and evidence quotes\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\""
+}

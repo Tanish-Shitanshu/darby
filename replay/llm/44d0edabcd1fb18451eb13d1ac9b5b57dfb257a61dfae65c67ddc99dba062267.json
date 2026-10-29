@@ -1,0 +1,9 @@
+{
+  "key": "44d0edabcd1fb18451eb13d1ac9b5b57dfb257a61dfae65c67ddc99dba062267",
+  "role": "planner",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:33:48.767Z",
+  "promptPreview": "USER GOAL:\nFind the top three AI startups and write down their prices in an Excel sheet.",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Search pricing pages for top AI startups\",\"tool\":\"web.search\",\"args\":{\"queries\":[\"OpenAI pricing\",\"Anthropic Claude pricing\",\"Perplexity AI pricing\"],\"perQuery\":1},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Read the search results in browser tabs\",\"tool\":\"browser.read_page\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Extract prices and evidence from the pages\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\"read\"},{\"id\":\"s4\",\"title\":\"Write startup prices into an Excel spreadsheet\",\"tool\":\"sheet.write\",\"args\":{\"name\":\"Top AI Startups\",\"fromStep\":\"s3\"},\"dependsOn\":[\"s3\"],\"suggestedRisk\":\"write_local\"}]}"
+}

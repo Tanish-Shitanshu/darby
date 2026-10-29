@@ -1,0 +1,9 @@
+{
+  "key": "32e3667910c648b9f29a5e0a9f1050da4ca0725625a4dda662f74c55f9c1a13d",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:01:22.782Z",
+  "promptPreview": "<<<PAGE\nFeatures\nFeatures\nVideo editing\nEditing video in Descript is as easy as using docs and slides.\nPodcasting\nMultitrack audio editing, just like editing text.\nScreen recorder\nCapture your screen for instant sharing or polished B-roll.\n",
+  "response": "```json\n{\n  \"name\": \"Descript\",\n  \"priceUsd\": 16,\n  \"quote\": \"16\",\n  \"note\": \"Lowest paid monthly USD price shown is $16 per person for the Hobbyist plan.\"\n}\n```"
+}

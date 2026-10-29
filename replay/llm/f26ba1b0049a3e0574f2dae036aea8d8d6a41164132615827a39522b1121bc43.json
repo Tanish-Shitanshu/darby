@@ -1,0 +1,9 @@
+{
+  "key": "f26ba1b0049a3e0574f2dae036aea8d8d6a41164132615827a39522b1121bc43",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:06:34.431Z",
+  "promptPreview": "<<<PAGE\n404\n你似乎来到了没有知识存在的荒原\n去往首页\n或者\n返回上页\nPAGE>>>",
+  "response": "```json\n{\n  \"name\": \"\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"404 error page with no product or pricing information found.\"\n}\n```"
+}

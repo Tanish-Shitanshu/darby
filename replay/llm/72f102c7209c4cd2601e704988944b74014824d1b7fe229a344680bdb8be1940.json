@@ -1,0 +1,9 @@
+{
+  "key": "72f102c7209c4cd2601e704988944b74014824d1b7fe229a344680bdb8be1940",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:52:38.021Z",
+  "promptPreview": "<<<PAGE\nHugging Face\nModels\nDatasets\nSpaces\nBuckets\nDocs\nEnterprise\nPricing\nWebsite\nTasks\nHuggingChat\nCollections\nLanguages\nOrganizations\nCommunity\nBlog\nPosts\nDaily Papers\nHardware\nLearn\nDiscord\nForum\nGitHub\nSolutions\nTeam & Enterprise\nHugg",
+  "response": "{\"name\":\"Hugging Face\",\"priceUsd\":9,\"quote\":\"$9 /month\",\"note\":\"Lowest paid monthly rate shown is for the PRO plan.\"}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "dd606beaae8cf2d1193c7af315101f4b3208e9398cbf3840abe993967f4adc67",
+  "role": "planner",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:46:39.005Z",
+  "promptPreview": "USER GOAL:\nResearch 10 AI startups and write their name, lowest paid monthly price in USD and an evidence quote in an Excel sheet called Ten Startups.",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Search top AI startup pricing pages\",\n      \"tool\": \"web.search\",\n      \"args\": {\n        \"queries\": [\n          \"OpenAI pricing\",\n          \"Anthropic Claude pricing\",\n          \"Cohere pricing\",\n          \"Scale AI pricing\",\n          \"Databricks pricing\",\n          \"Hugging Face pricing\",\n          \"Replicate AI pricing\",\n          \"Fireworks AI pricing\",\n          \"Character AI pricing\",\n          \"Jasper AI pricing\"\n        ],\n        \"perQuery\": 2\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Read search result pages in browser\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\n        \"s1\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Extract name, price and quote records\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\n        \"s2\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s4\",\n      \"title\": \"Write Ten Startups spreadsheet\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"Ten Startups\",\n        \"fromStep\": \"s3\"\n      },\n      \"dependsOn\": [\n        \"s3\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

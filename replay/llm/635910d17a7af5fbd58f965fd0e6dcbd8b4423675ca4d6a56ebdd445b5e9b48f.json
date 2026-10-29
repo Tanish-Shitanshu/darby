@@ -1,0 +1,9 @@
+{
+  "key": "635910d17a7af5fbd58f965fd0e6dcbd8b4423675ca4d6a56ebdd445b5e9b48f",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:47:48.452Z",
+  "promptPreview": "<<<PAGE\n\nPAGE>>>",
+  "response": "```json\n{\n  \"name\": null,\n  \"priceUsd\": null,\n  \"quote\": null\n}\n```"
+}

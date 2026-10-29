@@ -1,0 +1,9 @@
+{
+  "key": "3cf06f4097ebcbe5be2e45e245a561f23358753dbd2b08b98260a667bd038ab3",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T13:10:47.406Z",
+  "promptPreview": "<<<PAGE\nGet in touch\nMenu\nResearch\nSovereign AI\nCloud\nCustomers\nCompany\nGet in touch\nLogin\nWhy Sovereign AI\nProducts\nMethod\nSovereign AI in practice\nInference\nCompute\nEnergy & utilities\nManufacturing\nFinancial services\nPublic sector\nAll cus",
+  "response": "{\n  \"name\": \"Mistral AI\",\n  \"priceUsd\": 14.99,\n  \"quote\": \"$14.99 /mo\",\n  \"note\": \"The $5.99/mo Education plan was excluded as a discount.\"\n}"
+}

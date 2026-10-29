@@ -1,0 +1,9 @@
+{
+  "key": "48739f2269d5df3df30f1a3506b6560800fe5f982e1c0c21eac52d5557da345d",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:47:48.341Z",
+  "promptPreview": "<<<PAGE\nSkip to main content\nLogin\nWhy Databricks\nDiscover\nFor App Developers\nFor Executives\nFor Startups\nLakehouse Architecture\nDatabricks AI Research\nCustomers\nCustomer Stories\nPartners\nPartner Overview\nExplore the Databricks partner ecos",
+  "response": "```json\n{\n  \"name\": \"Databricks\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"No paid monthly USD price is displayed; pricing requires a quote or direct contact.\"\n}\n```"
+}

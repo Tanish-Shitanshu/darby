@@ -1,0 +1,9 @@
+{
+  "key": "79d259dc49c4e713f0c4a974ba6dedd8c93529272a7f532b815462cbac31ac92",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:01:44.318Z",
+  "promptPreview": "<<<PAGE\nWeb Apps\nTurn any webpage into\na web app.\n|\nPaste a URL or describe what you want — Replit ships a full-stack web app, ready to use.\nweb-app.replit.com\n/\nBuild web app\nOr just prepend\nweb-app.replit.com\n/\nto any URL in your browser.",
+  "response": "{\n  \"name\": \"Replit\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"No paid monthly USD price is displayed; only feature descriptions and signup prompts appear.\"\n}"
+}

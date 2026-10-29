@@ -1,0 +1,9 @@
+{
+  "key": "e0bfc4bf8485a181e6e5f46caea08c9d4a76035553838eed01eaa020fdb41911",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:36:02.711Z",
+  "promptPreview": "<<<PAGE\nNew\n⌃I\nComputer\nAutomations\nArtifacts\nCustomize\nProjects\nNo projects\nRecents\nNo recent sessions\nWhat do you want to know?\nWhat should we work on?\nWhat do you want to know?\nAsk anything…\nSearch\nComputer\nModel\nWork in a project\nPAGE>>",
+  "response": "{\"name\": \"Cursor\", \"priceUsd\": null, \"quote\": null, \"note\": \"The page shows a generic UI without any pricing information.\"}"
+}

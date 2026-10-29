@@ -1,0 +1,9 @@
+{
+  "key": "c5c2654d6fe8e643a75a8e48aa18896fc6c7a170c696f68f5f2bcf3e0b6ffa0e",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3.8-flash",
+  "recordedAt": "2026-10-29T13:16:26.574Z",
+  "promptPreview": "USER GOAL:\nFind the top three AI startups and write down their prices in an Excel sheet. Find the top three AI startups and write down their prices in an Excel sheet. Top.",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Search for pricing of top AI startups\",\n      \"tool\": \"web.search\",\n      \"args\": {\n        \"queries\": [\n          \"OpenAI ChatGPT pricing\",\n          \"Anthropic Claude pricing\",\n          \"Cohere pricing\"\n        ],\n        \"perQuery\": 1\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Open and read the pricing pages\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\"s1\"],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Extract names and pricing information\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\"s2\"],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s4\",\n      \"title\": \"Create spreadsheet with pricing data\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"Top AI Startups Pricing\",\n        \"fromStep\": \"s3\"\n      },\n      \"dependsOn\": [\"s3\"],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

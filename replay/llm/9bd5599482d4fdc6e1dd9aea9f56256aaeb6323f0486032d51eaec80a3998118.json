@@ -1,0 +1,9 @@
+{
+  "key": "9bd5599482d4fdc6e1dd9aea9f56256aaeb6323f0486032d51eaec80a3998118",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:14:11.645Z",
+  "promptPreview": "<<<PAGE\nA required part of this site couldn’t load. This may be due to a browser extension, network issues, or browser settings. Please check your connection, disable any ad blockers, or try using a different browser.\nEnter the characters s",
+  "response": "```json\n{\n  \"name\": null,\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"No product or price information found. The page shows an error and a CAPTCHA.\"\n}\n```"
+}

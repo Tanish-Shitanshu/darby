@@ -1,0 +1,9 @@
+{
+  "key": "b1d13a0a9654b59456fe5661a4883944d1dbbcd9bfd28405e57a62bd1ccbdcd5",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T13:10:36.853Z",
+  "promptPreview": "<<<PAGE\nSkip to main content\nProduct\nProducts\nClaude\nClaude Code\nClaude Cowork\nClaude Duet\nClaude Tag\nSpecialized\nClaude Security\nClaude Science\nCapabilities\nArtifacts\nDesign\nConnectors\nPlugins\nSkills\nExtensions\nClaude in Chrome\nClaude for ",
+  "response": "{\n  \"name\": \"Claude\",\n  \"priceUsd\": 20,\n  \"quote\": \"$20 if billed monthly.\",\n  \"note\": \"The Pro plan is $20 per month when billed monthly, while the Team plan starts at $25 per seat per month when billed monthly.\"\n}"
+}

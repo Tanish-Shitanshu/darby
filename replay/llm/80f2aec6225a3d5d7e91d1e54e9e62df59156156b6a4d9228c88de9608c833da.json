@@ -1,0 +1,9 @@
+{
+  "key": "80f2aec6225a3d5d7e91d1e54e9e62df59156156b6a4d9228c88de9608c833da",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:52:16.300Z",
+  "promptPreview": "<<<PAGE\nFriends\nMy games\n1\nLog in\nHome\nRecently played\nNew\nHot Games\nUpdated\nOriginals\nMultiplayer\nLeaderboards\nAction\nAdventure\nArcade\nBoard\nCard\nClicker\nDriving\n.io\nPuzzle\nShooting\nSimulation\nSports\nStrategy\nTrivia\nWord\nTags\nContact us\nAb",
+  "response": "{\"name\": \"CrazyGames\", \"priceUsd\": null, \"quote\": null, \"note\": \"Page describes a free gaming platform; no paid monthly USD price found.\"}"
+}

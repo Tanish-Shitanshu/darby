@@ -1,0 +1,9 @@
+{
+  "key": "c6848ddb653b2ff706e825d7717ecaf0451e82366124a143374ba12a2c45e17f",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:57:54.025Z",
+  "promptPreview": "<<<PAGE\nDownload PNG\nCopy SVG\nAll Logos\nPlatform\nPlatform\nPlatform\nSolutions\nSolutions\nSolutions\nResources\nResources\nResources\nCompany\nCompany\nCompany\nPricing\nPricing\nPricing\nLog In\nFree Trial\nGet a Demo\nPlatform\nPlatform Overview\nCanvas\nFr",
+  "response": "{\n  \"name\": \"Jasper\",\n  \"priceUsd\": 59,\n  \"quote\": \"Pro $59 month/seat\",\n  \"note\": \"Pricing page shows monthly Pro plan at $59 per seat; Business plan is custom priced.\"\n}"
+}

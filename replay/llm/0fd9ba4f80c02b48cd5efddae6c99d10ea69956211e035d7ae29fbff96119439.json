@@ -1,0 +1,9 @@
+{
+  "key": "0fd9ba4f80c02b48cd5efddae6c99d10ea69956211e035d7ae29fbff96119439",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:19:22.835Z",
+  "promptPreview": "<<<PAGE\nHow do I contact Microsoft Support from Windows 11?\nHow do I get help if Windows 11 won’t start?\nIs Windows 11 support free?\nWhat happened to the old Windows troubleshooters?\nConclusion\nWindows Recovery Environment\n. If Windows fail",
+  "response": "{\"name\":\"Windows 11\",\"priceUsd\":null,\"quote\":null,\"note\":\"The page discusses support options for Windows 11 and states that costs may vary by product and subscription, but it does not list a specific monthly USD price.\"}"
+}

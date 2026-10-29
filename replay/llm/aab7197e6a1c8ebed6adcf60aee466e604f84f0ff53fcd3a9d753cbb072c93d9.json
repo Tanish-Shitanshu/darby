@@ -1,0 +1,9 @@
+{
+  "key": "aab7197e6a1c8ebed6adcf60aee466e604f84f0ff53fcd3a9d753cbb072c93d9",
+  "role": "reader",
+  "provider": "sarvam",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T13:47:58.776Z",
+  "promptPreview": "<<<PAGE\nKling Logo\nTry Kling 4.0 from Kuaishou\nReplicate glyph\nExplore\nPricing\nEnterprise\nDocs\nBlog\nSign in\nTry for free\nMenu\nExplore\nPricing\nEnterprise\nDocs\nBlog\nSign in\nTry for free\nCompare models in the\nPlayground\nPricing\nYou only pay fo",
+  "response": "```json\n{\n  \"name\": \"Replicate\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"Usage-based pricing only; no monthly plans are shown on the page.\"\n}\n```"
+}
