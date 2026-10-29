@@ -7,7 +7,7 @@ import { canonicalJson, sha256 } from '../util/canonical';
 import { verifyChain } from './chain';
 
 /** A receipt as Darby signs it: the contract Receipt plus signed labels (REPLAY / SIMULATED) and run facts. */
-export type SignedReceipt = Receipt & { labels: string[]; cause?: string; llm?: { provider: string; model: string; liveCalls: number; replayedCalls: number } };
+export type SignedReceipt = Receipt & { labels: string[]; cause?: string; recovery?: string; llm?: { provider: string; model: string; liveCalls: number; replayedCalls: number } };
 
 export interface ReceiptBundle {
   format: 'darby-receipt-bundle/1';

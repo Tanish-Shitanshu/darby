@@ -40,6 +40,8 @@ export interface RunOptions {
   /** extra tools the executor should treat as an attack injected into the run (red-team): see redteam/ */
   redteam?: { simulateObeyingAgent?: boolean };
   repairOf?: string | null;
+  /** set by RunManager.repair(): re-plan after a verified failure (max 2 per chain) */
+  repair?: import('../planner/replanner').RepairContext;
   /** replace the planner (used by the compromised-planner red-team variant and by Playbook replay) */
   planOverride?: (goal: string) => Promise<import('@darby/contracts').Plan>;
   mode?: string;

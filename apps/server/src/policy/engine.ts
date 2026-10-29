@@ -219,17 +219,20 @@ function evaluate(input: PolicyInput): PolicyDecision {
     }
   }
 
-  if (risk === 'external_effect') return decision('require_approval', 'EXT-001-external-effect-needs-approval', risk, 'external effects always need the user\'s explicit approval');
-  if (risk === 'write_local') return decision('allow', 'LOCAL-001-darby-workspace', risk, 'writes only to Darby-owned documents in the workspace');
-
-  // READ-001: reads on allowlisted origins are allowed; a new origin (or a non-http scheme) needs approval
+  // URLs: only http(s) without embedded credentials; a non-allowlisted origin needs approval (reads: READ-001, writes: EXT-001)
   for (const l of lv) {
-    if (!/^urls?$/.test(keyCanon(l.path[0] ?? '')) || typeof l.value !== 'string') continue;
+    if (!/^urls?$/.test(keyCanon(l.path[l.path.length - 1] ?? '')) || typeof l.value !== 'string') continue;
     let u: URL;
     try { u = new URL(l.value); } catch { return decision('block', 'FORB-003-bad-url', risk, `"${l.value.slice(0, 60)}" is not a valid URL`); }
     if (!/^https?:$/.test(u.protocol)) return decision('block', 'FORB-003-bad-url', risk, `${u.protocol} URLs are never allowed`);
     if (u.username || u.password) return decision('block', 'FORB-003-bad-url', risk, 'URLs with embedded credentials are never allowed');
-    if (!allowedOrigins.includes(u.origin) && !input.approvedOrigins?.has(u.origin)) return decision('require_approval', 'READ-001-new-origin-needs-approval', risk, `${u.origin} is not on the allowlist`);
+    if (!allowedOrigins.includes(u.origin) && !input.approvedOrigins?.has(u.origin)) {
+      return risk === 'read'
+        ? decision('require_approval', 'READ-001-new-origin-needs-approval', risk, `${u.origin} is not on the allowlist`)
+        : decision('require_approval', 'EXT-001-write-to-new-origin', risk, `writing to ${u.origin} (not on the allowlist) needs your approval`);
+    }
   }
+  if (risk === 'external_effect') return decision('require_approval', 'EXT-001-external-effect-needs-approval', risk, 'external effects always need the user\'s explicit approval');
+  if (risk === 'write_local') return decision('allow', 'LOCAL-001-darby-workspace', risk, 'writes only to Darby-owned documents and the allowlisted demo apps');
   return decision('allow', 'READ-001-allowlisted-read', risk, 'reading allowlisted origins is allowed');
 }

@@ -106,7 +106,8 @@ export function App() {
             {run.receipt && (
               <Receipt run={run} verify={verify} tamper={tamper} remembered={remembered}
                 onTamper={() => void d.verifyReceipt(run.id).then(setTamper)}
-                onRemember={() => void d.remember(run.id).then(() => setRemembered(true))} />
+                onRemember={() => void d.remember(run.id).then(() => setRemembered(true))}
+                onRepair={run.receipt.verdict === 'FAILED' ? () => void d.repair(run.id) : undefined} />
             )}
           </div>
           <div className="col">

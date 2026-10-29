@@ -6,7 +6,7 @@ import type { LedgerEntry } from '@darby/contracts';
 import type { Deps } from './executor/context';
 import { verifyBundle, type ReceiptBundle, type SignedReceipt } from './ledger/receipt';
 import { redactSecrets } from './llm/providers';
-import type { RunManager } from './runs/manager';
+import { RepairError, type RunManager } from './runs/manager';
 
 const StartBody = z.object({ goal: z.string().trim().min(3).max(2000), mode: z.enum(['fixture', 'live']).default('fixture') });
 const ApprovalBody = z.object({ approved: z.boolean() });
@@ -101,6 +101,12 @@ export function createApi(manager: RunManager): Router {
     res.sendFile(file, { root, dotfiles: 'allow', headers: { 'cache-control': 'private, max-age=3600' } });
   }));
 
+  r.post('/runs/:id/repair', wrap(async (req, res) => {
+    try { res.status(202).json({ id: await manager.repair(String(req.params.id)) }); } catch (e) {
+      if (e instanceof RepairError) throw new HttpError(409, e.code, e.message);
+      throw e;
+    }
+  }));
   r.post('/runs/:id/cancel', wrap((req, res) => {
     if (!manager.cancel(String(req.params.id))) throw new HttpError(409, 'not_active', 'That run is not running');
     res.json({ ok: true });

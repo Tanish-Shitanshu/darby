@@ -126,9 +126,9 @@ export function ApprovalCard({ run, onResolve, onTakeover }: { run: RunView; onR
 }
 
 /* ---------- receipt ---------- */
-export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered }: {
+export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered, onRepair }: {
   run: RunView; verify: VerifyResult | null; tamper: { original: VerifyResult; tampered: VerifyResult; edit: { index: number; type: string } } | null;
-  onTamper: () => void; onRemember: () => void; remembered: boolean;
+  onTamper: () => void; onRemember: () => void; remembered: boolean; onRepair?: () => void;
 }) {
   const r = run.receipt;
   if (!r) return null;
@@ -150,6 +150,11 @@ export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered 
         {r.repairOf && <span className="chip label">repair of {r.repairOf.slice(4, 19)}</span>}
       </div>
       {r.cause && <p className="cause" data-testid="cause">{r.cause}</p>}
+      {r.recovery && (
+        <div className="recovery" data-testid="recovery"><strong>Safe recovery.</strong> {r.recovery}
+          {onRepair && <div className="row"><button className="btn primary" onClick={onRepair} data-testid="repair-btn">Try a safer way (re-plan)</button></div>}
+        </div>
+      )}
       {r.gaps.length > 0 && (
         <div className="gaps" data-testid="gaps">
           <strong>{r.gaps.length} gaps flagged</strong> — price not shown on the page, marked NOT FOUND, never guessed:{' '}

@@ -7,7 +7,12 @@ export interface Source {
   label: string;
   urls: string[];
 }
+export interface DemoLead { name: string; email: string; company: string }
 export interface Catalog {
+  /** Trusted, documented API endpoints of the fixture apps (configuration, not learned from pages). */
+  apis: { leads: string };
+  /** Used when a goal asks to "submit a lead" but names none. */
+  demoLead: DemoLead;
   /** Trusted configuration (like a user's bookmarks): URLs come from here, never from page text. */
   sources: Source[];
   names: Record<string, string>;
@@ -22,6 +27,8 @@ export async function loadCatalog(cfg: Config): Promise<Catalog> {
   for (const c of data.competitors) names[c.slug] = c.name;
   return {
     names,
+    apis: { leads: `${base}/api/leads` },
+    demoLead: { name: 'Ada Lovelace', email: 'ada.lovelace@example.test', company: 'Analytical Engines Ltd' },
     sources: [
       { id: 'fixture-startups', label: 'AI startups on the fixture web', urls: data.startups.map((s: any) => `${base}/startups/${s.slug}`) },
       { id: 'fixture-competitors', label: 'StudyLoop competitor pages on the fixture web', urls: data.competitors.map((c: any) => `${base}/competitors/${c.slug}`) },

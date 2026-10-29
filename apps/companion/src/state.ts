@@ -1,6 +1,6 @@
 import type { EvidenceContract, Plan, PolicyDecision, Receipt, RunEvent, StepStatus } from '@darby/contracts';
 
-export type SignedReceipt = Receipt & { labels?: string[]; cause?: string; llm?: { provider: string; model: string; liveCalls: number; replayedCalls: number } };
+export type SignedReceipt = Receipt & { labels?: string[]; cause?: string; recovery?: string; llm?: { provider: string; model: string; liveCalls: number; replayedCalls: number } };
 
 export interface TimelineItem {
   id: number;

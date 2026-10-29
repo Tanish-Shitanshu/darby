@@ -52,3 +52,7 @@ _Last updated: 2026-10-29_
 | GitHub test repo `darby-launch-test` + `GITHUB_TOKEN` (M6 PR step) | pending |
 | Google OAuth JSON (M4, optional) | pending / may be skipped |
 | Demo video recording | pending |
+
+## Handover note (Tanish, 29 Oct)
+- M1, M2, M3 done, tagged and pushed. M5 (failure + repair, Case 4) is in progress: Case 4 passed live once; vision check, tools, policy wiring and the UI repair button were being finished and are NOT tagged. Run npm run check first and fix whatever is red, then finish M5, tag m5-repair.
+- Tanish's AdaL credits are exhausted; work continues with a second engineer's own AdaL and his own Gemini key.

@@ -319,8 +319,45 @@ const scenarios: Scenario[] = [
       return checks;
     },
   },
+  {
+    id: 'case4',
+    title: 'Failure then fixed — "Saved ✓" is a claim; the read-back finds nothing; the repair uses POST /api/leads',
+    async run(h) {
+      const { checks, ok } = mk();
+      await h.resetFixtures();
+      const goal = 'Submit a lead through the form at /app/form?mode=broken and confirm it was saved.';
+      const idA = await h.manager.start(goal);
+      const A = await h.manager.wait(idA);
+      const ra = receiptOf(A);
+      const evA = eventsOf(h, idA);
+      ok('run A: verdict FAILED, not a false success', A.verdict === 'FAILED', `got ${A.verdict}${ra?.cause ? ` — ${ra.cause.slice(0, 160)}` : ''}`);
+      ok('run A: the cause says plainly that it was not saved', /not saved/i.test(ra?.cause ?? ''), (ra?.cause ?? '').slice(0, 200));
+      ok('run A: the form really saved nothing (fresh GET /api/leads is empty)', (await h.leads()).length === 0, `${(await h.leads()).length} leads`);
+      ok('run A: the page\'s "Saved ✓" is shown as an unverified claim', evA.some((e) => e.type === 'step.action' && /only the page.s claim, NOT proof/.test(desc(e))), 'claim event present');
+      ok('run A: no step is reported as passed', !evA.some((e) => e.type === 'step.finished' && e.payload.status === 'passed') && !!ra?.steps.every((s) => s.status !== 'passed'), ra?.steps.map((s) => `${s.stepId}:${s.status}`).join(' ') ?? '');
+      ok('run A: the independent vision check also said NO', evA.some((e) => e.type === 'step.evidence' && /independent vision check: NO/.test(String(e.payload.detail))), 'vision NO');
+      ok('run A: a safe recovery is offered, nothing was retried by itself', !!ra?.recovery && !h.manager.deps.repo.listRuns(50).some((r) => r.repairOf === idA), ra?.recovery?.slice(0, 80) ?? 'none');
+
+      const idB = await h.manager.repair(idA);
+      const B = await h.manager.wait(idB);
+      const rb = receiptOf(B);
+      const planB = B.plan?.steps.map((s) => `${s.tool}${s.tool === 'http.request' ? ` ${(s.args as any).method} ${new URL(String((s.args as any).url)).pathname}` : ''}`).join(' > ') ?? 'no plan';
+      ok('run B: VERIFIED', B.verdict === 'VERIFIED', `got ${B.verdict}${rb?.cause ? ` — ${rb.cause.slice(0, 160)}` : ''}`);
+      ok('run B: receipt says repairOf = run A', rb?.repairOf === idA && B.repairOf === idA, `repairOf=${rb?.repairOf}`);
+      ok('run B: used POST /api/leads', /http\.request POST \/api\/leads/.test(planB), planB);
+      const leads = (await h.leads()) as { email?: string }[];
+      ok('run B: the lead really exists now (fresh GET /api/leads)', leads.length === 1 && leads[0]?.email === 'ada.lovelace@example.test', JSON.stringify(leads));
+      ok('run B: the same lead as attempt A (pinned by code, not re-invented)', JSON.stringify((A.plan?.steps[0]?.args as any)?.fields) === JSON.stringify((B.plan?.steps[0]?.args as any)?.body), 'same name/email/company');
+      ok('run B: vision check said YES', eventsOf(h, idB).some((e) => e.type === 'step.evidence' && /independent vision check: YES/.test(String(e.payload.detail))), 'vision YES');
+      const va = receiptBundle(h.manager.deps, idA), vb = receiptBundle(h.manager.deps, idB);
+      ok('both receipts verify', !!va && !!vb && verifyBundle(va).valid && verifyBundle(vb).valid, 'chain + signature, both runs');
+      let limit = '';
+      try { await h.manager.repair(idB); } catch (e) { limit = (e as Error).message; }
+      ok('a VERIFIED run cannot be "repaired"', /FAILED/.test(limit), limit);
+      return checks;
+    },
+  },
   { id: 'case3', title: 'GTM Studio launch assets (M6)' },
-  { id: 'case4', title: 'Failure then fixed (M5)' },
 ];
 
 async function main() {

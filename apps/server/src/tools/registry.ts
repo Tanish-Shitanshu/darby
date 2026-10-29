@@ -41,6 +41,14 @@ export function resolveAllowedUrl(raw: string, ctx: CompileCtx): string | null {
   }
 }
 
+/** Lead fields: only name/email/company, plain characters only; a missing or invalid value falls back to the trusted demo lead. */
+export function cleanLead(raw: unknown, ctx: CompileCtx): Record<string, string> {
+  const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  const ok = (v: unknown, re: RegExp) => (typeof v === 'string' && re.test(v.trim()) ? v.trim() : null);
+  const d = ctx.catalog.demoLead;
+  return { name: ok(r.name, /^[\w .'-]{1,120}$/) ?? d.name, email: ok(r.email, /^[\w.+-]{1,64}@[\w-]+(\.[\w-]+)+$/) ?? d.email, company: ok(r.company, /^[\w .,'&-]{1,120}$/) ?? d.company };
+}
+
 const slugOf = (url: string) => url.replace(/[?#].*$/, '').split('/').filter(Boolean).pop() ?? 'page';
 export { slugOf };
 
@@ -56,8 +64,8 @@ const META: Record<string, Pick<ToolDef, 'args' | 'controlKeys' | 'recipientKeys
   'sheet.read': { args: z.object({ sheetRef: z.string().max(200) }).strict(), controlKeys: [], recipientKeys: [] },
   'share.grant': { args: z.object({ fromStep: Id, recipient: z.literal('team'), role: z.enum(['reader', 'commenter', 'writer']) }).strict(), controlKeys: ['recipient'], recipientKeys: ['recipient'] },
   'email.send': { args: z.object({ to: z.string().max(320), subject: z.string().max(200).optional(), body: z.string().max(5000).optional() }).strict(), controlKeys: ['to'], recipientKeys: ['to'] },
-  'browser.act': { args: z.object({ url: z.string().max(2048), actions: z.array(z.record(z.unknown())).max(20) }).strict(), controlKeys: ['url'], recipientKeys: [] },
-  'http.request': { args: z.object({ method: z.enum(['GET', 'POST']), url: z.string().max(2048), body: z.record(z.unknown()).optional() }).strict(), controlKeys: ['url'], recipientKeys: [] },
+  'browser.act': { args: z.object({ url: z.string().max(2048), fields: z.record(z.string().max(200)).refine((o) => Object.keys(o).length <= 10, 'at most 10 fields'), submit: z.boolean() }).strict(), controlKeys: ['url'], recipientKeys: [] },
+  'http.request': { args: z.object({ method: z.enum(['GET', 'POST']), url: z.string().max(2048), body: z.record(z.string().max(200)).optional() }).strict(), controlKeys: ['url'], recipientKeys: [] },
   'github.create_pr': { args: z.object({ repo: z.string().max(100), branch: z.string().max(100), title: z.string().max(200), body: z.string().max(5000).optional(), patchRef: z.string().max(200).optional() }).strict(), controlKeys: ['repo', 'branch'], recipientKeys: [] },
 };
 const def = (d: Omit<ToolDef, 'args' | 'controlKeys' | 'recipientKeys'>): [string, ToolDef] => [d.name, { ...d, ...META[d.name]! }];
@@ -127,12 +135,30 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
     contract: (a, ctx) => ({ kind: 'http_json_contains', url: `${ctx.cfg.fixtureBase}/api/outbox`, path: '$', expected: { to: String(a.to ?? '') } }),
   }),
   def({
-    name: 'browser.act', risk: 'write_local', implemented: false, description: 'Click/type on an allowlisted origin (forms).', argsHelp: '{ url, actions: [...] }',
-    normalize: (a) => a, contract: () => null,
+    name: 'browser.act', risk: 'write_local', implemented: true,
+    description: 'Fill and submit a form in a real tab on an allowlisted origin. Fields are matched by their input name; credentials are never entered. The page may claim success: that claim is NOT evidence, the verifier reads the real state back.',
+    argsHelp: '{ url: string (from Sources), fields: { name, email, company }, submit: true }',
+    normalize(args, ctx) {
+      const url = resolveAllowedUrl(String(args.url ?? ''), ctx) ?? (ctx.catalog.sources.find((s) => s.id === 'fixture-leaddesk')?.urls[0] ?? '');
+      return { url, fields: cleanLead(args.fields, ctx), submit: true };
+    },
+    contract(args, ctx) {
+      const f = (args.fields ?? {}) as Record<string, string>;
+      return { kind: 'http_json_contains', url: ctx.catalog.apis.leads, path: '$', expected: { email: f.email ?? ctx.catalog.demoLead.email } };
+    },
   }),
   def({
-    name: 'http.request', risk: 'write_local', implemented: false, description: 'Documented HTTP API call on the fixture origin.', argsHelp: '{ method, url, body }',
-    normalize: (a) => a, contract: () => null,
+    name: 'http.request', risk: 'write_local', implemented: true,
+    description: 'Call a documented HTTP API of an allowlisted app (the LeadDesk API: POST /api/leads {name,email,company}). Used when the user interface path is broken.',
+    argsHelp: '{ method: "POST", url: string (from Sources/apis), body: { name, email, company } }',
+    normalize(args, ctx) {
+      const url = resolveAllowedUrl(String(args.url ?? ''), ctx) ?? ctx.catalog.apis.leads;
+      return { method: args.method === 'GET' ? 'GET' : 'POST', url, body: cleanLead(args.body, ctx) };
+    },
+    contract(args, ctx) {
+      const b = (args.body ?? {}) as Record<string, string>;
+      return { kind: 'http_json_contains', url: ctx.catalog.apis.leads, path: '$', expected: { email: b.email ?? ctx.catalog.demoLead.email } };
+    },
   }),
   def({
     name: 'github.create_pr', risk: 'external_effect', implemented: false, description: 'Open a pull request on the test repo. External effect.', argsHelp: '{ repo, branch, title }',

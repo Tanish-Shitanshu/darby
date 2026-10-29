@@ -1,7 +1,7 @@
 // Independent verifier. It never imports the executor, never sees the reader's or the agent's prose, and does its own fresh reads
 // (own fetch, own file open). It only receives the evidence CONTRACT (the claim to check) and returns pass / fail / gap / error.
 import ExcelJS from 'exceljs';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { EvidenceContract } from '@darby/contracts';
 import { readLocalShares } from '../adapters/share-local';
@@ -18,7 +18,10 @@ export interface CheckResult {
   detail: string;
 }
 
+export interface VisionAnswer { answer: boolean; reason: string }
 export interface VerifierCtx {
+  /** independent vision model: sees ONE screenshot and ONE yes/no question, never the agent's claim */
+  vision?: (a: { file: string; question: string; stateHint: string }) => Promise<VisionAnswer>;
   root: string;           // repo root: relative paths resolve here
   workspaceDir: string;   // sheets must live here
   fetchTimeoutMs?: number;
@@ -167,6 +170,17 @@ function permissionPresent(c: Extract<EvidenceContract, { kind: 'permission_pres
   return pass(`SIMULATED (local adapter): the permission list shows ${c.email} as ${c.role}; nothing left this computer`);
 }
 
+async function visionCheck(c: Extract<EvidenceContract, { kind: 'vision_check' }>, ctx: VerifierCtx): Promise<CheckResult> {
+  if (!ctx.vision) return err('no vision model is available to check the screenshot');
+  const file = path.resolve(ctx.root, c.screenshotPath);
+  if (!existsSync(file)) return fail(`the screenshot ${c.screenshotPath} does not exist`);
+  const side = `${file}.state`;
+  const stateHint = existsSync(side) ? readFileSync(side, 'utf8').trim() : path.basename(file);
+  let r: VisionAnswer;
+  try { r = await ctx.vision({ file, question: c.question, stateHint }); } catch (e) { return err(`the vision model could not be reached: ${(e as Error).message.slice(0, 100)}`); }
+  return r.answer ? pass(`independent vision check: YES — ${r.reason}`) : fail(`independent vision check: NO — ${r.reason}`);
+}
+
 /** Tiny path walker: "$", "$.a.b", "a[0].b", numeric segments. */
 export function jsonPathGet(root: unknown, p: string): unknown {
   let cur: any = root;
@@ -196,7 +210,7 @@ async function httpJsonContains(c: Extract<EvidenceContract, { kind: 'http_json_
   const got = jsonPathGet(body, c.path);
   return jsonContains(got, c.expected)
     ? pass(`a fresh GET ${new URL(c.url).pathname} contains ${JSON.stringify(c.expected).slice(0, 80)}`)
-    : fail(`a fresh GET ${new URL(c.url).pathname} does NOT contain ${JSON.stringify(c.expected).slice(0, 80)} (found ${JSON.stringify(got)?.slice(0, 60) ?? 'nothing'}) — the change is not there`);
+    : fail(`Not saved: a fresh GET ${new URL(c.url).pathname} does not contain ${JSON.stringify(c.expected).slice(0, 80)} (it holds ${Array.isArray(got) ? `${got.length} record(s)` : JSON.stringify(got)?.slice(0, 40) ?? 'nothing'}). A success message on the page is only a claim; the data is not there.`);
 }
 
 /** Entry point. Contract kinds that are not implemented yet return an ERROR (-> NEEDS_YOU), never a pass. */
@@ -212,6 +226,7 @@ export async function verifyContract(c: EvidenceContract, ctx: VerifierCtx, extr
       case 'file_exists': return fileExists(c, ctx);
       case 'permission_present': return permissionPresent(c, ctx);
       case 'http_json_contains': return await httpJsonContains(c, ctx);
+      case 'vision_check': return await visionCheck(c, ctx);
       default: return err(`verifier for "${c.kind}" is not available yet`);
     }
   } catch (e) {

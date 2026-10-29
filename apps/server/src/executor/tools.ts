@@ -1,5 +1,7 @@
 import type { EvidenceContract, PlanStep } from '@darby/contracts';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
+import { writeFileSync } from 'node:fs';
 import { writeLocalSheet, type SheetRow } from '../adapters/sheets-local';
 import { grantLocalShare } from '../adapters/share-local';
 import { readPage } from '../reader/reader';
@@ -173,6 +175,82 @@ async function emailSend(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   return { summary: `email to ${to} placed in the fixture outbox`, contracts: [{ kind: 'http_json_contains', url, path: '$', expected: { to } }], result: { to } };
 }
 
+/** Look at the app's "saved leads" page and keep a screenshot for the independent vision check. The state fingerprint only keys the replay cache. */
+async function leadsPageEvidence(ctx: RunContext, step: PlanStep, email: string): Promise<EvidenceContract> {
+  const url = `${ctx.deps.cfg.fixtureBase}/app/leads`;
+  await ctx.checkpoint();
+  const page = await ctx.deps.browser.newPage();
+  try {
+    const read = await readPageText(page, url, ctx.signal);
+    const shot = await ctx.screenshot(page, step.id, 'leads-page');
+    writeFileSync(`${shot.abs}.state`, createHash('sha256').update(read.text).digest('hex'));
+    await ctx.checkpoint();
+    ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: 'Opened the saved-leads page and took a screenshot for an independent visual check', screenshotPath: shot.url });
+    return { kind: 'vision_check', screenshotPath: shot.rel, question: `This is the "Saved leads" page of a small lead-management app. Is there a table row whose Email column shows exactly "${email}"? Answer yes only if you can read that exact email in a row of the table.` };
+  } finally {
+    await page.close().catch(() => undefined);
+  }
+}
+
+async function browserAct(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
+  const { url, fields, submit } = step.args as { url: string; fields: Record<string, string>; submit: boolean };
+  const email = fields.email ?? '';
+  await ctx.checkpoint();
+  await rereadIfResumed(ctx, step);
+  const page = await ctx.deps.browser.newPage();
+  let claimed = false;
+  try {
+    const res = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+    if (!ctx.deps.cfg.allowedOrigins.includes(new URL(page.url()).origin)) throw new ToolError('The form redirected to an origin that is not on the allowlist.', 'failed');
+    if (!res || res.status() >= 400) throw new ToolError(`The form page answered HTTP ${res?.status()}`, 'failed');
+    ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: 'Opened the lead form in a real tab', screenshotPath: (await ctx.screenshot(page, step.id, 'form-empty')).url });
+    for (const [k, v] of Object.entries(fields)) {
+      if (!/^[\w-]{1,40}$/.test(k)) throw new ToolError(`“${k.slice(0, 20)}” is not a valid field name.`, 'failed');
+      await ctx.checkpoint();
+      const loc = page.locator(`input[name="${k}"], textarea[name="${k}"]`).first();
+      if ((await loc.count()) === 0) throw new ToolError(`The form has no field called “${k}”.`, 'failed');
+      await loc.fill(v, { timeout: 5000 });
+    }
+    ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Filled ${Object.keys(fields).join(', ')}`, screenshotPath: (await ctx.screenshot(page, step.id, 'form-filled')).url });
+    if (submit) {
+      await ctx.checkpoint();
+      await page.locator('button[type=submit], input[type=submit]').first().click({ timeout: 5000 });
+      await page.waitForTimeout(700);
+      claimed = /saved|success|thank/i.test(await page.evaluate(() => document.body.innerText));
+      ctx.emit({
+        type: 'step.action', runId: ctx.runId, stepId: step.id,
+        description: claimed ? 'Clicked Save. The page now shows a success message — that is only the page’s claim, NOT proof. Checking what was really saved…' : 'Clicked Save. No success message appeared. Checking what was really saved…',
+        screenshotPath: (await ctx.screenshot(page, step.id, 'form-submitted')).url,
+      });
+    }
+  } finally {
+    await page.close().catch(() => undefined);
+  }
+  const vision = await leadsPageEvidence(ctx, step, email);
+  return {
+    summary: `form submitted${claimed ? ' (page claims success)' : ''}; waiting for the independent read-back`,
+    contracts: [{ kind: 'http_json_contains', url: ctx.deps.catalog.apis.leads, path: '$', expected: { email } }, vision],
+    result: { uiClaimedSuccess: claimed, url },
+  };
+}
+
+async function httpRequest(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
+  const { method, url, body } = step.args as { method: string; url: string; body?: Record<string, string> };
+  if (method !== 'POST') throw new ToolError('Only POST is available for this tool in this build.', 'failed');
+  if (!ctx.deps.cfg.allowedOrigins.includes(new URL(url).origin)) throw new ToolError('The API is not on the allowlist.', 'failed');
+  await ctx.checkpoint();
+  const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body ?? {}), signal: AbortSignal.timeout(8000) });
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `POST ${new URL(url).pathname} → HTTP ${res.status} (the response is a claim too; it is verified by a fresh read-back)` });
+  if (res.status >= 400) throw new ToolError(`The API refused the request (HTTP ${res.status}).`, 'failed');
+  const email = body?.email ?? '';
+  const vision = await leadsPageEvidence(ctx, step, email);
+  return {
+    summary: `POST ${new URL(url).pathname} answered HTTP ${res.status}; waiting for the independent read-back`,
+    contracts: [{ kind: 'http_json_contains', url: ctx.deps.catalog.apis.leads, path: '$', expected: { email } }, vision],
+    result: { method, path: new URL(url).pathname, status: res.status },
+  };
+}
+
 export async function runTool(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   switch (step.tool) {
     case 'browser.read_page': return readPages(ctx, step);
@@ -180,6 +258,8 @@ export async function runTool(ctx: RunContext, step: PlanStep): Promise<ToolResu
     case 'sheet.write': return writeSheet(ctx, step);
     case 'share.grant': return shareGrant(ctx, step);
     case 'email.send': return emailSend(ctx, step);
+    case 'browser.act': return browserAct(ctx, step);
+    case 'http.request': return httpRequest(ctx, step);
     default: throw new ToolError(`The tool "${step.tool}" is registered but not available in this build yet.`, 'needs_you');
   }
 }

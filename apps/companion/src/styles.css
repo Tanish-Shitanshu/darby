@@ -140,3 +140,5 @@ textarea { resize: vertical; }
 .memory li { display: flex; justify-content: space-between; align-items: center; gap: 14px; border-bottom: 1px dashed var(--rule); padding: 10px 0; }
 .mem-form { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; margin: 12px 0; }
 @media (prefers-reduced-motion: reduce) { .drawer { animation: none; } .btn { transition: none; } }
+
+.recovery { background: #f3f0e0; border: 1px dashed var(--ink); border-radius: 8px; padding: 10px 14px; margin: 8px 0; }

@@ -135,6 +135,13 @@ export function useDarby() {
     verify: (id: string) => call<VerifyResult>(`/api/runs/${id}/verify`),
     start, open, refreshHistory,
     newRun: () => { setCurrentId(null); setError(null); },
+    repair: async (id: string) => {
+      setError(null);
+      starting.current = true;
+      setCurrentId(null);
+      try { const { id: nid } = await call<{ id: string }>(`/api/runs/${id}/repair`, { method: 'POST' }); starting.current = false; setCurrentId(nid); setRuns((r) => (r[nid] ? r : { ...r, [nid]: foldEvents(nid, []) })); }
+      catch (e) { starting.current = false; setCurrentId(id); setError((e as Error).message); }
+    },
     cancel: (id: string) => act(`/api/runs/${id}/cancel`),
     takeover: (id: string) => act(`/api/runs/${id}/takeover`),
     resume: (id: string) => act(`/api/runs/${id}/resume`),

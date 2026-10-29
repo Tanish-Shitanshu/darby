@@ -2,11 +2,16 @@ import { RunEvent } from '@darby/contracts';
 import { RunContext, type Deps, type RunOptions } from '../executor/context';
 import { runEngine } from '../executor/engine';
 import type { RunRow } from '../db/repo';
+import { MAX_REPAIRS } from '../planner/replanner';
 
 interface Active {
   ctx: RunContext;
   controller: AbortController;
   done: Promise<void>;
+}
+
+export class RepairError extends Error {
+  constructor(public code: string, message: string) { super(message); }
 }
 
 export const newRunId = (): string => {
@@ -30,6 +35,22 @@ export class RunManager {
       .finally(() => this.active.delete(id));
     this.active.set(id, { ctx, controller, done });
     return id;
+  }
+
+  /** How many repair runs already sit behind this run (A <- B <- C ...). */
+  repairDepth(id: string): number {
+    let d = 0;
+    for (let cur = this.deps.repo.getRun(id); cur?.repairOf && d < 10; cur = this.deps.repo.getRun(cur.repairOf)) d++;
+    return d;
+  }
+
+  /** Start a repair run for a FAILED run: re-plan with the verifier's cause. Max 2 repairs per chain; each repair is its own run with its own receipt. */
+  async repair(id: string): Promise<string> {
+    const run = this.deps.repo.getRun(id);
+    if (!run || run.verdict !== 'FAILED' || !run.plan) throw new RepairError('not_failed', 'Only a run that finished as FAILED can be repaired.');
+    if (this.repairDepth(id) >= MAX_REPAIRS) throw new RepairError('limit', `Repair limit reached (${MAX_REPAIRS} attempts). Take over and do it by hand.`);
+    if (this.deps.repo.listRuns(200).some((r) => r.repairOf === id && ['planning', 'running', 'awaiting_approval', 'paused'].includes(r.status))) throw new RepairError('busy', 'A repair of this run is already in progress.');
+    return this.start(run.goal, { mode: run.mode, repairOf: id, repair: { fromRunId: id, failedPlan: run.plan, cause: String(run.receipt?.cause ?? 'verification failed').slice(0, 600) } });
   }
 
   /** Resolves with the final run row once the run (and its receipt) is complete. */
