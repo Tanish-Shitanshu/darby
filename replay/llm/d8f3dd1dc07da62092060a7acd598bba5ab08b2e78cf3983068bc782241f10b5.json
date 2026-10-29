@@ -1,0 +1,9 @@
+{
+  "key": "d8f3dd1dc07da62092060a7acd598bba5ab08b2e78cf3983068bc782241f10b5",
+  "role": "coder",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T12:04:13.209Z",
+  "promptPreview": "FAILING TEST OUTPUT:\nTAP version 13\n# Subtest: subtotal adds price times quantity\nok 1 - subtotal adds price times quantity\n  ---\n  duration_ms: 0.7169\n  type: 'test'\n  ...\n# Subtest: applyDiscount takes a whole-number percentage off\nnot ok",
+  "response": "{\"file\":\"src/cart.js\",\"explanation\":\"The applyDiscount function was missing a division by 100 to correctly apply the whole-number percentage.\",\"content\":\"// Small shopping-cart helpers used by the checkout page.\\nfunction subtotal(items) {\\n  return items.reduce((sum, item) => sum + item.price * item.qty, 0);\\n}\\n\\n// percent is given as a whole number: 10 means 10 %\\nfunction applyDiscount(amount, percent) {\\n  return amount - amount * percent / 100;\\n}\\n\\nfunction total(items, percent = 0) {\\n  return applyDiscount(subtotal(items), percent);\\n}\\n\\nmodule.exports = { subtotal, applyDiscount, total };\\n\"}"
+}

@@ -84,6 +84,7 @@ try {
   await waitVerdict();
   check('case 1 verdict is VERIFIED WITH GAPS', (await verdictText()).includes('GAPS'), await verdictText());
   check('three gaps listed', /3 gaps/i.test(await tid('gaps').innerText()));
+  check('the spreadsheet is shown in the app with a download button', (await tid('sheet-preview').count()) === 1 && (await tid('download-sheet').count()) === 1);
   check('chain badge says valid', /valid/.test(await tid('chain-badge').innerText()));
   check('timeline shows the quarantine warning from the poisoned page', /(instruction|untrusted|hostile|flag)/i.test(await tid('timeline').innerText()), 'Case 2 evidence in the same run');
   const outbox = await (await fetch('http://localhost:4010/api/outbox')).json().catch(() => null);
@@ -132,6 +133,13 @@ try {
   await page.frames().find((f) => /landing/.test(f.url()))?.waitForSelector('main', { timeout: 15_000 }).catch(() => {});
   await sleep(1500);
   await shot('09-case3-review');
+
+  console.log('\n▶ case 6: fix a failing test (coding workflow)');
+  await startExample('case6');
+  await waitVerdict();
+  check('case 6 verdict is VERIFIED (the verifier ran the tests itself)', (await verdictText()).includes('VERIFIED'), await verdictText());
+  check('the receipt says the tests were run again by the verifier', /run again by the verifier/.test(await tid('receipt').innerText()));
+  await shot('09b-case6-code');
 
   console.log('\n▶ controls: deny and cancel');
   await startExample('case1');

@@ -140,7 +140,7 @@ export function ReviewPanel({ run, detail }: { run: RunView; detail: RunDetail |
     <section className="card review" data-testid="review" aria-label="Review what Darby made">
       <h2>Review — what Darby made <span className="muted small">(look before you approve)</span></h2>
       <div className="review-grid">
-        {hero && (<figure><img src={hero} alt="Hero image" data-testid="review-hero" /><figcaption>Hero image <span className="chip label">generated placeholder</span></figcaption></figure>)}
+        {hero && (<figure><img src={hero} alt="Hero image" data-testid="review-hero" /><figcaption>Hero image <span className="chip label">{labels.some((l) => l.startsWith('GENERATED:')) ? 'AI-generated artwork' : 'generated placeholder'}</span></figcaption></figure>)}
         {teaser && (<figure><video src={teaser} poster={hero ?? undefined} controls preload="metadata" data-testid="review-video" /><figcaption>15-second teaser (hero + captions + voiceover)</figcaption></figure>)}
         {voice && (<figure><audio src={voice} controls preload="metadata" data-testid="review-audio" /><figcaption>Voiceover {labels.filter((l) => /^(VOICE:|PLACEHOLDER:voiceover)/.test(l)).map((l) => (<span key={l} className="chip label">{l}</span>))}</figcaption></figure>)}
         {landing && (<figure className="wide"><iframe src={landing} title="Landing page preview" sandbox="allow-scripts" data-testid="review-page" /><figcaption>Landing page (runs in a sandbox) · <a href={landing} target="_blank" rel="noreferrer">open</a>{copy && <> · <a href={copy} target="_blank" rel="noreferrer">copy.json</a></>}</figcaption></figure>)}
@@ -321,6 +321,7 @@ function contractRows(c: EvidenceContract | null): [string, string][] {
     case 'page_assertions': return [['kind', 'page_assertions'], ['page', c.url], ['assertions', `${c.assertions.length}`]];
     case 'vision_check': return [['kind', 'vision_check'], ['screenshot', c.screenshotPath], ['question', c.question]];
     case 'media_probe': return [['kind', 'media_probe'], ['file', c.path], ['length', `${c.minSeconds}–${c.maxSeconds} s (${c.media})`]];
+    case 'tests_pass': return [['kind', 'tests_pass'], ['project', c.dir], ['at least', `${c.minTests} tests`]];
     case 'pr_exists': return [['kind', 'pr_exists'], ['repo', c.repo], ['pull request', c.number ? `#${c.number} “${c.title}”` : c.title], ['branch', c.branch]];
   }
 }

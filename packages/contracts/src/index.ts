@@ -30,6 +30,8 @@ export const EvidenceContract = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('vision_check'), screenshotPath: z.string(), question: z.string() }),
   // A generated audio/video file must really be media of the promised length (probed by a fresh ffmpeg run, not trusted from the maker).
   z.object({ kind: z.literal('media_probe'), path: z.string(), media: z.enum(['audio', 'video']), minSeconds: z.number().positive(), maxSeconds: z.number().positive() }),
+  // Code is fixed only if the project's own tests pass when the verifier runs them itself in a fresh process.
+  z.object({ kind: z.literal('tests_pass'), dir: z.string(), minTests: z.number().int().positive() }),
   // A pull request is real only if a fresh read of the repo shows it (GitHub REST API, or the local simulated repo).
   z.object({ kind: z.literal('pr_exists'), adapter: z.enum(['github', 'local']), repo: z.string(), number: z.number().int().positive(), title: z.string(), branch: z.string(), files: z.array(z.string()) }),
 ]);

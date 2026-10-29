@@ -1,0 +1,9 @@
+{
+  "key": "c6d3174b62ab43b3cbcdb2333838ab3bbe20203a678fc812142b967efb75d2a2",
+  "role": "vision",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T11:56:08.019Z",
+  "promptPreview": "Transcribe the speech in this audio. If there is no speech, return an empty transcript.",
+  "response": "{\n  \"transcript\": \"Research the top three AI startups and put their prices in a spreadsheet.\"\n}"
+}

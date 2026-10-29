@@ -125,6 +125,7 @@ export function proofLine(c: EvidenceContract | null): string {
     case 'vision_check': return 'Proof: an independent vision model answers a yes/no question about a screenshot; it never sees the agent’s claim';
     case 'media_probe': return `Proof: a fresh ffmpeg probe must show real ${c.media} of ${c.minSeconds}–${c.maxSeconds} seconds`;
     case 'pr_exists': return 'Proof: a fresh read of the repository must show the pull request, its title and its files';
+    case 'tests_pass': return `Proof: the project's own tests (at least ${c.minTests}) must pass when the verifier runs them itself`;
   }
 }
 

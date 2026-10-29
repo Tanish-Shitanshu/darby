@@ -1,0 +1,9 @@
+{
+  "key": "3b65a96e4f55fe548c9dd3e22f67f0a44d6b9d567f907d713c810b8b2e51640a",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T12:03:41.753Z",
+  "promptPreview": "USER GOAL:\nFix the failing tests in the sample app and prove the fix by running the tests again.\n\nYour previous answer was rejected:\n- planner output invalid: steps.0.id: Expected string, received number; steps.1.id: Expected string, receiv",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"1\",\n      \"title\": \"Run initial tests to identify failures\",\n      \"tool\": \"code.test\",\n      \"args\": {\n        \"fromStep\": null\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"write_local\"\n    },\n    {\n      \"id\": \"2\",\n      \"title\": \"Fix the failing source code\",\n      \"tool\": \"code.fix\",\n      \"args\": {\n        \"fromStep\": \"1\"\n      },\n      \"dependsOn\": [\n        \"1\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    },\n    {\n      \"id\": \"3\",\n      \"title\": \"Verify the fix by running tests again\",\n      \"tool\": \"code.test\",\n      \"args\": {\n        \"fromStep\": \"2\"\n      },\n      \"dependsOn\": [\n        \"2\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

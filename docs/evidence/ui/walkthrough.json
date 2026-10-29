@@ -1,7 +1,7 @@
 {
-  "at": "2026-10-29T11:45:46.772Z",
+  "at": "2026-10-29T12:08:08.859Z",
   "llm": "replay",
-  "passed": 20,
+  "passed": 23,
   "failed": 0,
   "results": [
     {
@@ -26,6 +26,11 @@
     },
     {
       "name": "three gaps listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the spreadsheet is shown in the app with a download button",
       "ok": true,
       "detail": ""
     },
@@ -86,6 +91,16 @@
     },
     {
       "name": "labels say what was simulated",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "case 6 verdict is VERIFIED (the verifier ran the tests itself)",
+      "ok": true,
+      "detail": "VERIFIED"
+    },
+    {
+      "name": "the receipt says the tests were run again by the verifier",
       "ok": true,
       "detail": ""
     },

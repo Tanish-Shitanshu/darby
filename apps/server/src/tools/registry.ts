@@ -58,6 +58,8 @@ const Id = z.string().max(24).nullable();
 const DocName = z.string().regex(/^[\w][\w \-]{0,39}$/);
 const META: Record<string, Pick<ToolDef, 'args' | 'controlKeys' | 'recipientKeys'>> = {
   'browser.read_page': { args: z.object({ urls: z.array(z.string().max(2048)).min(1).max(12).optional(), fromStep: Id.optional() }).strict().refine((a) => (a.urls ? 1 : 0) + (a.fromStep ? 1 : 0) === 1, 'give either urls or fromStep (a web.search step)'), controlKeys: ['urls'], recipientKeys: [] },
+  'code.test': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'code.fix': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
   'web.search': { args: z.object({ queries: z.array(z.string().min(2).max(100)).min(1).max(10), perQuery: z.number().int().min(1).max(2) }).strict(), controlKeys: [], recipientKeys: [] },
   'reader.extract': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
   'sheet.write': { args: z.object({ name: DocName, fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
@@ -105,6 +107,23 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
     contract(_args, ctx) {
       return { kind: 'quote_in_page', url: ctx.catalog.sources[0]?.urls[0] ?? ctx.cfg.fixtureBase, items: [] };
     },
+  }),
+  def({
+    name: 'code.test', risk: 'write_local', implemented: true,
+    description: 'Copy the sample project into the Darby workspace (never edit the original) and run its own tests with node --test. Failing tests are a finding, not an error.',
+    argsHelp: '{ fromStep: null }  for the first run, or { fromStep: <id of the code.fix step> } to run the tests again after the fix',
+    normalize(args, _ctx, prev) {
+      const from = typeof args.fromStep === 'string' && prev.some((p) => p.id === args.fromStep && p.tool === 'code.fix') ? args.fromStep : lastOf(prev, 'code.fix') ?? null;
+      return { fromStep: from };
+    },
+    contract() { return { kind: 'file_exists', path: 'workspace/{runId}/code/test-s1.log', minBytes: 20 }; },
+  }),
+  def({
+    name: 'code.fix', risk: 'write_local', implemented: true,
+    description: 'The coder model reads the failing test output and the source files and fixes ONE source file under src/ (in the workspace copy only). The verifier proves it by running the tests itself.',
+    argsHelp: '{ fromStep: <id of the failing code.test step> }',
+    normalize(_args, _ctx, prev) { return { fromStep: lastOf(prev, 'code.test') ?? null }; },
+    contract() { return { kind: 'file_exists', path: 'workspace/{runId}/code/patch.diff', minBytes: 10 }; },
   }),
   def({
     name: 'web.search', risk: 'read', implemented: true,
@@ -241,12 +260,13 @@ export const riskOf = (tool: string): Risk => (isRegistered(tool) ? TOOLS[tool]!
  * Tools are offered to the planner by scope, which keeps research prompts (and their recorded responses) stable:
  * form/API tools only for "submit a lead" goals, launch tools only for launch goals.
  */
-export type PlannerScope = 'base' | 'lead' | 'gtm' | 'web';
+export type PlannerScope = 'base' | 'lead' | 'gtm' | 'web' | 'code';
+export const CODE_TOOLS = new Set(['code.test', 'code.fix']);
 export const LEAD_TOOLS = new Set(['browser.act', 'http.request']);
 export const isGtmTool = (name: string): boolean => name.startsWith('gtm.') || name === 'github.create_pr';
 export function describeToolsForPlanner(scope: PlannerScope = 'lead'): string {
   return Object.values(TOOLS)
-    .filter((t) => t.implemented && (t.name === 'web.search' ? scope === 'web' : isGtmTool(t.name) ? scope === 'gtm' : LEAD_TOOLS.has(t.name) ? scope === 'lead' : true))
+    .filter((t) => t.implemented && (CODE_TOOLS.has(t.name) ? scope === 'code' : t.name === 'web.search' ? scope === 'web' : isGtmTool(t.name) ? scope === 'gtm' : LEAD_TOOLS.has(t.name) ? scope === 'lead' : true))
     .map((t) => `- ${t.name} [${t.risk}] ${t.description}\n    args: ${t.name === 'browser.read_page' && scope === 'web' ? '{ fromStep: <id of the web.search step> }  (reads the pages the search found)' : t.argsHelp}`)
     .join('\n');
 }

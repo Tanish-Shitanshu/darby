@@ -5,7 +5,7 @@ import path from 'node:path';
 import { completeJson } from '../llm/llm';
 import { Copy, copyProblem, loadBrief, templateCopy, type Brief } from '../gtm/brief';
 import { buildLanding, landingAssertions } from '../gtm/landing';
-import { captionHtml, heroHtml, makeTeaser, makeVoiceover, renderPng } from '../gtm/media';
+import { captionHtml, fetchGeneratedArt, heroHtml, makeTeaser, makeVoiceover, renderPng } from '../gtm/media';
 import { runPageAssertions } from '../gtm/pagetest';
 import { createGithubPr, createLocalPr, type PrDraft } from '../gtm/pr';
 import type { RunContext } from './context';
@@ -88,15 +88,22 @@ export async function gtmHero(ctx: RunContext, step: PlanStep): Promise<ToolResu
   const l = launchOf(ctx);
   const out = path.join(l.dir, 'hero.png');
   await ctx.checkpoint();
+  // Real image generation when a live model is in use (free, key-less service); recorded/offline runs and any failure use the labelled placeholder card.
+  let art: string | undefined;
+  if (ctx.deps.cfg.llm.provider !== 'replay' && process.env.DARBY_IMAGEGEN !== '0') {
+    ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: 'Asking an image model for hero artwork (free service, up to ~75 s)…' });
+    const buf = await fetchGeneratedArt(`${l.brief.product}: ${l.copy.headline}. Flat vector illustration for a landing page hero, floating flashcards and a student, navy and amber palette, clean shapes, no text, no letters`);
+    if (buf) art = `data:image/jpeg;base64,${buf.toString('base64')}`;
+  }
   const page = await ctx.deps.browser.newPage();
   try {
-    await renderPng(page, heroHtml({ product: l.brief.product, headline: l.copy.headline, sub: l.copy.subhead }), out);
+    await renderPng(page, heroHtml({ product: l.brief.product, headline: l.copy.headline, sub: l.copy.subhead, ...(art ? { art } : {}) }), out);
   } finally { await page.close().catch(() => undefined); }
   ctx.registerFile(step.id, 'image', out);
   l.heroRel = ctx.relative(out);
-  ctx.labels.add('GENERATED-PLACEHOLDER:hero.png');
-  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: 'Hero image rendered (deterministic card, labelled “generated placeholder”; no image model is configured)' });
-  return { summary: `hero.png rendered (${sizeOf(out)} bytes, generated placeholder)`, contracts: [{ kind: 'file_exists', path: l.heroRel, minBytes: 5000, mime: 'image/png' }], result: { file: l.heroRel, path: 'rendered-card' } };
+  ctx.labels.add(art ? 'GENERATED:image-model(pollinations)' : 'GENERATED-PLACEHOLDER:hero.png');
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: art ? 'Hero image made from model-generated artwork (labelled GENERATED, with the headline set over it)' : 'Hero image rendered (deterministic card, labelled “generated placeholder”: no image was generated in this mode)' });
+  return { summary: art ? `hero.png made from generated artwork (${sizeOf(out)} bytes)` : `hero.png rendered (${sizeOf(out)} bytes, generated placeholder)`, contracts: [{ kind: 'file_exists', path: l.heroRel, minBytes: 5000, mime: 'image/png' }], result: { file: l.heroRel, path: 'rendered-card' } };
 }
 
 export async function gtmVoice(ctx: RunContext, step: PlanStep): Promise<ToolResult> {

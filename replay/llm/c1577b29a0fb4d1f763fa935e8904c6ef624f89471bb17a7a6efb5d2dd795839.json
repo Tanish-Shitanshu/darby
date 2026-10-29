@@ -1,0 +1,9 @@
+{
+  "key": "c1577b29a0fb4d1f763fa935e8904c6ef624f89471bb17a7a6efb5d2dd795839",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T12:03:37.643Z",
+  "promptPreview": "USER GOAL:\nFix the failing tests in the sample app and prove the fix by running the tests again.",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": 1,\n      \"title\": \"Run initial tests to identify failures\",\n      \"tool\": \"code.test\",\n      \"args\": {\n        \"fromStep\": null\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"write_local\"\n    },\n    {\n      \"id\": 2,\n      \"title\": \"Fix the source code based on test failures\",\n      \"tool\": \"code.fix\",\n      \"args\": {\n        \"fromStep\": 1\n      },\n      \"dependsOn\": [\n        1\n      ],\n      \"suggestedRisk\": \"write_local\"\n    },\n    {\n      \"id\": 3,\n      \"title\": \"Run tests again to verify the fix\",\n      \"tool\": \"code.test\",\n      \"args\": {\n        \"fromStep\": 2\n      },\n      \"dependsOn\": [\n        2\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

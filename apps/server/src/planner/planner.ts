@@ -23,7 +23,20 @@ export const isLeadGoal = (goal: string): boolean => /\b(leads?|contacts?|forms?
 export const isGtmGoal = (goal: string): boolean => /\b(launch|go-to-market|gtm|teaser|landing page|studyloop)\b/i.test(goal);
 /** An open-ended research goal (no fixture site named): "research the top AI startups and put them in a spreadsheet". Uses the public web. */
 export const isWebResearchGoal = (goal: string): boolean => /\b(research|find|compare|top|best|leading|list)\b/i.test(goal) && !/fixture|localhost|\/app\/|\/startups\/|\/competitors\//i.test(goal);
-export const scopeOf = (goal: string, webOk = false): PlannerScope => (isGtmGoal(goal) ? 'gtm' : isLeadGoal(goal) ? 'lead' : webOk && isWebResearchGoal(goal) ? 'web' : 'base');
+/** A coding goal: fix a failing test / debug the sample project. Uses the code tools on a workspace copy. */
+export const isCodeGoal = (goal: string): boolean => /\b(failing tests?|fix (the |a )?(bug|tests?)|debug|unit tests?|sample[- ]app|codebase)\b/i.test(goal);
+export const scopeOf = (goal: string, webOk = false): PlannerScope => (isGtmGoal(goal) ? 'gtm' : isCodeGoal(goal) ? 'code' : isLeadGoal(goal) ? 'lead' : webOk && isWebResearchGoal(goal) ? 'web' : 'base');
+
+const codePlannerSystem = (): string => `You are the PLANNER of Darby, an AI browser workspace where every step must be provable.
+You see only the user's goal. Turn it into the shortest correct plan. Output ONLY JSON: {"steps":[{"id","title","tool","args","dependsOn","suggestedRisk"}]}
+
+Rules:
+- Use ONLY these registered tools (anything else is blocked):
+${describeToolsForPlanner('code')}
+- Debugging flow: s1 code.test (fromStep null) to see what fails, s2 code.fix (fromStep s1), s3 code.test (fromStep s2) to run the tests again after the fix.
+- The project is a small sample app that Darby copies into its own workspace; the original is never edited.
+- Titles are short plain-language sentences for a non-technical reader.
+- suggestedRisk must be one of read | write_local | external_effect | forbidden.`;
 
 const webPlannerSystem = (): string => `You are the PLANNER of Darby, an AI browser workspace where every step must be provable.
 You see only the user's goal. You never see web page text.
@@ -43,6 +56,7 @@ ${describeToolsForPlanner('web')}
 
 export function plannerSystem(ctx: CompileCtx, scope: PlannerScope = 'lead'): string {
   if (scope === 'web') return webPlannerSystem();
+  if (scope === 'code') return codePlannerSystem();
   const sources = ctx.catalog.sources.map((s) => `- ${s.id}: ${s.label}\n    urls: ${JSON.stringify(s.urls)}`).join('\n');
   return `You are the PLANNER of Darby, an AI browser workspace where every step must be provable.
 You see only the user's goal and trusted configuration. You never see web page text.

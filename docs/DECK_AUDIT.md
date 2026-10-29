@@ -58,3 +58,6 @@ pm run redteam): five payloads are stripped before the reader ever sees them, fi
 
 False or not-yet items that need a slide change or an AdaL session: rows 17, 20, 22, 34, 37 (Electron, Azure, Supabase, installable app), 19 and 13 (Excel/Drive/Sheets API), 24 and 30 (AdaL sessions), 7 and 8 (verify cited numbers).
 Fixed in the repo since the first audit: row 4 (10 poisoned pages, case2e) and row 9 (voice button and screenshot attach in the goal box).
+
+## Final status update
+New since the first audit, all covered by tests or a live run: open-web research into an Excel sheet (row 11a), real AI image generation with a live model (row 21), microphone speech-to-text in any browser (row 9), a coding workflow with `tests_pass` verification, and `npm run desktop` (an app-style window, not an installer). Rows 17, 20, 22, 34, 37 (Electron, Azure OpenAI, Supabase, installable app) are still FALSE as written and still need slide rewording by the owner; "Excel (Graph)" and "Drive" are still not built.

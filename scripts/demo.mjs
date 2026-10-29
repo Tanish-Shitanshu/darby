@@ -3,6 +3,7 @@
 // npm run demo -- --offline   -> same, answering every model call from recordings (no internet, no key)
 // npm run demo -- --keep      -> do not reset runs/workspace (keeps history)
 // npm run demo -- --no-open   -> do not open a browser window
+// npm run desktop             -> same, but the companion opens as its own app window (Chrome app mode: no tabs, no address bar)
 import { spawn, spawnSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
@@ -32,6 +33,18 @@ let opened = false;
 const open = (url) => {
   if (opened || args.has('--no-open')) return;
   opened = true;
+  if (args.has('--app')) {   // a real desktop window: Chrome in app mode, with its own profile so it never touches the user's browsing
+    const winChrome = ['LOCALAPPDATA', 'PROGRAMFILES', 'PROGRAMFILES(X86)'].map((v) => process.env[v] && path.join(process.env[v], 'Google', 'Chrome', 'Application', 'chrome.exe')).find((p) => p && existsSync(p));
+    const bin = process.platform === 'win32' ? winChrome : process.platform === 'darwin' ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : 'google-chrome';
+    if (bin && (process.platform === 'linux' || existsSync(bin))) {
+      spawn(bin, [`--app=${url}`, '--window-size=1360,900', `--user-data-dir=${path.join(root, '.darby', 'app-window')}`, '--no-first-run'], { stdio: 'ignore', detached: true }).unref();
+      console.log(`
+▶ Darby is open in its own window (${url}). Stop with Ctrl+C.
+`);
+      return;
+    }
+    console.log('Chrome was not found for app mode; opening the default browser instead.');
+  }
   const [cmd, a] = process.platform === 'darwin' ? ['open', [url]] : process.platform === 'win32' ? ['cmd', ['/c', 'start', '', url]] : ['xdg-open', [url]];
   spawn(cmd, a, { stdio: 'ignore', detached: true }).unref();
   console.log(`\n▶ Darby is open at ${url}\n  Demo goals: fixtures/demo-goals.json (buttons on the start screen)\n  Stop with Ctrl+C.\n`);
@@ -39,8 +52,9 @@ const open = (url) => {
 const onData = (d) => {
   const t = d.toString();
   process.stdout.write(t);
-  const m = /(http:\/\/localhost:\d+)\/?/.exec(t.replace(/\u001b\[[0-9;]*m/g, ''));
-  if (m && /Local:/.test(t)) open(m[1]);
+  const clean = t.replace(/\u001b\[[0-9;]*m/g, '');   // vite colours the word "Local" and its address, so match on the plain text
+  const m = /Local:\s*(http:\/\/localhost:\d+)/.exec(clean);
+  if (m) open(m[1]);
 };
 child.stdout.on('data', onData);
 child.stderr.on('data', onData);

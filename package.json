@@ -27,6 +27,8 @@
     "replay:curate": "tsx scripts/replay-curate.ts",
     "redteam": "tsx tests/acceptance/run.ts --redteam",
     "demo": "node scripts/demo.mjs",
+    "desktop": "node scripts/demo.mjs --app",
+    "desktop:offline": "node scripts/demo.mjs --app --offline",
     "demo:offline": "node scripts/demo.mjs --offline",
     "demo:reset": "tsx scripts/db-reset.ts --runs",
     "demo:check": "tsx scripts/demo-check.ts",

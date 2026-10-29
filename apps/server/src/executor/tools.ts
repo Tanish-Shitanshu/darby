@@ -7,6 +7,7 @@ import { grantLocalShare } from '../adapters/share-local';
 import { readPage } from '../reader/reader';
 import { slugOf } from '../tools/registry';
 import { isPublicWebUrl, searchOnce, type Hit } from './websearch';
+import { codeFix, codeTest } from './code-tools';
 import { pMap } from '../util/pmap';
 import { readPageText } from './browser';
 import type { RunContext } from './context';
@@ -324,6 +325,8 @@ export async function runTool(ctx: RunContext, step: PlanStep): Promise<ToolResu
   switch (step.tool) {
     case 'browser.read_page': return readPages(ctx, step);
     case 'web.search': return webSearch(ctx, step);
+    case 'code.test': return codeTest(ctx, step);
+    case 'code.fix': return codeFix(ctx, step);
     case 'reader.extract': return extract(ctx, step);
     case 'sheet.write': return writeSheet(ctx, step);
     case 'share.grant': return shareGrant(ctx, step);

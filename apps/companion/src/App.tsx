@@ -10,10 +10,13 @@ type Tamper = { original: VerifyResult; tampered: VerifyResult; edit: { index: n
 const GOALS = demoGoals as Record<string, { label: string; goal: string }>;
 const WEB_GOAL = 'Research the top 5 AI startups and write their name, lowest paid monthly price in USD and an evidence quote in an Excel sheet called Top AI Startups.';
 
+const CODE_GOAL = 'Fix the failing tests in the sample app and prove the fix by running the tests again.';
+
 const SUGGESTIONS: { testid: string; icon: ReactNode; title: string; text: string; tag: string; tone: string; goal: string }[] = [
   { testid: 'example-case1', icon: Icon.sheet, title: 'Research into a spreadsheet', text: 'Reads 10 startup pages, writes prices with exact quotes to a sheet, shares it only after you approve.', tag: 'Verified, with gaps flagged', tone: 'teal', goal: GOALS.case1?.goal ?? '' },
   { testid: 'example-web', icon: Icon.globe, title: 'Research the open web', text: 'Searches the live web for top AI startups and puts their pricing in an Excel sheet you can download.', tag: 'Live web · read-only', tone: 'green', goal: WEB_GOAL },
   { testid: 'example-case3', icon: Icon.rocket, title: 'Launch assets', text: 'Copy, hero image, voiceover, teaser video and a landing page that Darby tests itself.', tag: 'Pull request waits for you', tone: 'blue', goal: GOALS.case3?.goal ?? '' },
+  { testid: 'example-case6', icon: Icon.code, title: 'Fix a failing test', text: 'Runs a project\'s tests, lets the coder model fix the bug, and proves it by running the tests again.', tag: 'Verifier runs the tests itself', tone: 'amber', goal: GOALS.case6?.goal ?? CODE_GOAL },
   { testid: 'example-case4', icon: Icon.form, title: 'A form that lies', text: 'A page says "Saved ✓" but stores nothing. Darby catches it, reports FAILED, then repairs it.', tag: 'Fails honestly, then fixed', tone: 'red', goal: GOALS.case4?.goal ?? '' },
 ];
 
@@ -38,7 +41,7 @@ export function App() {
   const [listening, setListening] = useState(false);
   const [note, setNote] = useState('');
   const recRef = useRef<any>(null);
-  const toggleVoice = () => {
+  const toggleVoiceBrowser = () => {
     const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
     if (!SR) { setNote('Voice input needs Chrome or Edge (speech recognition is not available in this browser). Type the goal instead.'); return; }
     if (listening) { recRef.current?.stop(); return; }
@@ -48,6 +51,37 @@ export function App() {
     rec.onerror = (ev: any) => setNote(`Voice input stopped (${ev.error}). Type the goal instead.`);
     rec.onend = () => setListening(false);
     recRef.current = rec; setListening(true); setNote(''); rec.start();
+  };
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  /** Record with the microphone, let the server transcribe it (works in any browser); fall back to the browser's own speech recognition. */
+  const toggleVoice = async () => {
+    if (listening) { mediaRef.current?.stop(); recRef.current?.stop(); return; }
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { toggleVoiceBrowser(); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const chunks: Blob[] = [];
+      const rec = new MediaRecorder(stream);
+      mediaRef.current = rec;
+      rec.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      rec.onstop = async () => {
+        stream.getTracks().forEach((t) => t.stop());
+        setListening(false);
+        if (!chunks.length) { setNote('No sound was recorded. Try again, or type the goal.'); return; }
+        setNote('Transcribing…');
+        const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+        const audio = await new Promise<string>((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] ?? ''); fr.readAsDataURL(blob); });
+        try {
+          const res = await fetch('/api/transcribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ audio, mime: blob.type }) });
+          const j = await res.json();
+          if (!res.ok) throw new Error(j?.error?.message ?? j?.message ?? 'The recording could not be transcribed.');
+          if (!j.transcript) { setNote('No speech was heard. Try again, or type the goal.'); return; }
+          setGoal((g) => (g ? `${g} ${j.transcript}` : j.transcript));
+          setNote('Transcribed. Check the text, then press Plan & run.');
+        } catch (e) { setNote(`${(e as Error).message} Type the goal instead.`); }
+      };
+      rec.start(); setListening(true); setNote('Recording… press the button again to stop (it stops by itself after 60 s).');
+      setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 60_000);
+    } catch { toggleVoiceBrowser(); }
   };
   const attachShot = async (file?: File) => {
     if (!file) return;

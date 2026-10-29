@@ -27,6 +27,7 @@ npm run check             # typecheck (all workspaces) + unit tests (vitest)
 npm run fixtures:check    # boots the fixture web on a spare port (4019), verifies it against ground truth, shuts it down
 npm run test:acceptance   # runs the implemented demo cases on recorded LLM responses (REPLAY); add `-- --live` to use your Gemini key
 npm run redteam           # poisoned page, compromised planner, hostile reader model, 10 poisoned pages, forbidden actions (all must be contained)
+npm run desktop           # same as demo, but Darby opens as its own app-style window (Chrome app mode)
 npm run ui:walkthrough    # drives the real UI through all four cases, Hub, deny and cancel; screenshots in docs/evidence/ui (add UI_HEADED=1 to watch)
 npm run llm:ping          # one tiny model call; prints only OK or the error, never the key
 npm run verify-receipt -- docs/evidence/m1-case1-receipt.json   # recompute the hash chain + Ed25519 signature

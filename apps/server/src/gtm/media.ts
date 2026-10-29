@@ -15,9 +15,9 @@ export function ffmpegPath(): string | null {
   return null;
 }
 
-export function run(cmd: string, args: string[], timeoutMs = 120_000): Promise<{ code: number | null; out: string; err: string }> {
+export function run(cmd: string, args: string[], timeoutMs = 120_000, cwd?: string): Promise<{ code: number | null; out: string; err: string }> {
   return new Promise((resolve) => {
-    const c = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    const c = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'], ...(cwd ? { cwd } : {}) });
     let out = '', err = '';
     const t = setTimeout(() => c.kill('SIGKILL'), timeoutMs);
     c.stdout.on('data', (d) => (out += d));
@@ -41,7 +41,25 @@ export async function probeMedia(file: string): Promise<MediaInfo | null> {
 const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /** Deterministic hero card (no image model needed): same input, same pixels. Labelled "generated placeholder" wherever it is shown. */
-export function heroHtml(p: { product: string; headline: string; sub: string }): string {
+/** Free, key-less text-to-image (Pollinations). Returns null on any problem so the caller falls back to the labelled placeholder card. */
+export async function fetchGeneratedArt(prompt: string): Promise<Buffer | null> {
+  try {
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt.slice(0, 400))}?width=1280&height=720&nologo=true&model=flux`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(75_000), redirect: 'follow' });
+    if (!res.ok || !/^image\//.test(res.headers.get('content-type') ?? '')) return null;
+    const buf = Buffer.from(await res.arrayBuffer());
+    return buf.length > 5_000 ? buf : null;
+  } catch { return null; }
+}
+
+export function heroHtml(p: { product: string; headline: string; sub: string; art?: string }): string {
+  if (p.art) {   // model-generated artwork as the background; a solid band at the bottom carries the text (and covers the generator's corner mark)
+    return `<!doctype html><meta charset="utf-8"><body style="margin:0;width:1280px;height:720px;overflow:hidden;position:relative;font-family:system-ui,sans-serif;background:#14213d url(${p.art}) center/cover no-repeat;color:#fff">
+<div style="position:absolute;left:0;right:0;bottom:0;height:300px;background:linear-gradient(0deg,#0d1730 0%,#0d1730 62%,transparent 100%)"></div>
+<div style="position:absolute;left:64px;right:64px;bottom:60px"><div style="font:700 66px/1.05 Georgia,serif">${esc(p.headline)}</div>
+<div style="font:400 26px system-ui;margin-top:12px;opacity:.92;max-width:980px">${esc(p.sub)}</div>
+<div style="font:600 16px system-ui;margin-top:16px;opacity:.7;letter-spacing:.12em">${esc(p.product.toUpperCase())} · AI-GENERATED ARTWORK</div></div></body>`;
+  }
   return `<!doctype html><meta charset="utf-8"><body style="margin:0;width:1280px;height:720px;overflow:hidden;font-family:Georgia,'Times New Roman',serif;background:linear-gradient(135deg,#14213d 0%,#1f3a5f 55%,#fca311 160%);color:#fff;display:flex;align-items:center;justify-content:center">
 <div style="width:1040px"><div style="display:flex;gap:18px;margin-bottom:34px">
 <div style="width:210px;height:140px;border-radius:14px;background:#fff;color:#14213d;padding:18px;box-sizing:border-box;font:600 20px system-ui;transform:rotate(-6deg);box-shadow:0 12px 30px #0006">Q: What is spaced repetition?</div>

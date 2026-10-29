@@ -109,3 +109,14 @@ Status: MET (works, tested), PARTLY (works with a stated limit), NOT MET (not bu
 2. A demo video (OWNER).
 3. Google Sheets and a real GitHub test repo PR (needs credentials: OWNER).
 4. Audio transcription and a real image-generation provider (needs a paid or approved service; not done).
+
+## Final status update (supersedes the PARTLY rows above where it says so)
+| PS1 line | Now | Evidence |
+|---|---|---|
+| Image generation | MET with a live model: the hero uses real AI-generated artwork (free, key-less service), labelled `GENERATED:image-model(pollinations)`. Offline replay and any failure fall back to the labelled placeholder card | `gtm.hero_image`; Review panel caption says "AI-generated artwork" or "generated placeholder" |
+| Audio transcription / analysis | MET: the Speak button records from the microphone and the multimodal model transcribes it into the goal box; works in any browser, not only Chrome | `POST /api/transcribe`; tested live with a generated voice clip |
+| Codebase understanding, debugging, test execution, code changes | MET on a sample project: copy into the workspace, run its tests (2 of 3 fail), the coder model fixes one source file, the verifier runs the tests itself in a fresh process (3/3 pass), a diff is kept, the original is never edited; a coder answer that runs a shell command is refused | scenarios `case6` (scripted coder), `case6-real` (real planner and coder, recorded), `case6b` (hostile coder answer); new evidence kind `tests_pass` |
+| Real internet research into an Excel sheet | MET (live): `web.search`, public-site reads only, quotes re-checked by the verifier's own fresh read, `.xlsx` shown in the app and downloadable | `case5`, `case5b`; live run in `docs/SUBMISSION.md` |
+| "Desktop browser" | browser-integrated workspace plus an app-style window: `npm run desktop` opens Darby in its own Chrome app window (no tabs or address bar) | `scripts/demo.mjs --app` |
+| Still not built | video understanding of third-party video; Slack, Notion, Google Workspace connectors; Electron installer; context from the user's own live Chrome tabs (a "Page context" field exists instead) | listed in `docs/DECK_AUDIT.md` |
+| Still the owner's | AdaL usage recordings, demo video, real GitHub PR token | `docs/ADAL_TODO_FOR_OWNER.md` |

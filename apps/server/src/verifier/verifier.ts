@@ -6,7 +6,7 @@ import path from 'node:path';
 import type { EvidenceContract } from '@darby/contracts';
 import type { Page } from 'playwright';
 import { readLocalShares } from '../adapters/share-local';
-import { probeMedia } from '../gtm/media';
+import { probeMedia, run as runCmd } from '../gtm/media';
 import { runPageAssertions } from '../gtm/pagetest';
 import { readGithubPr, readLocalPr } from '../gtm/pr';
 
@@ -237,6 +237,22 @@ async function mediaProbe(c: Extract<EvidenceContract, { kind: 'media_probe' }>,
   return pass(`${path.basename(file)}: ${info.seconds.toFixed(1)} s${info.hasVideo ? ', video + audio' : ', audio'} (fresh ffmpeg probe)`);
 }
 
+/** Run a project's tests in a fresh process and read the TAP summary. Used by the maker and, independently, by the verifier. */
+export async function runProjectTests(dir: string, timeoutMs = 40_000): Promise<{ code: number | null; pass: number; fail: number; total: number; output: string }> {
+  const r = await runCmd(process.execPath, ['--test', '--test-reporter=tap'], timeoutMs, dir);
+  const n = (k: string) => Number(new RegExp(`^# ${k} (\\d+)`, 'm').exec(r.out)?.[1] ?? 0);
+  return { code: r.code, pass: n('pass'), fail: n('fail'), total: n('tests'), output: (r.out + r.err).slice(-6000) };
+}
+
+async function testsPass(c: Extract<EvidenceContract, { kind: 'tests_pass' }>, ctx: VerifierCtx): Promise<CheckResult> {
+  const dir = resolveInside(ctx, c.dir, ctx.workspaceDir);
+  if (!dir || !existsSync(dir)) return fail(`the project folder ${c.dir} is missing or outside the Darby workspace`);
+  const t = await runProjectTests(dir);
+  if (t.total < c.minTests) return fail(`only ${t.total} tests ran, expected at least ${c.minTests}`);
+  if (t.code !== 0 || t.fail > 0) return fail(`${t.fail} of ${t.total} tests still fail when the verifier runs them itself`);
+  return pass(`${t.pass}/${t.total} tests pass (run again by the verifier in a fresh process)`);
+}
+
 async function prExists(c: Extract<EvidenceContract, { kind: 'pr_exists' }>, ctx: VerifierCtx): Promise<CheckResult> {
   let got: { title: string; branch: string; files: string[]; state?: string } | null;
   if (c.adapter === 'github') {
@@ -304,6 +320,7 @@ export async function verifyContract(c: EvidenceContract, ctx: VerifierCtx, extr
       case 'page_assertions': return await pageAssertions(c, ctx);
       case 'media_probe': return await mediaProbe(c, ctx);
       case 'pr_exists': return await prExists(c, ctx);
+      case 'tests_pass': return await testsPass(c, ctx);
       default: return err(`verifier for "${(c as { kind: string }).kind}" is not available yet`);
     }
   } catch (e) {
