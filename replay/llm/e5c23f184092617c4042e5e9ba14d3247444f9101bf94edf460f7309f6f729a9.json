@@ -1,0 +1,9 @@
+{
+  "key": "e5c23f184092617c4042e5e9ba14d3247444f9101bf94edf460f7309f6f729a9",
+  "role": "vision",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T10:58:35.239Z",
+  "promptPreview": "Describe the screenshot so it can be used as context for a request.",
+  "response": "{\n  \"description\": \"The screenshot shows a dashboard for an automated testing tool named Darby, displaying a failed run for a task to submit and confirm a lead form. It provides a detailed breakdown of the plan, a live timeline of actions taken, and a specific error message explaining that the lead was not found in the API after submission. The interface includes options to re-plan the task, download a JSON receipt, or perform a tamper test.\"\n}"
+}

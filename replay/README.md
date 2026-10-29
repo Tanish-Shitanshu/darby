@@ -1,6 +1,6 @@
 # Recorded LLM responses (REPLAY)
 
-25 recordings of real model calls (planner, reader, vision) made while running the demo cases against the fixture web.
+26 recordings of real model calls (planner, reader, vision) made while running the demo cases against the fixture web.
 They contain no keys and no personal data: prompts are fixture page text and fixed instructions.
 
 The replay provider (`LLM_PROVIDER=replay`) answers from these files by request hash, so the acceptance tests and the offline demo run
