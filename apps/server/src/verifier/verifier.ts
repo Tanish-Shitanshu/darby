@@ -4,7 +4,11 @@ import ExcelJS from 'exceljs';
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { EvidenceContract } from '@darby/contracts';
+import type { Page } from 'playwright';
 import { readLocalShares } from '../adapters/share-local';
+import { probeMedia } from '../gtm/media';
+import { runPageAssertions } from '../gtm/pagetest';
+import { readGithubPr, readLocalPr } from '../gtm/pr';
 
 export interface CheckResult {
   /** every claim in the contract was proven (gaps count as proven-absent, see below) */
@@ -26,6 +30,10 @@ export interface VerifierCtx {
   workspaceDir: string;   // sheets must live here
   fetchTimeoutMs?: number;
   fetchImpl?: typeof fetch;
+  /** a fresh browser tab for page_assertions (never the tab the maker used) */
+  openPage?: () => Promise<Page>;
+  allowedOrigins?: string[];
+  githubToken?: string | null;
 }
 
 const pass = (detail: string, extra: Partial<CheckResult> = {}): CheckResult => ({ passed: true, gap: false, gaps: [], error: false, detail, ...extra });
@@ -181,6 +189,54 @@ async function visionCheck(c: Extract<EvidenceContract, { kind: 'vision_check' }
   return r.answer ? pass(`independent vision check: YES — ${r.reason}`) : fail(`independent vision check: NO — ${r.reason}`);
 }
 
+async function pageAssertions(c: Extract<EvidenceContract, { kind: 'page_assertions' }>, ctx: VerifierCtx): Promise<CheckResult> {
+  if (!ctx.openPage) return err('no browser is available to test the page');
+  let url = c.url;
+  if (url.startsWith('file:')) {
+    const f = resolveInside(ctx, url.replace(/^file:(\/\/)?/, ''), ctx.workspaceDir);
+    if (!f) return fail('the page is outside the Darby workspace');
+    if (!existsSync(f)) return fail(`the page ${path.basename(f)} does not exist`);
+    url = `file://${f}`;
+  } else if (!(ctx.allowedOrigins ?? []).includes(new URL(url).origin)) return fail('the page is on an origin that is not allowlisted');
+  const page = await ctx.openPage();
+  try {
+    const r = await runPageAssertions(page, url, c.assertions);
+    return r.ok ? pass(`fresh browser tab: ${r.detail}`) : fail(`browser test failed: ${r.detail}`);
+  } finally {
+    await page.close().catch(() => undefined);
+  }
+}
+
+async function mediaProbe(c: Extract<EvidenceContract, { kind: 'media_probe' }>, ctx: VerifierCtx): Promise<CheckResult> {
+  const file = path.resolve(ctx.root, c.path);
+  if (!existsSync(file)) return fail(`file missing: ${c.path}`);
+  const info = await probeMedia(file);
+  if (!info) return err('ffmpeg is not available to probe the file');
+  if (info.seconds === null) return fail(`${path.basename(file)} is not readable as media`);
+  if (c.media === 'video' && (!info.hasVideo || !info.hasAudio)) return fail(`${path.basename(file)} must contain both a video and an audio stream (video: ${info.hasVideo}, audio: ${info.hasAudio})`);
+  if (c.media === 'audio' && !info.hasAudio) return fail(`${path.basename(file)} has no audio stream`);
+  if (info.seconds < c.minSeconds || info.seconds > c.maxSeconds) return fail(`${path.basename(file)} lasts ${info.seconds.toFixed(1)} s, expected ${c.minSeconds}–${c.maxSeconds} s`);
+  return pass(`${path.basename(file)}: ${info.seconds.toFixed(1)} s${info.hasVideo ? ', video + audio' : ', audio'} (fresh ffmpeg probe)`);
+}
+
+async function prExists(c: Extract<EvidenceContract, { kind: 'pr_exists' }>, ctx: VerifierCtx): Promise<CheckResult> {
+  let got: { title: string; branch: string; files: string[]; state?: string } | null;
+  if (c.adapter === 'github') {
+    try { got = await readGithubPr(ctx.githubToken ?? null, c.repo, c.number); } catch (e) { return err(`could not ask GitHub: ${(e as Error).name}`); }
+    if (!got) return fail(`GitHub does not show pull request #${c.number} on ${c.repo}`);
+    if (got.state !== 'open') return fail(`pull request #${c.number} is ${got.state}, not open`);
+  } else {
+    const dir = resolveInside(ctx, c.repo, ctx.workspaceDir);
+    if (!dir) return fail('the local repo is outside the Darby workspace');
+    got = await readLocalPr(dir, c.number, c.branch);
+    if (!got) return fail(`the local test repo has no pull request #${c.number} on branch ${c.branch}`);
+  }
+  if (got.title !== c.title) return fail(`the pull request title is “${got.title.slice(0, 50)}”, expected “${c.title.slice(0, 50)}”`);
+  const missing = c.files.filter((f) => !got!.files.includes(f));
+  if (missing.length) return fail(`the pull request does not contain: ${missing.join(', ')}`);
+  return pass(`${c.adapter === 'github' ? 'GitHub API' : 'SIMULATED (local repo)'}: pull request #${c.number} is open on ${c.adapter === 'github' ? c.repo : 'the local test repo'} with ${c.files.length} files and the expected title`);
+}
+
 /** Tiny path walker: "$", "$.a.b", "a[0].b", numeric segments. */
 export function jsonPathGet(root: unknown, p: string): unknown {
   let cur: any = root;
@@ -227,7 +283,10 @@ export async function verifyContract(c: EvidenceContract, ctx: VerifierCtx, extr
       case 'permission_present': return permissionPresent(c, ctx);
       case 'http_json_contains': return await httpJsonContains(c, ctx);
       case 'vision_check': return await visionCheck(c, ctx);
-      default: return err(`verifier for "${c.kind}" is not available yet`);
+      case 'page_assertions': return await pageAssertions(c, ctx);
+      case 'media_probe': return await mediaProbe(c, ctx);
+      case 'pr_exists': return await prExists(c, ctx);
+      default: return err(`verifier for "${(c as { kind: string }).kind}" is not available yet`);
     }
   } catch (e) {
     return err(`verifier error: ${(e as Error).message.slice(0, 120)}`);

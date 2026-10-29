@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ApprovalCard, EvidenceDrawer, History, Lightbox, Memory, PlanList, Receipt, Timeline } from './parts';
+import { ApprovalCard, EvidenceDrawer, History, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 
 const LINK_TEXT: Record<Link, string> = { connecting: 'connecting', up: 'connected', down: 'offline' };
@@ -41,7 +41,8 @@ export function App() {
   // the green "chain valid" badge is computed by the server from the stored receipt, not assumed
   useEffect(() => { if (runId && hasReceipt) d.verify(runId).then(setVerify).catch(() => setVerify(null)); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [runId, hasReceipt]);
   // evidence rows / stored results for the drawer
-  useEffect(() => { if (runId && drawer) d.detail(runId).then(setDetail).catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [runId, drawer, hasReceipt, run?.timeline.length]);
+  const isLaunch = !!run?.plan?.steps.some((s) => s.tool.startsWith('gtm.'));
+  useEffect(() => { if (runId && (drawer || isLaunch)) d.detail(runId).then(setDetail).catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [runId, drawer, isLaunch, hasReceipt, run?.timeline.length]);
 
   const go = (t: Tab) => { setTab(t); if (t === 'history') void d.refreshHistory(); if (t === 'memory') void d.loadMemory(); };
 
@@ -103,6 +104,7 @@ export function App() {
               <h2>Plan — a proof for every step <span className="muted small">(click a step for its evidence)</span></h2>
               <PlanList run={run} onOpen={setDrawer} active={drawer} />
             </section>
+            {isLaunch && <ReviewPanel run={run} detail={detail} />}
             {run.receipt && (
               <Receipt run={run} verify={verify} tamper={tamper} remembered={remembered}
                 onTamper={() => void d.verifyReceipt(run.id).then(setTamper)}

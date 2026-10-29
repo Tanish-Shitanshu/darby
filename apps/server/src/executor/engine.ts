@@ -40,7 +40,8 @@ function summarizeChecks(contracts: EvidenceContract[], results: CheckResult[]):
   if (bad.length) return bad.slice(0, 3).map((r) => r.detail).join(' | ');
   const gaps = [...new Set(results.flatMap((r) => r.gaps))];
   switch (kind) {
-    case 'file_exists': return `${ok}/${n} screenshots exist on disk (sha256 recorded)`;
+    case 'file_exists': return contracts.every((c) => c.kind === 'file_exists' && /shots/.test(c.path)) ? `${ok}/${n} screenshots exist on disk (sha256 recorded)` : results.map((r) => r.detail).join(' | ');
+    case 'media_probe': case 'pr_exists': case 'page_assertions': return results.map((r) => r.detail).join(' | ');
     case 'quote_in_page': {
       const proven = results.filter((r) => r.passed && !r.gap).length;
       return gaps.length
@@ -210,7 +211,7 @@ async function runStep(ctx: RunContext, step: PlanStep, done: StepOutcome[]): Pr
   }
 
   await ctx.checkpoint();
-  const vctx = { root: cfg.root, workspaceDir: cfg.workspaceDir, vision: makeVision(ctx) };
+  const vctx = { root: cfg.root, workspaceDir: cfg.workspaceDir, vision: makeVision(ctx), openPage: () => deps.browser.newPage(), allowedOrigins: cfg.allowedOrigins, githubToken: process.env.GITHUB_TOKEN || null };
   const results: CheckResult[] = [];
   for (const c of tool.contracts) {
     const r = await verifyContract(c, vctx);

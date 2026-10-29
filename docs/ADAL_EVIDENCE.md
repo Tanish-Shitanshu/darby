@@ -20,6 +20,7 @@ AdaL's weekly credits ran out after M3. From 29 Oct (about 12:30 IST) the remain
 | # | Time | Milestone | Tool | What | Evidence |
 |---|------|-----------|------|------|----------|
 | 10 | 2026-10-29 | M5 | other assistant (not AdaL) | Failure + repair (Case 4): `browser.act` / `http.request`, vision check, replanner, UI repair button; scoped the lead tools into the planner prompt so Case 1/2 recordings stay valid; scripted-model Case 4 plumbing test | `npm run test:acceptance -- case4-stub` PASS; Case 4 passed live against Gemini once before the handover |
+| 11 | 2026-10-29 | M6 | other assistant (not AdaL) | GTM Studio: copy, hero, voiceover, teaser, coder-written landing page with browser test + repair loop, `page_assertions` / `media_probe` / `pr_exists` verifiers, PR behind approval, Review panel | `npm run test:acceptance -- case3 case3-denied` PASS (scripted model); 92 unit tests |
 
 ## Required evidence by the end
 - [ ] Build: commit log with `Built-with: AdaL` trailers and milestone tags m0..m8

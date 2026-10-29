@@ -1,4 +1,4 @@
-export type Role = 'planner' | 'reader' | 'verifier' | 'vision';
+export type Role = 'planner' | 'reader' | 'verifier' | 'vision' | 'creative' | 'coder';
 
 export interface LlmImage { mime: string; data: Buffer }
 

@@ -116,13 +116,15 @@ export function foldEvents(id: string, events: RunEvent[]): RunView {
 export function proofLine(c: EvidenceContract | null): string {
   if (!c) return 'No proof needed — pure reasoning step';
   switch (c.kind) {
-    case 'file_exists': return 'Proof: a screenshot of every page exists on disk, hashed (sha256)';
+    case 'file_exists': return /shots|read-/.test(c.path) ? 'Proof: a screenshot of every page exists on disk, hashed (sha256)' : 'Proof: the file exists on disk with real content (size checked, sha256 recorded)';
     case 'quote_in_page': return 'Proof: each price is an exact quote, re-fetched from the page by an independent verifier. No price shown = flagged gap, never guessed';
     case 'sheet_readback': return 'Proof: the saved document is re-opened from disk and every cell must equal what was written';
     case 'permission_present': return `Proof: the permission list must show ${c.email} as ${c.role}`;
     case 'http_json_contains': return 'Proof: a fresh API read-back must contain the expected record';
     case 'page_assertions': return 'Proof: the generated page loads and shows what the brief promised (browser test)';
     case 'vision_check': return 'Proof: an independent vision model answers a yes/no question about a screenshot; it never sees the agent’s claim';
+    case 'media_probe': return `Proof: a fresh ffmpeg probe must show real ${c.media} of ${c.minSeconds}–${c.maxSeconds} seconds`;
+    case 'pr_exists': return 'Proof: a fresh read of the repository must show the pull request, its title and its files';
   }
 }
 

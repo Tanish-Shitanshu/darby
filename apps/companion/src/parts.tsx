@@ -125,6 +125,35 @@ export function ApprovalCard({ run, onResolve, onTakeover }: { run: RunView; onR
   );
 }
 
+/* ---------- review panel (GTM Studio): what Darby made, open it before you approve anything ---------- */
+const launchFile = (runId: string, p: string): string | null => { const m = /[\\/]launch[\\/](.+)$/.exec(p); return m ? `/api/runs/${runId}/files/launch/${m[1]!.replace(/\\/g, '/')}` : null; };
+export function ReviewPanel({ run, detail }: { run: RunView; detail: RunDetail | null }) {
+  const ev = detail?.evidence ?? [];
+  const find = (re: RegExp) => { const e = ev.find((x) => re.test(x.path)); return e ? launchFile(run.id, e.path) : null; };
+  const hero = find(/hero\.png$/); const voice = find(/voiceover\.mp3$/); const teaser = find(/teaser\.mp4$/); const landing = find(/landing[\\/]index\.html$/);
+  const copy = find(/copy\.json$/);
+  const prStep = detail?.steps.find((s) => s.result && typeof s.result === 'object' && 'adapter' in s.result && 'number' in s.result);
+  const pr = prStep?.result as { adapter: string; simulated?: boolean; number: number; url: string; repo: string; branch: string } | undefined;
+  const labels = run.receipt?.labels ?? [];
+  if (!hero && !voice && !teaser && !landing) return null;
+  return (
+    <section className="card review" data-testid="review" aria-label="Review what Darby made">
+      <h2>Review — what Darby made <span className="muted small">(look before you approve)</span></h2>
+      <div className="review-grid">
+        {hero && (<figure><img src={hero} alt="Hero image" data-testid="review-hero" /><figcaption>Hero image <span className="chip label">generated placeholder</span></figcaption></figure>)}
+        {teaser && (<figure><video src={teaser} controls preload="metadata" data-testid="review-video" /><figcaption>15-second teaser (hero + captions + voiceover)</figcaption></figure>)}
+        {voice && (<figure><audio src={voice} controls preload="metadata" data-testid="review-audio" /><figcaption>Voiceover {labels.filter((l) => /^(VOICE:|PLACEHOLDER:voiceover)/.test(l)).map((l) => (<span key={l} className="chip label">{l}</span>))}</figcaption></figure>)}
+        {landing && (<figure className="wide"><iframe src={landing} title="Landing page preview" sandbox="allow-scripts" data-testid="review-page" /><figcaption>Landing page (runs in a sandbox) · <a href={landing} target="_blank" rel="noreferrer">open</a>{copy && <> · <a href={copy} target="_blank" rel="noreferrer">copy.json</a></>}</figcaption></figure>)}
+      </div>
+      {pr && (
+        <p className="pr-line" data-testid="review-pr">
+          {pr.simulated ? <span className="chip label">SIMULATED</span> : <span className="chip chain-ok">REAL</span>} Pull request #{pr.number} on <strong>{pr.simulated ? 'the local test repo' : pr.repo}</strong> (branch {pr.branch}){!pr.simulated && <> · <a href={pr.url} target="_blank" rel="noreferrer">open on GitHub</a></>}
+        </p>
+      )}
+    </section>
+  );
+}
+
 /* ---------- receipt ---------- */
 export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered, onRepair }: {
   run: RunView; verify: VerifyResult | null; tamper: { original: VerifyResult; tampered: VerifyResult; edit: { index: number; type: string } } | null;
@@ -204,6 +233,8 @@ function contractRows(c: EvidenceContract | null): [string, string][] {
     case 'http_json_contains': return [['kind', 'http_json_contains'], ['url', c.url], ['expects', JSON.stringify(c.expected).slice(0, 120)]];
     case 'page_assertions': return [['kind', 'page_assertions'], ['page', c.url], ['assertions', `${c.assertions.length}`]];
     case 'vision_check': return [['kind', 'vision_check'], ['screenshot', c.screenshotPath], ['question', c.question]];
+    case 'media_probe': return [['kind', 'media_probe'], ['file', c.path], ['length', `${c.minSeconds}–${c.maxSeconds} s (${c.media})`]];
+    case 'pr_exists': return [['kind', 'pr_exists'], ['repo', c.repo], ['pull request', c.number ? `#${c.number} “${c.title}”` : c.title], ['branch', c.branch]];
   }
 }
 

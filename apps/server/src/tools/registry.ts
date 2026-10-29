@@ -66,7 +66,13 @@ const META: Record<string, Pick<ToolDef, 'args' | 'controlKeys' | 'recipientKeys
   'email.send': { args: z.object({ to: z.string().max(320), subject: z.string().max(200).optional(), body: z.string().max(5000).optional() }).strict(), controlKeys: ['to'], recipientKeys: ['to'] },
   'browser.act': { args: z.object({ url: z.string().max(2048), fields: z.record(z.string().max(200)).refine((o) => Object.keys(o).length <= 10, 'at most 10 fields'), submit: z.boolean() }).strict(), controlKeys: ['url'], recipientKeys: [] },
   'http.request': { args: z.object({ method: z.enum(['GET', 'POST']), url: z.string().max(2048), body: z.record(z.string().max(200)).optional() }).strict(), controlKeys: ['url'], recipientKeys: [] },
-  'github.create_pr': { args: z.object({ repo: z.string().max(100), branch: z.string().max(100), title: z.string().max(200), body: z.string().max(5000).optional(), patchRef: z.string().max(200).optional() }).strict(), controlKeys: ['repo', 'branch'], recipientKeys: [] },
+  'github.create_pr': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'gtm.copy': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'gtm.hero_image': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'gtm.voiceover': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'gtm.teaser': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'gtm.landing_page': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'gtm.test_page': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
 };
 const def = (d: Omit<ToolDef, 'args' | 'controlKeys' | 'recipientKeys'>): [string, ToolDef] => [d.name, { ...d, ...META[d.name]! }];
 
@@ -161,19 +167,69 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
     },
   }),
   def({
-    name: 'github.create_pr', risk: 'external_effect', implemented: false, description: 'Open a pull request on the test repo. External effect.', argsHelp: '{ repo, branch, title }',
-    normalize: (a) => a, contract: () => null,
+    name: 'gtm.copy', risk: 'write_local', implemented: true,
+    description: 'Positioning, landing-page copy, teaser lines and a launch post for the product in the launch brief, written by a model from the brief and the competitor records only (never from page text). Falls back to a labelled template if no model answer is available.',
+    argsHelp: '{ fromStep: <id of the reader.extract step over the competitor pages> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'reader.extract') ?? null }),
+    contract: () => ({ kind: 'file_exists', path: 'workspace/{runId}/launch/copy.json', minBytes: 200 }),
+  }),
+  def({
+    name: 'gtm.hero_image', risk: 'write_local', implemented: true,
+    description: 'Hero image 1280x720 for the launch (a deterministic rendered card, labelled "generated placeholder"; an image model is used instead when one is configured).',
+    argsHelp: '{ fromStep: <id of the gtm.copy step> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'gtm.copy') ?? null }),
+    contract: () => ({ kind: 'file_exists', path: 'workspace/{runId}/launch/hero.png', minBytes: 5000, mime: 'image/png' }),
+  }),
+  def({
+    name: 'gtm.voiceover', risk: 'write_local', implemented: true,
+    description: 'Voiceover audio (mp3) of the teaser lines: Edge neural voice if available, else the computer\'s built-in speech; a labelled placeholder tone only if no speech engine exists.',
+    argsHelp: '{ fromStep: <id of the gtm.copy step> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'gtm.copy') ?? null }),
+    contract: () => ({ kind: 'media_probe', path: 'workspace/{runId}/launch/voiceover.mp3', media: 'audio', minSeconds: 3, maxSeconds: 30 }),
+  }),
+  def({
+    name: 'gtm.teaser', risk: 'write_local', implemented: true,
+    description: '15-second teaser video (mp4: hero image, caption slides and the voiceover) composed with ffmpeg.',
+    argsHelp: '{ fromStep: <id of the gtm.voiceover step> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'gtm.voiceover') ?? null }),
+    contract: () => ({ kind: 'media_probe', path: 'workspace/{runId}/launch/teaser.mp4', media: 'video', minSeconds: 13.5, maxSeconds: 16.5 }),
+  }),
+  def({
+    name: 'gtm.landing_page', risk: 'write_local', implemented: true,
+    description: 'Landing page (HTML/CSS/JS in workspace/<run>/launch/landing) written by a coder model, tested in a real browser tab, repaired once if the test fails; labelled template fallback otherwise.',
+    argsHelp: '{ fromStep: <id of the gtm.hero_image step> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'gtm.hero_image') ?? null }),
+    contract: () => ({ kind: 'file_exists', path: 'workspace/{runId}/launch/landing/index.html', minBytes: 800 }),
+  }),
+  def({
+    name: 'gtm.test_page', risk: 'read', implemented: true,
+    description: 'Open the generated landing page in a fresh browser tab: headline, hero image, benefits, CTA click, no console errors; then an independent vision check of its screenshot.',
+    argsHelp: '{ fromStep: <id of the gtm.landing_page step> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'gtm.landing_page') ?? null }),
+    contract: () => ({ kind: 'page_assertions', url: 'file:workspace/{runId}/launch/landing/index.html', assertions: [{ selector: 'h1#headline' }, { selector: 'button#cta' }] }),
+  }),
+  def({
+    name: 'github.create_pr', risk: 'external_effect', implemented: true,
+    description: 'Open a pull request with the landing page, hero image, positioning and launch post on the TEST repo (darby-launch-test). External effect: always needs the user\'s approval. Without a GitHub token the pull request is made in a local test repo and labelled SIMULATED.',
+    argsHelp: '{ fromStep: <id of the gtm.test_page step> }',
+    normalize: (_a, _c, prev) => ({ fromStep: lastOf(prev, 'gtm.test_page') ?? null }),
+    contract: () => ({ kind: 'pr_exists', adapter: 'local', repo: 'darby-launch-test', number: 1, title: '(set when opened)', branch: 'darby/launch', files: [] }),
   }),
 ]);
 
 export const isRegistered = (tool: string): boolean => Object.prototype.hasOwnProperty.call(TOOLS, tool) || /^gtm\./.test(tool) && Object.prototype.hasOwnProperty.call(TOOLS, tool);
 export const riskOf = (tool: string): Risk => (isRegistered(tool) ? TOOLS[tool]!.risk : 'forbidden');
 
-/** Form/API tools are only offered to the planner when the goal is about submitting data to an app (keeps research prompts, and their recordings, stable). */
+/**
+ * Tools are offered to the planner by scope, which keeps research prompts (and their recorded responses) stable:
+ * form/API tools only for "submit a lead" goals, launch tools only for launch goals.
+ */
+export type PlannerScope = 'base' | 'lead' | 'gtm';
 export const LEAD_TOOLS = new Set(['browser.act', 'http.request']);
-export function describeToolsForPlanner(leadScope = true): string {
+export const isGtmTool = (name: string): boolean => name.startsWith('gtm.') || name === 'github.create_pr';
+export function describeToolsForPlanner(scope: PlannerScope = 'lead'): string {
   return Object.values(TOOLS)
-    .filter((t) => t.implemented && (leadScope || !LEAD_TOOLS.has(t.name)))
+    .filter((t) => t.implemented && (isGtmTool(t.name) ? scope === 'gtm' : LEAD_TOOLS.has(t.name) ? scope === 'lead' : true))
     .map((t) => `- ${t.name} [${t.risk}] ${t.description}\n    args: ${t.argsHelp}`)
     .join('\n');
 }

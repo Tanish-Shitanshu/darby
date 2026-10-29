@@ -9,6 +9,7 @@ import { slugOf } from '../tools/registry';
 import { pMap } from '../util/pmap';
 import { readPageText } from './browser';
 import type { RunContext } from './context';
+import { githubCreatePr, gtmCopy, gtmHero, gtmLanding, gtmTeaser, gtmTestPage, gtmVoice } from './gtm-tools';
 
 export class ToolError extends Error {
   constructor(message: string, public kind: 'failed' | 'needs_you' = 'needs_you') {
@@ -260,6 +261,13 @@ export async function runTool(ctx: RunContext, step: PlanStep): Promise<ToolResu
     case 'email.send': return emailSend(ctx, step);
     case 'browser.act': return browserAct(ctx, step);
     case 'http.request': return httpRequest(ctx, step);
+    case 'gtm.copy': return gtmCopy(ctx, step);
+    case 'gtm.hero_image': return gtmHero(ctx, step);
+    case 'gtm.voiceover': return gtmVoice(ctx, step);
+    case 'gtm.teaser': return gtmTeaser(ctx, step);
+    case 'gtm.landing_page': return gtmLanding(ctx, step);
+    case 'gtm.test_page': return gtmTestPage(ctx, step);
+    case 'github.create_pr': return githubCreatePr(ctx, step);
     default: throw new ToolError(`The tool "${step.tool}" is registered but not available in this build yet.`, 'needs_you');
   }
 }

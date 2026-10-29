@@ -28,6 +28,10 @@ export const EvidenceContract = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('file_exists'), path: z.string(), minBytes: z.number().int().positive(), mime: z.string().optional() }),
   // For pages with no API: an independent model looks at a screenshot and answers a yes/no question. It never sees the agent's claim.
   z.object({ kind: z.literal('vision_check'), screenshotPath: z.string(), question: z.string() }),
+  // A generated audio/video file must really be media of the promised length (probed by a fresh ffmpeg run, not trusted from the maker).
+  z.object({ kind: z.literal('media_probe'), path: z.string(), media: z.enum(['audio', 'video']), minSeconds: z.number().positive(), maxSeconds: z.number().positive() }),
+  // A pull request is real only if a fresh read of the repo shows it (GitHub REST API, or the local simulated repo).
+  z.object({ kind: z.literal('pr_exists'), adapter: z.enum(['github', 'local']), repo: z.string(), number: z.number().int().positive(), title: z.string(), branch: z.string(), files: z.array(z.string()) }),
 ]);
 export type EvidenceContract = z.infer<typeof EvidenceContract>;
 

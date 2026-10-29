@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import ExcelJS from 'exceljs';
@@ -115,5 +115,32 @@ describe('sheet_readback', () => {
     const r = await verifyContract({ kind: 'sheet_readback', sheetRef: '../../etc/passwd', range: 'A1:A1', expected: [['x']] }, vctx);
     expect(r.passed).toBe(false);
     expect(r.detail).toMatch(/outside/);
+  });
+});
+
+describe('GTM contracts', () => {
+  const root = mkdtempSync(path.join(tmpdir(), 'darby-v-'));
+  const ctx = { root, workspaceDir: path.join(root, 'ws') };
+  afterAll(() => rmSync(root, { recursive: true, force: true }));
+  it('media_probe fails for a file that is not media, and for a missing file', async () => {
+    mkdirSync(ctx.workspaceDir, { recursive: true });
+    writeFileSync(path.join(root, 'fake.mp4'), 'not a video at all');
+    expect((await verifyContract({ kind: 'media_probe', path: 'fake.mp4', media: 'video', minSeconds: 14, maxSeconds: 16 }, ctx)).passed).toBe(false);
+    expect((await verifyContract({ kind: 'media_probe', path: 'nope.mp4', media: 'video', minSeconds: 14, maxSeconds: 16 }, ctx)).passed).toBe(false);
+  });
+  it('pr_exists (local) never passes without a real record, and stays inside the workspace', async () => {
+    expect((await verifyContract({ kind: 'pr_exists', adapter: 'local', repo: 'ws/repo', number: 1, title: 't', branch: 'b', files: ['a'] }, ctx)).passed).toBe(false);
+    const out = await verifyContract({ kind: 'pr_exists', adapter: 'local', repo: '../../etc', number: 1, title: 't', branch: 'b', files: [] }, ctx);
+    expect(out.passed).toBe(false);
+    expect(out.detail).toMatch(/outside/);
+  });
+  it('page_assertions refuses pages outside the workspace and non-allowlisted origins', async () => {
+    expect((await verifyContract({ kind: 'page_assertions', url: 'file:../secret.html', assertions: [] }, ctx)).passed).toBe(false);
+    const withBrowser = { ...ctx, openPage: async () => { throw new Error('must not open'); } } as never;
+    const out = await verifyContract({ kind: 'page_assertions', url: 'file:../secret.html', assertions: [] }, withBrowser);
+    expect(out.detail).toMatch(/outside/);
+    const ext = await verifyContract({ kind: 'page_assertions', url: 'https://evil.test/x', assertions: [] }, { ...(withBrowser as object), allowedOrigins: ['http://localhost:4010'] } as never);
+    expect(ext.passed).toBe(false);
+    expect(ext.detail).toMatch(/allowlisted/);
   });
 });

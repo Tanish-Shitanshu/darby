@@ -101,6 +101,20 @@ export function createApi(manager: RunManager): Router {
     res.sendFile(file, { root, dotfiles: 'allow', headers: { 'cache-control': 'private, max-age=3600' } });
   }));
 
+  /** Files a launch run produced (hero, voiceover, teaser, landing page, copy): read-only, confined to workspace/<run>/launch. */
+  r.get('/runs/:id/files/*rel', wrap((req, res) => {
+    const id = path.basename(String(req.params.id));
+    const rel = ([] as string[]).concat((req.params as unknown as Record<string, string | string[]>).rel ?? []).join('/');
+    const base = path.join(cfg.workspaceDir, id);
+    const abs = path.resolve(base, rel);
+    const inside = path.relative(path.join(base, 'launch'), abs);
+    if (inside.startsWith('..') || path.isAbsolute(inside) || !/\.(png|jpe?g|mp3|mp4|html|css|js|md|json|txt)$/i.test(abs) || !existsSync(abs)) throw new HttpError(404, 'not_found', 'No such file');
+    // generated pages are untrusted code: they run only inside a sandboxed iframe and may load nothing from the network
+    res.set('content-security-policy', "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; media-src 'self'");
+    res.set('x-content-type-options', 'nosniff');
+    res.sendFile(path.relative(base, abs), { root: base, dotfiles: 'allow', headers: { 'cache-control': 'private, max-age=60' } });
+  }));
+
   r.post('/runs/:id/repair', wrap(async (req, res) => {
     try { res.status(202).json({ id: await manager.repair(String(req.params.id)) }); } catch (e) {
       if (e instanceof RepairError) throw new HttpError(409, e.code, e.message);

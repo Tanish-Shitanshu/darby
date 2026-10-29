@@ -33,7 +33,9 @@ describe('policy rules', () => {
   it('EXT-001: every external effect needs approval', () => {
     expect(run('share.grant', { fromStep: 's3', recipient: 'team', role: 'reader' })).toMatchObject({ action: 'require_approval', ruleId: expect.stringMatching(/^EXT-001/), risk: 'external_effect' });
     expect(run('email.send', { to: TEAM, subject: 'hi', body: 'x' })).toMatchObject({ action: 'require_approval', ruleId: expect.stringMatching(/^EXT-001/) });
-    expect(run('github.create_pr', { repo: 'me/darby-launch-test', branch: 'launch', title: 'Launch assets' })).toMatchObject({ action: 'require_approval' });
+    expect(run('github.create_pr', { fromStep: 's8' })).toMatchObject({ action: 'require_approval', ruleId: expect.stringMatching(/^EXT-001/), risk: 'external_effect' });
+    // the planner can no longer pick the repo or branch: any such argument is rejected by the strict schema
+    expect(rule('github.create_pr', { fromStep: 's8', repo: 'someone/else', branch: 'x' })).toMatch(/^FORB-003/);
   });
   it('FORB-003: unregistered tools are blocked, including name tricks and prototype names', () => {
     for (const t of ['shell.run', 'gtm.made_up', 'Email.Send', 'email.send ', 'email.send/../shell', '__proto__', 'constructor', 'toString', 'email\u200b.send']) {

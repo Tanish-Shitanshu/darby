@@ -3,7 +3,7 @@
 _Last updated: 2026-10-29_
 
 ## Current state
-- **M5 done** (tag `m5-repair`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next, in order: M6 (GTM Studio, Case 3), M8-lite (one-command demo + offline replay), M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists. Intro video (Video Producer) stays an AdaL step.
+- **M5 and M6 done** (tags `m5-repair`, `m6-gtm`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next, in order: M8-lite (one-command demo + offline replay), M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists. Intro video (Video Producer) stays an AdaL step.
 - Who built what (kept honest for PS1 evidence): M0-M3, the red-team pass and the evidence screenshots were built with AdaL. From M5 onward the build continues with a second AI coding assistant (not AdaL) because the AdaL weekly credits ran out; those commits are authored by the repo owner only and are listed in `docs/ADAL_EVIDENCE.md` as NOT AdaL work.
 - Step 0 (LLM provider) done: Gemini provider verified live (`gemini-3.5-flash`, JSON + image input), fallback chain `gemini-3-flash-preview`, `gemini-3.8-flash`; free-tier limiter (sliding-window RPM, concurrency 2, backoff on 429/503/timeouts); every response cached in the replay store.
 
@@ -15,7 +15,7 @@ _Last updated: 2026-10-29_
 | M2 policy/approvals/control | done | m2-policy | |
 | M3 companion UI | done | m3-ui | |
 | M5 failure + repair | done (code + tests); real-model replay recordings for Case 4 still to be curated on the owner's machine | m5-repair | `case4` (replay/live) and `case4-stub` (scripted model, deterministic, runs anywhere) |
-| M6 GTM Studio | todo | | |
+| M6 GTM Studio | done (code + tests, scripted-model acceptance); real-model recording + real PR still to be done on the owner's machine | m6-gtm | `case3` (approve) and `case3-denied` |
 | M7 Playbooks + Hub | todo | | |
 | M4 Google Sheets | skipped unless `secrets/google-oauth.json` exists | | SHEET_ADAPTER=local |
 | M8 demo hardening | todo | | |
@@ -53,6 +53,15 @@ _Last updated: 2026-10-29_
 | GitHub test repo `darby-launch-test` + `GITHUB_TOKEN` (M6 PR step) | pending |
 | Google OAuth JSON (M4, optional) | pending / may be skipped |
 | Demo video recording | pending |
+
+## M6 notes (GTM Studio, Case 3)
+- Chain (planner picks it for launch goals only): browser.read_page (3 competitor pages) -> reader.extract -> gtm.copy -> gtm.hero_image -> gtm.voiceover -> gtm.teaser -> gtm.landing_page -> gtm.test_page -> github.create_pr (external effect, approval card lists repo/branch/title/4 files/hash).
+- Every fallback is labelled in the signed receipt: `FALLBACK:template-copy`, `GENERATED-PLACEHOLDER:hero.png` (deterministic rendered card; no image model configured), voiceover `VOICE:edge-tts | macos-say | espeak-ng` or `PLACEHOLDER:voiceover-tone` (not speech!), `CODEGEN:model-written-landing` or `FALLBACK:template-landing`, `SIMULATED:github.create_pr` (local git repo, no token).
+- Landing page: coder model writes it, Darby tests it in a real tab, feeds failures back once, else labelled template. New evidence kinds: `media_probe` (fresh ffmpeg probe: teaser 13.5-16.5 s with video+audio), `pr_exists` (GitHub REST read-back, or the local repo re-read with git), and the previously missing `page_assertions` verifier (fresh tab, no console errors, images loaded, click reveals text) plus a vision check of the screenshot.
+- Review panel in the companion (image, audio, video, sandboxed page preview, PR line) from `GET /api/runs/:id/files/launch/...` (read-only, confined to the run's launch folder, CSP-locked).
+- `case3` / `case3-denied` use a scripted stand-in model (offline, deterministic; the first landing page it sends is deliberately broken to exercise the repair loop). Real-model recordings for Case 3 (planner, reader, creative, coder, vision) must be recorded once on the owner's machine: `LLM_PROVIDER=gemini` run Case 3 from the UI, then `npm run replay:curate`.
+- Owner-only for a REAL pull request: create the repo `darby-launch-test`, put `GITHUB_TOKEN` (fine-grained, that repo only, contents + pull requests write) and `GITHUB_TEST_REPO=owner/darby-launch-test` in `.env`. Without them the PR is SIMULATED and says so.
+- Voiceover on a Mac uses the built-in `say` (offline); `pip install edge-tts` gives the neural voice when online. ffmpeg: system one, else the bundled `@ffmpeg-installer/ffmpeg` (npm install).
 
 ## M5 notes
 - `browser.act` fills a real form and treats the page's "Saved ✓" as an unverified claim; the verifier reads `GET /api/leads` fresh and an independent vision check looks at the "Saved leads" page (it never sees the agent's claim). Broken form => FAILED with a plain-language cause, a recovery is offered, nothing is retried by itself.

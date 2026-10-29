@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getConfig } from '../config';
 import { loadCatalog } from '../sources';
-import { compilePlan, PlannerOutput } from './planner';
+import { compilePlan, PlannerOutput, plannerSystem, scopeOf } from './planner';
 
 const cfg = getConfig();
 const step = (id: string, tool: string, args: Record<string, unknown> = {}, dependsOn: string[] = []) => ({ id, title: `Step ${id} title`, tool, args, dependsOn, suggestedRisk: 'read' as const });
@@ -44,5 +44,19 @@ describe('plan compiler: the planner proposes, code decides', () => {
     const out = PlannerOutput.parse({ steps: [step('s1', 'browser.read_page', { urls: ['http://evil.test/'] })] });
     const { plan } = compilePlan('g', out, { cfg, catalog });
     expect((plan!.steps[0]!.args.urls as string[]).length).toBe(10);
+  });
+});
+
+describe('planner prompt scopes keep recorded prompts stable', () => {
+  it('research goals never see the form or launch tools; launch goals see the launch chain', async () => {
+    const catalog = await loadCatalog(cfg);
+    const base = plannerSystem({ cfg, catalog }, scopeOf('Research the 10 AI startups and record prices in a sheet, then share it with the team email.'));
+    expect(base).not.toMatch(/browser\.act|http\.request|gtm\.|github\.create_pr|demo lead/);
+    const lead = plannerSystem({ cfg, catalog }, scopeOf('Submit a lead through the form at /app/form?mode=broken and confirm it was saved.'));
+    expect(lead).toMatch(/browser\.act/);
+    expect(lead).not.toMatch(/gtm\./);
+    const gtm = plannerSystem({ cfg, catalog }, scopeOf('Launch StudyLoop from the brief and open a pull request on the test repo.'));
+    expect(gtm).toMatch(/gtm\.copy[\s\S]*gtm\.teaser[\s\S]*github\.create_pr/);
+    expect(gtm).not.toMatch(/browser\.act/);
   });
 });
