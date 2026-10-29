@@ -9,12 +9,13 @@ Slides are never edited by the assistant. Rows marked **OWNER** need a wording d
 | 1 | 1 | Plan of 4 steps, proof per step, read back "10 of 10 match", share "you approved", VERIFIED WITH GAPS, 3 gaps flagged | `npm run test:acceptance -- case1` (gaps exactly cobalt, echo, helio); `fixtures/expected.json` | TRUE | Receipt id on the slide (`9f3a…c21e`) is a sample; deck already says "sample data" |
 | 2 | 1 | 7/7 PS1 requirements covered | `docs/PS1.md`, rows below | PARTLY | Req. 7 "AdaL builds Darby" is true only for M0–M3 and the red team (see `docs/ADAL_EVIDENCE.md`); M5–M7 were built with another assistant. **OWNER**: do not say "all built with AdaL" |
 | 3 | 1 | 4 live demo cases, one a failure | `fixtures/demo-goals.json`, acceptance case1/case2/case3/case4 | TRUE | Case 3 and 4 need recordings for offline mode (Phase 1) |
-| 4 | 1 | 10 red-team poisoned pages | One poisoned fixture page (Fathom, page 6 of 10). Red-team coverage: 5 hostile-reader outputs (case2c), 3 policy bypass attempts (case2d), 48 independent attempts by AdaL (`docs/evidence/adal-redteam`), injection suite in `playbook:check` | PARTLY → being fixed | Building 10 distinct poisoned pages + test (see PROGRESS). Until that lands: **OWNER** reword to "10 hostile injection pages" only if the suite ships |
+| 4 | 1 | 10 red-team poisoned pages | One poisoned fixture page (Fathom, page 6 of 10). Red-team coverage: 5 hostile-reader outputs (case2c), 3 policy bypass attempts (case2d), 48 independent attempts by AdaL (`docs/evidence/adal-redteam`), injection suite in `playbook:check` | TRUE | Ten poisoned fixture pages (/redteam/rt-1..t-10, ten different hiding techniques) plus case2e (
+pm run redteam): five payloads are stripped before the reader ever sees them, five are obeyed by a hostile model stub and rejected at the reader boundary; nothing reaches the sheet or the outbox |
 | 5 | 1 | 0 risky actions without approval | Policy engine, case1-denied, case2*, cancel-approval, `npm run redteam` | TRUE | |
 | 6 | 2 | Typical run: 3 guessed prices, 1 hidden instruction | Illustrative scenario of other agents | n/a | Presented as "a typical run", not Darby output |
 | 7 | 2 | 30–61 % task completion; 45 %+ false success; Gartner "Block" | External citations (arXiv:2504.01382, arXiv:2604.06240, Gartner 7211030) | UNVERIFIED | **OWNER**: confirm the numbers against the sources before presenting; the assistant cannot verify them |
 | 8 | 2 | Comet/Neon/Dia, browser-use/BrowserOS, Magentic-UI comparison | Public claims about third parties | UNVERIFIED | **OWNER**: be ready to defend each if a judge asks |
-| 9 | 3 | "You ask: text, voice or a screenshot" | Text: yes. Voice: mic button in goal box (Chrome speech API). Screenshot: attach an image, vision model describes it into the goal box for you to review | TRUE after this change | Voice needs Chrome + internet; screenshot needs a model key (live) |
+| 9 | 3 | "You ask: text, voice or a screenshot" | Text: yes. Voice: mic button in goal box (Chrome speech API). Screenshot: attach an image, vision model describes it into the goal box for you to review | TRUE | Voice needs Chrome + internet; screenshot needs a model key (live) |
 | 10 | 3 | Typed steps, each with a proof contract | Plan compiler + 10 contract kinds in `packages/contracts` | TRUE | |
 | 11 | 3 | Real tabs and apps; risky steps wait for you | Playwright executor, approval cards | TRUE | "Apps": only the local fixture apps and a local sheet; no Sheets/Excel/Drive app is driven |
 | 12 | 3 | Read-back, vision, independent verifier | `verifier/`, `vision_check`, `sheet_readback` | TRUE | |
@@ -54,4 +55,4 @@ Slides are never edited by the assistant. Rows marked **OWNER** need a wording d
 ## Summary for the owner
 
 False or not-yet items that need a slide change or an AdaL session: rows 17, 20, 22, 34, 37 (Electron, Azure, Supabase, installable app), 19 and 13 (Excel/Drive/Sheets API), 24 and 30 (AdaL sessions), 7 and 8 (verify cited numbers).
-Items the repo can make true and is being fixed: rows 4 (10 poisoned pages), 9 (voice and screenshot input).
+Fixed in the repo since the first audit: row 4 (10 poisoned pages, case2e) and row 9 (voice button and screenshot attach in the goal box).

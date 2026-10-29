@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ApprovalCard, EvidenceDrawer, History, Hub, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 
@@ -24,6 +24,33 @@ export function App() {
   const d = useDarby();
   const [tab, setTab] = useState<Tab>('run');
   const [goal, setGoal] = useState('');
+  const [listening, setListening] = useState(false);
+  const [note, setNote] = useState('');
+  const recRef = useRef<any>(null);
+  const toggleVoice = () => {
+    const SR = (window as any).SpeechRecognition ?? (window as any).webkitSpeechRecognition;
+    if (!SR) { setNote('Voice input needs Chrome or Edge (speech recognition is not available in this browser). Type the goal instead.'); return; }
+    if (listening) { recRef.current?.stop(); return; }
+    const rec = new SR();
+    rec.lang = 'en-US'; rec.interimResults = false; rec.continuous = false;
+    rec.onresult = (ev: any) => { const said = String(ev.results[0][0].transcript).trim(); setGoal((g) => (g ? `${g} ${said}` : said)); setNote('Heard you. Check the text, then press Plan & run.'); };
+    rec.onerror = (ev: any) => setNote(`Voice input stopped (${ev.error}). Type the goal instead.`);
+    rec.onend = () => setListening(false);
+    recRef.current = rec; setListening(true); setNote(''); rec.start();
+  };
+  const attachShot = async (file?: File) => {
+    if (!file) return;
+    if (file.size > 4_000_000) { setNote('That image is over 4 MB. Use a smaller screenshot.'); return; }
+    setNote('Reading the screenshot…');
+    const dataUrl = await new Promise<string>((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result)); fr.readAsDataURL(file); });
+    try {
+      const res = await fetch('/api/describe-image', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ dataUrl }) });
+      const j = await res.json();
+      if (!res.ok) throw new Error(j?.error?.message ?? j?.message ?? 'The screenshot could not be read.');
+      setGoal((g) => `${g ? g + '\n' : ''}[From my screenshot: ${j.description}]`);
+      setNote('Screenshot described below. Edit the text if it is wrong, then press Plan & run.');
+    } catch (e) { setNote(`${(e as Error).message} Type the goal instead.`); }
+  };
   const [verify, setVerify] = useState<VerifyResult | null>(null);
   const [tamper, setTamper] = useState<Tamper | null>(null);
   const [remembered, setRemembered] = useState(false);
@@ -89,8 +116,13 @@ export function App() {
             <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} rows={4} placeholder="Describe your goal in plain language…" aria-label="Your goal" />
             <div className="row">
               <button className="btn primary" disabled={!allUp || goal.trim().length < 3} onClick={() => void d.start(goal.trim())} data-testid="run-btn">Plan &amp; run</button>
+              <button className={`btn ghost${listening ? ' on' : ''}`} onClick={toggleVoice} data-testid="voice-btn" aria-pressed={listening} title="Speak your goal (Chrome speech recognition, needs internet)">{listening ? '● Listening… stop' : '🎤 Speak'}</button>
+              <label className="btn ghost" data-testid="shot-btn" title="Attach a screenshot: the vision model describes it into the goal box for you to edit">
+                📎 Screenshot<input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void attachShot(e.target.files?.[0])} />
+              </label>
               <span className="muted">Every step gets a proof; the run ends in a signed receipt.</span>
             </div>
+            {note && <p className="muted small" role="status" data-testid="input-note">{note}</p>}
             <div className="row examples" aria-label="Example goals"><span className="muted small">Try an example:</span>
               {EXAMPLES.map((x) => (<button key={x.label} className="btn ghost" onClick={() => setGoal(x.goal)} data-testid={`example-${x.label.slice(0, 6).replace(/\W/g, '').toLowerCase()}`}>{x.label}</button>))}
             </div>

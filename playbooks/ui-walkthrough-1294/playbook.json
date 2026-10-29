@@ -1,0 +1,148 @@
+{
+  "format": "darby-playbook/1",
+  "slug": "ui-walkthrough-1294",
+  "name": "UI walkthrough 1294",
+  "description": "Saved from: Research the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email.",
+  "createdAt": "2026-10-29T09:45:01.393Z",
+  "createdFrom": {
+    "runId": "run_20261029_151448_ptxt",
+    "verdict": "VERIFIED_WITH_GAPS",
+    "goal": "Research the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email.",
+    "gaps": [
+      "cobalt",
+      "echo",
+      "helio"
+    ]
+  },
+  "params": [
+    {
+      "key": "urls",
+      "label": "Pages to read",
+      "type": "urls",
+      "default": [
+        "/startups/acme-ai",
+        "/startups/beta-labs",
+        "/startups/cobalt",
+        "/startups/delta",
+        "/startups/echo",
+        "/startups/fathom",
+        "/startups/gizmo",
+        "/startups/helio",
+        "/startups/ionic-ai",
+        "/startups/juno"
+      ],
+      "bind": {
+        "step": "s1",
+        "arg": "urls"
+      }
+    },
+    {
+      "key": "sheetName",
+      "label": "Name of the new sheet",
+      "type": "text",
+      "default": "Competitors",
+      "bind": {
+        "step": "s3",
+        "arg": "name"
+      }
+    }
+  ],
+  "steps": [
+    {
+      "id": "s1",
+      "title": "Read pages for the 10 AI startups",
+      "tool": "browser.read_page",
+      "args": {
+        "urls": [
+          "/startups/acme-ai",
+          "/startups/beta-labs",
+          "/startups/cobalt",
+          "/startups/delta",
+          "/startups/echo",
+          "/startups/fathom",
+          "/startups/gizmo",
+          "/startups/helio",
+          "/startups/ionic-ai",
+          "/startups/juno"
+        ]
+      },
+      "dependsOn": [],
+      "proof": "file_exists"
+    },
+    {
+      "id": "s2",
+      "title": "Extract pricing details and quotes from startup pages",
+      "tool": "reader.extract",
+      "args": {
+        "fromStep": "s1"
+      },
+      "dependsOn": [
+        "s1"
+      ],
+      "proof": "quote_in_page"
+    },
+    {
+      "id": "s3",
+      "title": "Create sheet Competitors with startup details",
+      "tool": "sheet.write",
+      "args": {
+        "name": "Competitors",
+        "fromStep": "s2"
+      },
+      "dependsOn": [
+        "s2"
+      ],
+      "proof": "sheet_readback"
+    },
+    {
+      "id": "s4",
+      "title": "Share Competitors sheet with the team email",
+      "tool": "share.grant",
+      "args": {
+        "fromStep": "s3",
+        "recipient": "team",
+        "role": "reader"
+      },
+      "dependsOn": [
+        "s3"
+      ],
+      "proof": "permission_present"
+    }
+  ],
+  "manifest": {
+    "tools": [
+      {
+        "tool": "browser.read_page",
+        "risk": "read"
+      },
+      {
+        "tool": "reader.extract",
+        "risk": "read"
+      },
+      {
+        "tool": "sheet.write",
+        "risk": "write_local"
+      },
+      {
+        "tool": "share.grant",
+        "risk": "external_effect"
+      }
+    ],
+    "reads": [
+      "the fixture web (allow-listed origin)"
+    ],
+    "writes": [
+      "a new Darby-owned spreadsheet (its name is a parameter)"
+    ],
+    "externalEffects": [
+      {
+        "tool": "share.grant",
+        "what": "share the document with the team email as reader"
+      }
+    ],
+    "recipients": [
+      "the team email from settings"
+    ],
+    "needsApproval": true
+  }
+}

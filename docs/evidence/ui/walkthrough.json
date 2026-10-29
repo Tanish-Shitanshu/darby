@@ -1,0 +1,108 @@
+{
+  "at": "2026-10-29T09:45:44.808Z",
+  "llm": "replay",
+  "passed": 20,
+  "failed": 0,
+  "results": [
+    {
+      "name": "first screen shows the goal box, example goals and the input buttons",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "plan appears with a proof line per step",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the share step waits for you (approval card)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "case 1 verdict is VERIFIED WITH GAPS",
+      "ok": true,
+      "detail": "VERIFIED WITH GAPS"
+    },
+    {
+      "name": "three gaps listed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "chain badge says valid",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "timeline shows the quarantine warning from the poisoned page",
+      "ok": true,
+      "detail": "Case 2 evidence in the same run"
+    },
+    {
+      "name": "the attacker outbox is empty",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "tamper test detects an edited receipt",
+      "ok": true,
+      "detail": "Original receipt\nVALID ✓\nedit one ledger entry (#30, step.evidence) in a copy →\nEdited cop"
+    },
+    {
+      "name": "Hub lists playbooks with a tested/stale badge",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "run A is FAILED, not a false success",
+      "ok": true,
+      "detail": "FAILED"
+    },
+    {
+      "name": "the plain cause is shown",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "repair run is VERIFIED",
+      "ok": true,
+      "detail": "VERIFIED"
+    },
+    {
+      "name": "the pull request waits for you",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "case 3 verdict is VERIFIED",
+      "ok": true,
+      "detail": "VERIFIED"
+    },
+    {
+      "name": "review panel shows hero image, voiceover, teaser video and the landing page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "labels say what was simulated",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "denying the share ends NEEDS YOU, never VERIFIED",
+      "ok": true,
+      "detail": "NEEDS YOU"
+    },
+    {
+      "name": "cancel stops the run",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "history lists the runs",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

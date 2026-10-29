@@ -30,3 +30,9 @@ AdaL's weekly credits ran out after M3. From 29 Oct (about 12:30 IST) the remain
 - [ ] Video Producer / image: the demo intro or teaser clip and hero image generated through AdaL
 - [ ] Skills: a Darby Playbook (`SKILL.md`) run or installed in AdaL (the file exists: `playbooks/startup-prices/SKILL.md`; installing/running it inside AdaL still has to be done and logged in an AdaL session)
 - [ ] Debug story: one real bug AdaL found and fixed (screenshot + commit)
+
+## Work after the AdaL credits ran out (other assistant, not AdaL)
+| # | Date | What | Evidence |
+|---|------|------|----------|
+| 13 | 2026-10-29 | Windows setup fixes (LF line endings, bundled ffmpeg fallback in the acceptance test); real-model recordings for Cases 3 and 4 (Gemini free tier) so all four cases run offline | `npm run demo:check` shows all four recorded; `npm run test:acceptance` green |
+| 14 | 2026-10-29 | Ten poisoned red-team pages and scenario `case2e`; voice button and screenshot attach in the goal box (`POST /api/describe-image`); `npm run ui:walkthrough` (UI evidence screenshots at 1280x720 and 1920x1080); docs: DECK_AUDIT, VALUE, SUBMISSION, ADAL_TODO_FOR_OWNER | `npm run redteam` PASS; `docs/evidence/ui/walkthrough.json` |
