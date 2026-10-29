@@ -38,7 +38,7 @@ if (groqKeys.length) {
   let i = 0;
   for (const k of groqKeys) {
     i++;
-    const r = await hit('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + k }, body: JSON.stringify({ model: env.GROQ_MODEL || 'llama-3.3-70b-versatile', max_tokens: 10, messages: [{ role: 'user', content: 'say ok' }] }) });
+    const r = await hit('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + k }, body: JSON.stringify({ model: env.GROQ_MODEL || 'openai/gpt-oss-120b', max_tokens: 10, messages: [{ role: 'user', content: 'say ok' }] }) });
     add('Groq key ' + i, r.status === 200, r.status === 200 ? 'answers' : r.status === 429 ? 'rate limited right now' : 'HTTP ' + r.status);
   }
 } else add('Groq keys', true, 'none set (optional backup: GROQ_API_KEY in .env)');

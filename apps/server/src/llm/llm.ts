@@ -177,7 +177,7 @@ export function createLlm(cfg: Config): Llm {
       // Order: Gemini -> Groq (several keys) -> Sarvam. Each tier that fails is rested for a short time; Gemini is retried every 90 s, so the run moves back to it as soon as its quota is back.
       const gem = e.GEMINI_API_KEY ? geminiProvider(e.GEMINI_API_KEY, [cfg.llm.geminiModel, ...cfg.llm.geminiFallbacks.filter((m) => m !== cfg.llm.geminiModel)]) : null;
       const groqKeys = groqKeysFromEnv(e);
-      const grq = groqKeys.length ? groqProvider(groqKeys, e.GROQ_MODEL || 'llama-3.3-70b-versatile') : null;
+      const grq = groqKeys.length ? groqProvider(groqKeys, e.GROQ_MODEL || 'openai/gpt-oss-120b') : null;
       const sar = e.SARVAM_API_KEY ? sarvamChatProvider(e.SARVAM_API_KEY, e.SARVAM_MODEL || 'sarvam-105b') : null;
       const tiers = [gem, grq, sar].filter((t): t is RawProvider => !!t);
       if (!tiers.length) throw new Error('LLM_PROVIDER=auto needs GEMINI_API_KEY, GROQ_API_KEY and/or SARVAM_API_KEY in .env');
@@ -205,7 +205,7 @@ export function createLlm(cfg: Config): Llm {
     case 'groq': {
       const keys = groqKeysFromEnv(e);
       if (!keys.length) throw new Error('LLM_PROVIDER=groq but GROQ_API_KEY is empty');
-      raw = groqProvider(keys, e.GROQ_MODEL || 'llama-3.3-70b-versatile');
+      raw = groqProvider(keys, e.GROQ_MODEL || 'openai/gpt-oss-120b');
       break;
     }
     case 'replay':
