@@ -1,7 +1,7 @@
 {
-  "at": "2026-10-29T12:08:08.859Z",
+  "at": "2026-10-29T12:59:12.399Z",
   "llm": "replay",
-  "passed": 23,
+  "passed": 25,
   "failed": 0,
   "results": [
     {
@@ -28,6 +28,16 @@
       "name": "three gaps listed",
       "ok": true,
       "detail": ""
+    },
+    {
+      "name": "a plain-language summary says what Darby did and found (cheapest and priciest)",
+      "ok": true,
+      "detail": "What Darby did and found Listen Darby read the pages and wrote the spreadsheet. 4 of 4 st"
+    },
+    {
+      "name": "the language picker, voice-chat switch and Listen button are there",
+      "ok": true,
+      "detail": "picker is on the home screen; Listen is on the summary"
     },
     {
       "name": "the spreadsheet is shown in the app with a download button",

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApprovalCard, EvidenceDrawer, History, Hub, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
 import { Icon, ResultHero, SheetPreview } from './extras';
+import { SummaryCard, useSpeaker, useVoiceConfig } from './voice';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 import demoGoals from '../../../fixtures/demo-goals.json';
 
@@ -38,6 +39,12 @@ export function App() {
   const [goal, setGoal] = useState('');
   const [pageUrl, setPageUrl] = useState('');
   const [showPage, setShowPage] = useState(false);
+  const voiceCfg = useVoiceConfig();
+  const speaker = useSpeaker();
+  const [lang, setLang] = useState('auto');
+  const [voiceReplies, setVoiceReplies] = useState(() => { try { return localStorage.getItem('darby.voiceReplies') !== 'off'; } catch { return true; } });
+  const [runMeta, setRunMeta] = useState<Record<string, { lang: string; voice: boolean }>>({});
+  const setReplies = (on: boolean) => { setVoiceReplies(on); if (!on) speaker.stop(); try { localStorage.setItem('darby.voiceReplies', on ? 'on' : 'off'); } catch { /* storage unavailable */ } };
   const [listening, setListening] = useState(false);
   const [note, setNote] = useState('');
   const recRef = useRef<any>(null);
@@ -71,12 +78,20 @@ export function App() {
         const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
         const audio = await new Promise<string>((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] ?? ''); fr.readAsDataURL(blob); });
         try {
-          const res = await fetch('/api/transcribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ audio, mime: blob.type }) });
+          const res = await fetch('/api/voice/transcribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ audio, mime: blob.type }) });
           const j = await res.json();
           if (!res.ok) throw new Error(j?.error?.message ?? j?.message ?? 'The recording could not be transcribed.');
           if (!j.transcript) { setNote('No speech was heard. Try again, or type the goal.'); return; }
-          setGoal((g) => (g ? `${g} ${j.transcript}` : j.transcript));
-          setNote('Transcribed. Check the text, then press Plan & run.');
+          const spoken = j.languageName && j.languageName !== 'English' ? ` (${j.languageName})` : '';
+          if (voiceReplies) {   // voice chat: the spoken request runs straight away and Darby answers aloud when it is done
+            setGoal(j.transcript);
+            setNote(`Heard${spoken}: “${j.transcript}”${j.english && j.english !== j.transcript ? ` → understood as: “${j.english}”` : ''}. Working on it…`);
+            void submit({ goal: j.transcript, lang: j.language, voice: true });
+          } else {
+            setGoal((g) => (g ? `${g} ${j.transcript}` : j.transcript));
+            setNote(`Heard${spoken}: “${j.transcript}”. Check the text, then press Plan & run.`);
+            if (j.language && j.language !== 'en-IN') setLang(j.language);
+          }
         } catch (e) { setNote(`${(e as Error).message} Type the goal instead.`); }
       };
       rec.start(); setListening(true); setNote('Recording… press the button again to stop (it stops by itself after 60 s).');
@@ -123,7 +138,13 @@ export function App() {
   useEffect(() => { if (runId && (drawer || isLaunch)) d.detail(runId).then(setDetail).catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [runId, drawer, isLaunch, hasReceipt, run?.timeline.length]);
 
   const go = (t: Tab) => { setTab(t); if (t === 'history') void d.refreshHistory(); if (t === 'memory') void d.loadMemory(); if (t === 'hub') void d.loadPlaybooks(); };
-  const submit = () => { if (allUp && goal.trim().length >= 3) void d.start(pageUrl.trim() ? `${goal.trim()}\n(Work on this page: ${pageUrl.trim()})` : goal.trim()); };
+  const submit = async (o?: { goal: string; lang: string; voice: boolean }) => {
+    const g = (o?.goal ?? goal).trim();
+    if (!allUp || g.length < 3) return;
+    const useLang = o?.lang ?? lang;
+    const r = await d.start(!o && pageUrl.trim() ? `${g}\n(Work on this page: ${pageUrl.trim()})` : g, useLang);
+    if (r) setRunMeta((m) => ({ ...m, [r.id]: { lang: useLang === 'auto' ? 'en-IN' : useLang, voice: !!o?.voice } }));
+  };
   const status = allUp ? (d.config?.llm.replayOnly ? 'Ready · offline replay' : 'Ready · live model') : d.server === 'down' ? 'Server offline' : 'Connecting…';
 
   const NAV: { id: Tab; label: string; icon: ReactNode }[] = [
@@ -189,7 +210,7 @@ export function App() {
 
             <section className="composer card" aria-labelledby="goal-h">
               <h2 id="goal-h" className="sr">What should Darby get done?</h2>
-              <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); submit(); } }}
+              <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(); } }}
                 rows={3} placeholder="Describe what you want done, e.g. “Research the top 5 AI startups and put their prices in a spreadsheet”" aria-label="Your goal" />
               {showPage && (
                 <label className="ctx"><span className="muted small">Start from this page (optional)</span>
@@ -204,10 +225,17 @@ export function App() {
                     {Icon.image}<span>Screenshot</span><input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void attachShot(e.target.files?.[0])} />
                   </label>
                   <button className={`iconbtn${showPage ? ' on' : ''}`} onClick={() => setShowPage((v) => !v)} aria-pressed={showPage} title="Choose the page Darby starts from">{Icon.link}<span>Page</span></button>
+                  <label className="selectwrap" title="Language you will speak or type. Auto-detect works for voice.">
+                    <span className="sr">Language</span>
+                    <select value={lang} onChange={(e) => setLang(e.target.value)} data-testid="lang-select" aria-label="Language">
+                      <option value="auto">Auto</option>
+                      {voiceCfg.languages.map((l) => <option key={l.code} value={l.code}>{l.native === l.name ? l.name : `${l.name} · ${l.native}`}</option>)}
+                    </select>
+                  </label>
+                  <button className={`iconbtn${voiceReplies ? ' on' : ''}`} onClick={() => setReplies(!voiceReplies)} aria-pressed={voiceReplies} data-testid="voice-replies" title="When you talk to Darby, it talks back and runs your request at once. Turn off to get text only.">{Icon.speaker}<span>{voiceReplies ? 'Voice chat on' : 'Voice chat off'}</span></button>
                 </div>
                 <div className="go">
-                  <span className="hint">Ctrl + Enter</span>
-                  <button className="btn primary big" disabled={!allUp || goal.trim().length < 3} onClick={submit} data-testid="run-btn">Plan &amp; run {Icon.arrow}</button>
+                  <button className="btn primary big" disabled={!allUp || goal.trim().length < 3} onClick={() => void submit()} data-testid="run-btn" title="Ctrl + Enter">Plan &amp; run {Icon.arrow}</button>
                 </div>
               </div>
               {note && <p className="muted small note" role="status" data-testid="input-note">{note}</p>}
@@ -258,6 +286,7 @@ export function App() {
               </div>
               <div hidden={rtab !== 'result'} className="stack">
                 {run.receipt && <ResultHero run={run} />}
+                {run.receipt && <SummaryCard runId={run.id} lang={runMeta[run.id]?.lang ?? 'en-IN'} sarvam={voiceCfg.sarvam} autoSpeak={voiceReplies && !!runMeta[run.id]?.voice} speaker={speaker} />}
                 {run.receipt && <SheetPreview run={run} />}
                 {isLaunch && <ReviewPanel run={run} detail={detail} />}
                 {run.receipt && (
@@ -278,6 +307,7 @@ export function App() {
         {tab === 'memory' && (<main className="page"><PageHead title="Memory" sub="Preferences you control. View, add and delete." /><Memory items={d.memory} onAdd={(k, v) => void d.addMemory(k, v)} onDelete={(id) => void d.deleteMemory(id)} /></main>)}
 
         {run && tab === 'run' && <EvidenceDrawer run={run} stepId={drawer} detail={detail} onClose={() => setDrawer(null)} onShot={setShot} />}
+        {speaker.speaking && <button className="stop-fab btn danger" onClick={speaker.stop} data-testid="stop-speaking-global">Stop speaking</button>}
         <Lightbox src={shot} onClose={() => setShot(null)} />
       </div>
     </div>

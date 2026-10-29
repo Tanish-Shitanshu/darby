@@ -308,3 +308,17 @@ Video understanding of third-party video; Slack, Notion and Google connectors; c
 ## 14. Where to read more (all in `docs/`)
 
 `PS1.md` (the problem statement), `DECK.md` (our deck as text), `PS1_COMPLIANCE.md` (every PDF line vs the product), `DECK_AUDIT.md` (every slide claim vs the code), `ARCHITECTURE.md` (diagram), `SPEC.md`, `DEMO_SCRIPT.md`, `VALUE.md` (users, value, future), `SUBMISSION.md` (deliverables map), `ADAL_EVIDENCE.md` and `ADAL_TODO_FOR_OWNER.md`, `PROGRESS.md`, `HANDOFF.md`, `evidence/` (screenshots and red-team reports).
+
+---
+
+## 15. Update: Sarvam AI voice chat (agentic voice in Indian languages)
+
+Added last, as the headline feature. Code: `apps/server/src/voice/` (client and summary builder), routes in `apps/server/src/api.ts` (`/api/voice/config`, `/api/voice/transcribe`, `/api/voice/speak`, `/api/runs/:id/summary`), UI in `apps/companion/src/voice.tsx` and the composer in `App.tsx`.
+
+**Flow:** microphone → Sarvam Saaras speech-to-text (language auto-detected) → Sarvam translation to English for the planner → the normal Darby pipeline (plan, real tabs, verification, signed receipt) → a closing **summary built from the signed receipt and the verified spreadsheet** (what was done, cheapest, most expensive, average, which items are gaps, anything blocked) → Sarvam translation back to the user's language → Sarvam Bulbul text-to-speech.
+
+**Controls:** "Voice chat on" means speak, run and be answered aloud; a Stop speaking button is always visible while it talks. "Voice chat off" means text only (speech just fills the box; the summary is written, with an optional Listen button). A language picker (Auto or a specific language) handles typed goals.
+
+**Setup:** put `SARVAM_API_KEY=...` in your own `.env` (never in chat, docs or commits). Without a key everything still works in English. No billing was enabled.
+
+**Honesty notes:** it was built against Sarvam's documented REST API and tested with a mocked API (unit tests) and in the UI; run it once with a real key before demo day. The planner and the recorded model answers stay English, so existing demos and recordings are unaffected.

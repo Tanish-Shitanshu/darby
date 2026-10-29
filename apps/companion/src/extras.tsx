@@ -12,6 +12,7 @@ export const Icon = {
   hub: <I><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></I>,
   sheet: <I><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M3 10h18M9 4v16" /></I>,
   shield: <I><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" /><path d="M8.5 12.2l2.4 2.4 4.6-4.9" /></I>,
+  speaker: <I size={17}><path d="M11 5L6 9H3v6h3l5 4V5zM15.5 8.5a5 5 0 010 7M18.5 5.5a9 9 0 010 13" /></I>,
   code: <I><path d="M8 8l-4 4 4 4M16 8l4 4-4 4M14 5l-4 14" /></I>,
   rocket: <I><path d="M5 15c-1 1-1.5 4-1.5 4s3-.5 4-1.5M14 4c4 0 6 2 6 6-2.5 3.5-6 6-9 7l-4-4c1-3 3.5-6.5 7-9z" /><circle cx="15" cy="9" r="1.4" /></I>,
   form: <I><rect x="4" y="3" width="16" height="18" rx="2" /><path d="M8 8h8M8 12h8M8 16h5" /></I>,

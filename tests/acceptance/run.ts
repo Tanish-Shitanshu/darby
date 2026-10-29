@@ -18,6 +18,7 @@ import type { RawProvider } from '../../apps/server/src/llm/types';
 import { checkPlaybook } from '../../apps/server/src/playbooks/check';
 import { loadPlaybook, playbookFromRun, PlaybookError, savePlaybook } from '../../apps/server/src/playbooks/playbook';
 import { verifyBundle, type SignedReceipt } from '../../apps/server/src/ledger/receipt';
+import { buildSummary } from '../../apps/server/src/voice/summary';
 import { htmlToText } from '../../apps/server/src/verifier/verifier';
 import { ACCEPT_PORT, expected, readSheetRows, startHarness, type Check, type Harness } from './harness';
 
@@ -233,6 +234,8 @@ const scenarios: Scenario[] = [
       ok('10/10 rows read back', !!rb && /10\/10 data rows/.test(rb.evidenceSummary), rb?.evidenceSummary ?? 'no read-back step');
       const gt = await groundTruth(h, await checkSheet(h, id, run.plan));
       ok('prices + quotes equal fixtures/expected.json', gt.ok, gt.detail);
+      const sum = await buildSummary(h.manager.deps, id, 'en-IN');
+      ok('the closing summary reports what was found, computed from the sheet', /Cheapest: Gizmo at \$19/.test(sum.english.highlights.join(' ')) && /Most expensive: Delta at \$99/.test(sum.english.highlights.join(' ')) && /Cobalt|Echo|Helio/.test(sum.english.highlights.join(' ')), sum.english.highlights.slice(0, 3).join(' | ').slice(0, 200));
       ok('approval was requested for share.grant only', JSON.stringify(h.approvals) === JSON.stringify(['share.grant']), `approvals: ${h.approvals.join(', ') || 'none'}`);
       const ev = eventsOf(h, id).map((e) => e.type);
       ok('share waited for approval before it ran', ev.indexOf('approval.requested') > -1 && ev.indexOf('approval.requested') < ev.indexOf('approval.resolved'), 'approval.requested -> approval.resolved');

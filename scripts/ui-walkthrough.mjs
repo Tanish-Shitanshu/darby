@@ -69,7 +69,7 @@ const startExample = async (key) => {
 try {
   console.log('\n▶ first run');
   await page.goto(base); await tid('goal-box').waitFor();
-  check('first screen shows the goal box, example goals and the input buttons', (await tid('run-btn').count()) === 1 && (await tid('voice-btn').count()) === 1 && (await tid('shot-btn').count()) === 1);
+  check('first screen shows the goal box, example goals and the input buttons', (await tid('run-btn').count()) === 1 && (await tid('voice-btn').count()) === 1 && (await tid('shot-btn').count()) === 1 && (await tid('lang-select').count()) === 1 && (await tid('voice-replies').count()) === 1);
   await shot('00-start');
 
   console.log('\n▶ case 1: research to sheet, share needs approval');
@@ -84,6 +84,9 @@ try {
   await waitVerdict();
   check('case 1 verdict is VERIFIED WITH GAPS', (await verdictText()).includes('GAPS'), await verdictText());
   check('three gaps listed', /3 gaps/i.test(await tid('gaps').innerText()));
+  await tid('summary-card').waitFor({ timeout: 20_000 });
+  check('a plain-language summary says what Darby did and found (cheapest and priciest)', /Cheapest: Gizmo/.test(await tid('summary-card').innerText()), (await tid('summary-card').innerText()).slice(0, 90).replace(/\s+/g, ' '));
+  check('the language picker, voice-chat switch and Listen button are there', (await tid('lang-select').count()) === 0 && (await tid('listen-btn').count()) === 1, 'picker is on the home screen; Listen is on the summary');
   check('the spreadsheet is shown in the app with a download button', (await tid('sheet-preview').count()) === 1 && (await tid('download-sheet').count()) === 1);
   check('chain badge says valid', /valid/.test(await tid('chain-badge').innerText()));
   check('timeline shows the quarantine warning from the poisoned page', /(instruction|untrusted|hostile|flag)/i.test(await tid('timeline').innerText()), 'Case 2 evidence in the same run');

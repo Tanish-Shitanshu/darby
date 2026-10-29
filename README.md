@@ -18,6 +18,23 @@ Give it a goal. It plans with proof, works in real browser tabs, **re-checks eve
 
 ---
 
+## 🗣️ Voice chat in Indian languages (powered by Sarvam AI)
+
+Talk to Darby in **Hindi, Tamil, Telugu, Bengali, Kannada, Malayalam, Marathi, Gujarati, Punjabi, Odia or English**. Darby does not just transcribe: it **does the job and reports back**.
+
+> *“Research ten AI startups and put their prices in an Excel sheet”* (spoken in any supported language)
+> → Sarvam **Saaras** transcribes it and detects the language → Sarvam **translates** it for the planner → Darby researches, verifies and writes the `.xlsx` → Darby writes a **summary of what it did and the key findings** (cheapest, most expensive, average, which prices could not be confirmed) → Sarvam translates the summary back and **Bulbul speaks it**.
+
+| | |
+|---|---|
+| **Voice chat on** | You speak, it runs at once, and it answers aloud. A **Stop speaking** button is always on screen. |
+| **Voice chat off** | Everything stays text: speech fills the goal box for you to check, and the summary is written, with a **Listen** button if you want it read out. |
+| **Typed goals** | Pick a language (or Auto): non-English goals are translated for the planner, the summary comes back in your language. |
+| **Honest and safe** | Summary numbers come from the signed receipt and the verified sheet, computed by code. The planner still only sees the (translated) goal, never page text; the summary can never trigger an action. |
+| **Needs** | `SARVAM_API_KEY` in your own `.env`. Without it Darby still works in English (voice falls back to the Gemini model, replies use the browser voice). |
+
+---
+
 ## Why Darby exists
 
 AI agents click around the web and then say **“Done. All 10 added.”** Often they guessed three prices, obeyed a hidden instruction on a page, or saved nothing at all, and nobody checked. Darby is built around one idea: **an agent’s own word is not proof.**
