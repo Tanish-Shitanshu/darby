@@ -3,8 +3,14 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "workspaces": ["packages/*", "apps/*", "fixtures/site"],
-  "engines": { "node": ">=20" },
+  "workspaces": [
+    "packages/*",
+    "apps/*",
+    "fixtures/site"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "concurrently -k -n server,companion,fixtures -c cyan,magenta,yellow \"npm run dev -w @darby/server\" \"npm run dev -w @darby/companion\" \"npm run fixtures\"",
     "typecheck": "npm run typecheck --workspaces --if-present",
@@ -13,10 +19,13 @@
     "test:acceptance": "node scripts/acceptance.mjs",
     "fixtures": "node fixtures/site/server.mjs",
     "fixtures:check": "node scripts/fixtures-check.mjs",
-    "fixtures:selfcheck": "node fixtures/site/selfcheck.mjs"
+    "fixtures:selfcheck": "node fixtures/site/selfcheck.mjs",
+    "llm:ping": "tsx scripts/llm-ping.ts",
+    "guard": "bash scripts/guard-secrets.sh"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
+    "tsx": "^4.23.15",
     "typescript": "^5.9.3",
     "vitest": "^3.2.4"
   }
