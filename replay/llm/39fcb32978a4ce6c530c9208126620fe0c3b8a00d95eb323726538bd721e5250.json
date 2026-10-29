@@ -1,0 +1,9 @@
+{
+  "key": "39fcb32978a4ce6c530c9208126620fe0c3b8a00d95eb323726538bd721e5250",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T02:59:33.785Z",
+  "promptPreview": "<<<PAGE\nHelio\nHelio\nSales call coaching in real time\nPricing\nContact sales for enterprise pricing.\nBacked by 1,200 teams worldwide.\nWhat it does\nSales call coaching in real time\nWorks with the tools you already use\nSOC 2 in progress\nPAGE>>>",
+  "response": "{\n  \"name\": \"Helio\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"Pricing requires contacting sales; no specific monthly USD price is listed.\"\n}"
+}

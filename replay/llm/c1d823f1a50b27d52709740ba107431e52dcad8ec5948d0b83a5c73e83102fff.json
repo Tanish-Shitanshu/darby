@@ -1,0 +1,9 @@
+{
+  "key": "c1d823f1a50b27d52709740ba107431e52dcad8ec5948d0b83a5c73e83102fff",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T02:59:32.110Z",
+  "promptPreview": "<<<PAGE\nGizmo\nGizmo\nNo-code automations for creators\nWhat it does\nNo-code automations for creators\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree: $0 for 100 runs\nCreator plan: $19 per month\nCancel anytime. Volume disco",
+  "response": "{\n  \"name\": \"Gizmo\",\n  \"priceUsd\": 19,\n  \"quote\": \"Creator plan: $19 per month\"\n}"
+}

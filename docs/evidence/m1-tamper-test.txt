@@ -1,0 +1,8 @@
+
+verdict: VERIFIED_WITH_GAPS [REPLAY]  ·  run run_20261029_083630_yixd  ·  gaps: cobalt, echo, helio  ·  blocked attempts: 0
+
+INVALID ✗
+exit=
+verdict: VERIFIED [REPLAY]  ·  run run_20261029_083630_yixd  ·  gaps: cobalt, echo, helio  ·  blocked attempts: 0
+
+INVALID ✗

@@ -33,12 +33,16 @@ export class ReplayStore {
   }
 }
 
+/** Fixture origins differ per machine/port; recordings must not. */
+export const FIXTURE_PLACEHOLDER = 'http://fixture.local';
+export const normalizeOrigins = (t: string): string => t.replace(/http:\/\/(?:localhost|127\.0\.0\.1):\d+/g, FIXTURE_PLACEHOLDER);
+
 export function requestKey(req: LlmRequest): string {
   return sha256(
     canonicalJson({
       role: req.role,
-      system: req.system,
-      prompt: req.prompt,
+      system: normalizeOrigins(req.system),
+      prompt: normalizeOrigins(req.prompt),
       images: req.imageKeyHint ? [`hint:${req.imageKeyHint}`] : (req.images ?? []).map((i) => sha256(i.data)),
     }),
   );
@@ -86,24 +90,27 @@ export function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 export class Llm {
   stats = { live: 0, replay: 0 };
   private limiter: Limiter;
+  private fixtureBase: string;
   constructor(
     public readonly providerName: string,
     public readonly model: string,
     private raw: RawProvider | null,
     private store: ReplayStore,
-    opts: { rpm: number; concurrency: number },
+    opts: { rpm: number; concurrency: number; fixtureBase?: string },
   ) {
+    this.fixtureBase = opts.fixtureBase ?? 'http://localhost:4010';
     this.limiter = new Limiter(opts.rpm, opts.concurrency);
   }
 
   get replayOnly(): boolean { return this.raw === null; }
+  private localize(t: string): string { return t.split(FIXTURE_PLACEHOLDER).join(this.fixtureBase.replace(/\/$/, '')); }
 
   async complete(req: LlmRequest, signal?: AbortSignal): Promise<LlmResult> {
     const key = requestKey(req);
     const hit = this.store.get(key);
     if (hit) {
       this.stats.replay++;
-      return { text: hit.response, source: 'replay', provider: hit.provider, model: hit.model, key };
+      return { text: this.localize(hit.response), source: 'replay', provider: hit.provider, model: hit.model, key };
     }
     if (!this.raw) throw new ReplayMissError(key, req.role);
 
@@ -117,9 +124,9 @@ export class Llm {
     this.stats.live++;
     this.store.put({
       key, role: req.role, provider: this.raw.name, model: out.model, recordedAt: new Date().toISOString(),
-      promptPreview: req.prompt.slice(0, 240), response: out.text,
+      promptPreview: normalizeOrigins(req.prompt).slice(0, 240), response: normalizeOrigins(out.text),
     });
-    return { text: out.text, source: 'live', provider: this.raw.name, model: out.model, key };
+    return { text: this.localize(normalizeOrigins(out.text)), source: 'live', provider: this.raw.name, model: out.model, key };
   }
 
   private async withRetry<T>(fn: () => Promise<T>, signal?: AbortSignal): Promise<T> {
@@ -141,7 +148,7 @@ export class Llm {
 
 export function createLlm(cfg: Config): Llm {
   const store = new ReplayStore({ curated: cfg.replayCuratedDir, record: cfg.replayRecordDir });
-  const opts = { rpm: cfg.llm.rpm, concurrency: cfg.llm.concurrency };
+  const opts = { rpm: cfg.llm.rpm, concurrency: cfg.llm.concurrency, fixtureBase: cfg.fixtureBase };
   const e = process.env;
   let raw: RawProvider | null = null;
   switch (cfg.llm.provider) {
@@ -183,7 +190,7 @@ export interface JsonCall<T> { ok: true; value: T; result: LlmResult }
 export interface JsonFail { ok: false; reason: string; result?: LlmResult }
 
 /** Call a role and validate the answer against a zod schema. Never throws for bad model output, only for transport errors. */
-export async function completeJson<T>(llm: Llm, req: LlmRequest, schema: ZodType<T>, signal?: AbortSignal): Promise<JsonCall<T> | JsonFail> {
+export async function completeJson<T>(llm: Llm, req: LlmRequest, schema: ZodType<T, any, any>, signal?: AbortSignal): Promise<JsonCall<T> | JsonFail> {
   const result = await llm.complete(req, signal);
   let parsed: unknown;
   try {

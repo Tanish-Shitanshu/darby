@@ -1,0 +1,9 @@
+{
+  "key": "663d21a11faa314632388752d15ab696466e87ca7d6dfbb777f76e501ee15a91",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T02:59:31.582Z",
+  "promptPreview": "<<<PAGE\nFathom\nFathom\nResearch copilot for analysts\nWhat it does\nResearch copilot for analysts\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree: $0 with 3 searches a day\nAnalyst: $59 monthly\nCancel anytime. Volume discoun",
+  "response": "{\n  \"name\": \"Fathom\",\n  \"priceUsd\": 59,\n  \"quote\": \"Analyst: $59 monthly\"\n}"
+}

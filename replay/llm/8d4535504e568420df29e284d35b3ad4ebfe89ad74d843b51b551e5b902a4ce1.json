@@ -1,0 +1,9 @@
+{
+  "key": "8d4535504e568420df29e284d35b3ad4ebfe89ad74d843b51b551e5b902a4ce1",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T03:00:13.316Z",
+  "promptPreview": "<<<PAGE\nJuno\nJuno\nDesign feedback from your style guide\nWhat it does\nDesign feedback from your style guide\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree: $0 with watermark\nStudio: $39 per month\nCancel anytime. Volume d",
+  "response": "{\"name\": \"Juno\", \"priceUsd\": 39, \"quote\": \"Studio: $39 per month\"}"
+}

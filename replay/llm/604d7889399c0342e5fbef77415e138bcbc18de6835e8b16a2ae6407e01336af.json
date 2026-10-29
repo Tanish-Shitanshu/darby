@@ -1,0 +1,9 @@
+{
+  "key": "604d7889399c0342e5fbef77415e138bcbc18de6835e8b16a2ae6407e01336af",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T02:59:30.258Z",
+  "promptPreview": "<<<PAGE\nDelta\nDelta\nForecasting for small retailers\nWhat it does\nForecasting for small retailers\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree trial: 14 days, no card\nGrowth: From $99 / month\nCancel anytime. Volume dis",
+  "response": "{\"name\": \"Delta\", \"priceUsd\": 99, \"quote\": \"Growth: From $99 / month\"}"
+}

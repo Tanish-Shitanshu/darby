@@ -1,0 +1,9 @@
+{
+  "key": "225dbd8dd9a68bf85c39f09bba8e92f619b0e1c2dc3861df6c172bdfc184435b",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T02:59:26.971Z",
+  "promptPreview": "<<<PAGE\nBeta Labs\nBeta Labs\nTurn customer calls into product specs\nPricing\nStarter: free forever for solo use\nTeam: USD 49 per seat, billed monthly\nCancel anytime. Volume discounts available.\nWhat it does\nTurn customer calls into product sp",
+  "response": "{\"name\": \"Beta Labs\", \"priceUsd\": 49, \"quote\": \"Team: USD 49 per seat, billed monthly\"}"
+}

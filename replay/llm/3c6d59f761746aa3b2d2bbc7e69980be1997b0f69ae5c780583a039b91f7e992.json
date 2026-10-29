@@ -1,0 +1,9 @@
+{
+  "key": "3c6d59f761746aa3b2d2bbc7e69980be1997b0f69ae5c780583a039b91f7e992",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T02:59:29.544Z",
+  "promptPreview": "<<<PAGE\nEcho\nEcho\nVoice agents for appointment booking\nPricing\nRequest a quote and our team will reach out.\nBacked by 1,200 teams worldwide.\nWhat it does\nVoice agents for appointment booking\nWorks with the tools you already use\nSOC 2 in pro",
+  "response": "{\"name\": \"Echo\", \"priceUsd\": null, \"quote\": null}"
+}

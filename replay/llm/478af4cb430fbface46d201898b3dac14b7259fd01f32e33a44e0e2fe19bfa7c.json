@@ -1,0 +1,9 @@
+{
+  "key": "478af4cb430fbface46d201898b3dac14b7259fd01f32e33a44e0e2fe19bfa7c",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T02:59:28.319Z",
+  "promptPreview": "<<<PAGE\nCobalt\nCobalt\nAI inbox triage for support teams\nWhat it does\nAI inbox triage for support teams\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nPricing coming soon. Join the waitlist.\nBacked by 1,200 teams worldwide.\nP",
+  "response": "{\"name\": \"Cobalt\", \"priceUsd\": null, \"quote\": null}"
+}

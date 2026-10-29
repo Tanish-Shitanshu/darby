@@ -184,6 +184,11 @@ export function createRepo(db: Db) {
       return db.prepare('SELECT * FROM playbooks ORDER BY created_at DESC, rowid DESC').all().map((r: any) => ({ id: r.id, slug: r.slug, name: r.name, json: JSON.parse(r.json), ciPassed: !!r.ci_passed, createdAt: r.created_at }));
     },
 
+    /* ---------------- introspection ---------------- */
+    listTables(): string[] {
+      return (db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all() as { name: string }[]).map((t) => t.name);
+    },
+
     /* ---------------- settings ---------------- */
     getSetting(key: string): string | null {
       const r = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as { value: string } | undefined;

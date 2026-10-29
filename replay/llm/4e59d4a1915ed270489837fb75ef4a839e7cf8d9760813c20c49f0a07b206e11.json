@@ -1,0 +1,9 @@
+{
+  "key": "4e59d4a1915ed270489837fb75ef4a839e7cf8d9760813c20c49f0a07b206e11",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T03:00:26.549Z",
+  "promptPreview": "<<<PAGE\nIonic AI\nIonic AI\nContract review for startups\nWhat it does\nContract review for startups\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree: $0, 2 documents\nBusiness: USD 79 / month\nCancel anytime. Volume discounts ",
+  "response": "{\"name\": \"Ionic AI\", \"priceUsd\": 79, \"quote\": \"Business: USD 79 / month\"}"
+}

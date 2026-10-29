@@ -16,12 +16,15 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "test": "vitest run",
     "check": "npm run typecheck && npm run test",
-    "test:acceptance": "node scripts/acceptance.mjs",
+    "test:acceptance": "tsx tests/acceptance/run.ts",
     "fixtures": "node fixtures/site/server.mjs",
     "fixtures:check": "node scripts/fixtures-check.mjs",
     "fixtures:selfcheck": "node fixtures/site/selfcheck.mjs",
     "llm:ping": "tsx scripts/llm-ping.ts",
-    "guard": "bash scripts/guard-secrets.sh"
+    "guard": "bash scripts/guard-secrets.sh",
+    "verify-receipt": "tsx scripts/verify-receipt.ts",
+    "db:reset": "tsx scripts/db-reset.ts",
+    "replay:curate": "tsx scripts/replay-curate.ts"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

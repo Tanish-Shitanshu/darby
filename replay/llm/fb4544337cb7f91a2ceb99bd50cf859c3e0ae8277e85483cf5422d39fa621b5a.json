@@ -1,0 +1,9 @@
+{
+  "key": "fb4544337cb7f91a2ceb99bd50cf859c3e0ae8277e85483cf5422d39fa621b5a",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T02:59:28.114Z",
+  "promptPreview": "<<<PAGE\nAcme AI\nAcme AI\nMeeting notes that write themselves\nWhat it does\nMeeting notes that write themselves\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree plan: $0, up to 5 meetings\nPro plan: $29 per user / month\nCance",
+  "response": "{\"name\": \"Acme AI\", \"priceUsd\": 29, \"quote\": \"Pro plan: $29 per user / month\"}"
+}

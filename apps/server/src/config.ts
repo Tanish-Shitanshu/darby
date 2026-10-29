@@ -59,7 +59,7 @@ export function getConfig(): Config {
     profileDir: path.join(darbyDir, 'profile'),
     workspaceDir: path.resolve(e.DARBY_WORKSPACE || path.join(ROOT, 'workspace')),
     replayCuratedDir: path.join(ROOT, 'replay', 'llm'),
-    replayRecordDir: path.join(darbyDir, 'replay'),
+    replayRecordDir: path.resolve(e.DARBY_REPLAY_DIR || path.join(ROOT, '.darby', 'replay')),
     migrationsDir: path.join(ROOT, 'apps', 'server', 'db', 'migrations'),
     llm: {
       provider: (e.LLM_PROVIDER || 'replay').toLowerCase(),
