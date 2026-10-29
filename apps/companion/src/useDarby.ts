@@ -102,16 +102,16 @@ export function useDarby() {
     };
   }, [refreshHistory]);
 
-  const start = useCallback(async (goal: string, lang?: string): Promise<{ id: string; understood: string | null } | null> => {
+  const start = useCallback(async (goal: string, lang?: string): Promise<{ id: string; understood: string | null; language: string } | null> => {
     setError(null);
     starting.current = true;
     setCurrentId(null);
     try {
-      const { id, understood } = await call<{ id: string; understood: string | null }>('/api/runs', { method: 'POST', body: JSON.stringify({ goal, ...(lang ? { lang } : {}) }) });
+      const { id, understood, language } = await call<{ id: string; understood: string | null; language?: string }>('/api/runs', { method: 'POST', body: JSON.stringify({ goal, ...(lang ? { lang } : {}) }) });
       starting.current = false;
       setCurrentId(id);
       setRuns((r) => (r[id] ? r : { ...r, [id]: foldEvents(id, []) }));
-      return { id, understood: understood ?? null };
+      return { id, understood: understood ?? null, language: language ?? 'en-IN' };
     } catch (e) { starting.current = false; setError((e as Error).message); return null; }
   }, []);
 

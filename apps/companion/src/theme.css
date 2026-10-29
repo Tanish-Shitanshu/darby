@@ -124,3 +124,70 @@ textarea:focus, input:focus { border-color: var(--brand); box-shadow: 0 0 0 4px 
 .drawer-close { flex: none; }
 .banner { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin: 0 0 16px; padding: 14px 18px; border: 1px solid #efcfca; background: #fdf3f1; border-radius: 18px; color: var(--ink); }
 .banner .btn { margin-left: auto; }
+
+/* ----- Dabo, the voice companion (buddy.tsx) ----- */
+.buddy { position: fixed; left: 0; top: 0; z-index: 130; pointer-events: none; will-change: transform; }
+.buddy-pop { position: relative; width: 84px; height: 84px; animation: dabo-in .45s cubic-bezier(.2,1.5,.4,1) both; transform-origin: 50% 90%; }
+.buddy.leaving .buddy-pop { animation: dabo-out .55s ease-in both; }
+@keyframes dabo-in { from { transform: scale(.2) translateY(20px); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes dabo-out { to { transform: scale(.2) translateY(20px) rotate(8deg); opacity: 0; } }
+.buddy-svg { display: block; overflow: visible; filter: drop-shadow(0 10px 14px rgba(15,122,92,.28)); }
+.dabo-shadow { fill: rgba(21,21,43,.16); }
+.dabo-body { transform-box: fill-box; transform-origin: 50% 100%; animation: dabo-bob 2.4s ease-in-out infinite; }
+@keyframes dabo-bob { 0%,100% { transform: translateY(0) scale(1,1); } 50% { transform: translateY(-3px) scale(1.015,.985); } }
+.dabo-face { fill: #0b3d2e; opacity: .92; }
+.dabo-white { fill: #fff; } .dabo-pupil { fill: #12122a; } .dabo-cheek { fill: #ff9fb0; opacity: .55; }
+.dabo-eyes { transition: transform .08s linear; }
+.dabo-eye { transform-box: fill-box; transform-origin: 50% 50%; animation: dabo-blink 5s infinite; }
+@keyframes dabo-blink { 0%,92%,100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.dabo-ant path, .dabo-arm { fill: none; stroke: #0f7a5c; stroke-width: 4; stroke-linecap: round; }
+.dabo-ant { transform-box: fill-box; transform-origin: 50% 100%; animation: dabo-sway 3s ease-in-out infinite; }
+.dabo-ant-r { animation-delay: -1.2s; }
+@keyframes dabo-sway { 0%,100% { transform: rotate(-5deg); } 50% { transform: rotate(6deg); } }
+.dabo-arm { transform-box: fill-box; transform-origin: 50% 0%; }
+.dabo-mouth { fill: none; stroke: #7ee2a8; stroke-width: 3.2; stroke-linecap: round; }
+.dabo-mouth-open { fill: #7ee2a8; opacity: 0; transform-box: fill-box; transform-origin: 50% 50%; }
+
+/* speaking: the mouth opens and closes, sound waves pulse, a speaker badge shows */
+.buddy-speaking .dabo-mouth { opacity: 0; }
+.buddy-speaking .dabo-mouth-open { opacity: 1; animation: dabo-talk .34s ease-in-out infinite alternate; }
+@keyframes dabo-talk { from { transform: scaleY(.25) scaleX(.8); } to { transform: scaleY(1.1) scaleX(1.1); } }
+.buddy-speaking .dabo-body { animation-duration: .9s; }
+.buddy-speaking .dabo-arm-r { animation: dabo-wave .6s ease-in-out infinite alternate; }
+@keyframes dabo-wave { from { transform: rotate(-10deg); } to { transform: rotate(24deg); } }
+.dabo-waves path { fill: none; stroke: #0f7a5c; stroke-width: 3.2; stroke-linecap: round; animation: dabo-wave-pulse 1s ease-in-out infinite; }
+.dabo-waves path:nth-child(2) { animation-delay: .25s; }
+@keyframes dabo-wave-pulse { 0%,100% { opacity: .25; } 50% { opacity: 1; } }
+.buddy-badge { position: absolute; right: -6px; bottom: 4px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; background: var(--brand); box-shadow: 0 4px 10px rgba(21,21,43,.3); animation: dabo-badge 1s ease-in-out infinite; }
+@keyframes dabo-badge { 0%,100% { transform: scale(1); } 50% { transform: scale(1.14); } }
+
+/* listening: antennae stand up and rings ripple out */
+.buddy-listening .dabo-ant { animation: dabo-perk .5s ease-in-out infinite alternate; }
+@keyframes dabo-perk { from { transform: rotate(-12deg) scaleY(1.08); } to { transform: rotate(10deg) scaleY(1.08); } }
+.buddy-rings i { position: absolute; left: 50%; top: 56%; width: 80px; height: 80px; margin: -40px 0 0 -40px; border-radius: 50%; border: 2px solid rgba(63,191,142,.7); animation: dabo-ring 1.6s ease-out infinite; }
+.buddy-rings i:nth-child(2) { animation-delay: .5s; } .buddy-rings i:nth-child(3) { animation-delay: 1s; }
+@keyframes dabo-ring { from { transform: scale(.6); opacity: .9; } to { transform: scale(1.7); opacity: 0; } }
+
+/* thinking / working: eyes drift up, dots count */
+.buddy-thinking .dabo-body, .buddy-working .dabo-body { animation-duration: 1.2s; }
+.buddy-dots { position: absolute; left: 50%; top: -14px; transform: translateX(-50%); display: flex; gap: 4px; }
+.buddy-dots i { width: 7px; height: 7px; border-radius: 50%; background: #ffb938; animation: dabo-dot 1s ease-in-out infinite; }
+.buddy-dots i:nth-child(2) { animation-delay: .15s; } .buddy-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes dabo-dot { 0%,100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(-5px); opacity: 1; } }
+
+/* attention: a small hop to get noticed */
+.buddy-attention .dabo-body { animation: dabo-hop .8s ease-in-out infinite; }
+@keyframes dabo-hop { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-12px); } 60% { transform: translateY(-12px); } }
+
+.buddy-bubble { position: absolute; left: 70px; top: -6px; width: max-content; max-width: min(280px, 60vw); padding: 9px 14px; border-radius: 16px 16px 16px 4px; background: #fff; color: var(--ink); border: 1px solid var(--line); box-shadow: var(--shadow-2); font-size: .875rem; line-height: 1.4; transform: translateY(-100%); pointer-events: auto; }
+.buddy-stop { margin-left: 10px; border: 0; border-radius: 999px; padding: 2px 10px; background: #fdecea; color: #a1281d; font: inherit; font-weight: 600; cursor: pointer; }
+.voice-fab { position: fixed; left: 24px; bottom: 24px; z-index: 110; display: inline-flex; align-items: center; gap: 8px; height: 48px; padding: 0 20px; border-radius: 999px; border: 0; background: var(--brand); color: #fff; font-weight: 550; box-shadow: var(--shadow-2); cursor: pointer; }
+.voice-fab:hover { background: #33335c; }
+.voice-fab.on { background: #c0392b; animation: dabo-badge 1s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .buddy *, .buddy-pop, .voice-fab { animation: none !important; }
+}
+
+.buddy[data-side='left'] .buddy-bubble { left: auto; right: 70px; border-radius: 16px 16px 4px 16px; }
+.buddy[data-vert='below'] .buddy-bubble { top: 70px; transform: none; }

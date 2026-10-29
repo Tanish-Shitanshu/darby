@@ -20,9 +20,19 @@ export class BrowserHost {
   async context(): Promise<BrowserContext> {
     if (this.ctx) return this.ctx;
     if (!this.launching) this.launching = this.launch();
-    this.ctx = await this.launching;
-    this.ctx.on('close', () => { this.ctx = null; this.launching = null; });
-    return this.ctx;
+    const launching = this.launching;
+    let ctx: BrowserContext;
+    try {
+      ctx = await launching;
+    } catch (e) {
+      if (this.launching === launching) this.launching = null;   // a failed launch must not be cached: the next step gets a fresh try instead of the same error forever
+      throw e;
+    }
+    if (this.ctx !== ctx) {
+      this.ctx = ctx;
+      ctx.on('close', () => { if (this.ctx === ctx) { this.ctx = null; this.launching = null; } });
+    }
+    return ctx;
   }
 
   private async launch(): Promise<BrowserContext> {

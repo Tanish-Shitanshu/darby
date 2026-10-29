@@ -27,11 +27,12 @@ Talk to Darby in **Hindi, Tamil, Telugu, Bengali, Kannada, Malayalam, Marathi, G
 
 | | |
 |---|---|
-| **Voice chat on** | You speak, it runs at once, and it answers aloud. A **Stop speaking** button is always on screen. |
+| **Dabo, the companion** | A small green bot pops up next to your cursor only when there is something to show: *listening* (rings pulse), *understanding you*, *working* on your spoken task, *needing your approval*, and *speaking* (mouth moves, speaker badge, the words in a bubble with a **Stop** button). It follows the cursor, answers in your language, and leaves when it has nothing more to say. A **Talk to Darby** button is on every screen. |
+| **Voice chat on** | You speak, it runs at once, and it answers aloud. |
 | **Voice chat off** | Everything stays text: speech fills the goal box for you to check, and the summary is written, with a **Listen** button if you want it read out. |
 | **Typed goals** | Pick a language (or Auto): non-English goals are translated for the planner, the summary comes back in your language. |
 | **Honest and safe** | Summary numbers come from the signed receipt and the verified sheet, computed by code. The planner still only sees the (translated) goal, never page text; the summary can never trigger an action. |
-| **Needs** | `SARVAM_API_KEY` in your own `.env`. Without it Darby still works in English (voice falls back to the Gemini model, replies use the browser voice). |
+| **Needs** | `SARVAM_API_KEY` in your own `.env` (restart the server after editing it: `.env` is read at startup). Recordings are limited to about 28 seconds. Without it Darby still works in English (voice falls back to the Gemini model, replies use the browser voice). |
 
 ---
 

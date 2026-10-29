@@ -1,6 +1,6 @@
 import { RateLimitError, TransientError, type LlmRequest, type RawProvider } from './types';
 
-const REQUEST_TIMEOUT_MS = 40_000;
+const REQUEST_TIMEOUT_MS = 30_000;
 
 function withTimeout(signal?: AbortSignal): AbortSignal {
   const t = AbortSignal.timeout(REQUEST_TIMEOUT_MS);

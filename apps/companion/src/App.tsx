@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApprovalCard, EvidenceDrawer, History, Hub, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
 import { Icon, ResultHero, SheetPreview } from './extras';
+import { Buddy, useBuddyLine, type BuddyMode } from './buddy';
 import { SummaryCard, useSpeaker, useVoiceConfig } from './voice';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 import demoGoals from '../../../fixtures/demo-goals.json';
@@ -46,6 +47,8 @@ export function App() {
   const [runMeta, setRunMeta] = useState<Record<string, { lang: string; voice: boolean }>>({});
   const setReplies = (on: boolean) => { setVoiceReplies(on); if (!on) speaker.stop(); try { localStorage.setItem('darby.voiceReplies', on ? 'on' : 'off'); } catch { /* storage unavailable */ } };
   const [listening, setListening] = useState(false);
+  const [transcribing, setTranscribing] = useState(false);
+  const [talkLang, setTalkLang] = useState('en-IN');   // language of the latest spoken or typed request: the companion answers in it
   const [note, setNote] = useState('');
   const recRef = useRef<any>(null);
   const toggleVoiceBrowser = () => {
@@ -75,6 +78,7 @@ export function App() {
         setListening(false);
         if (!chunks.length) { setNote('No sound was recorded. Try again, or type the goal.'); return; }
         setNote('Transcribing…');
+        setTranscribing(true);
         const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
         const audio = await new Promise<string>((ok) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] ?? ''); fr.readAsDataURL(blob); });
         try {
@@ -85,6 +89,7 @@ export function App() {
           const spoken = j.languageName && j.languageName !== 'English' ? ` (${j.languageName})` : '';
           if (voiceReplies) {   // voice chat: the spoken request runs straight away and Darby answers aloud when it is done
             setGoal(j.transcript);
+            if (j.language) setTalkLang(j.language);
             setNote(`Heard${spoken}: “${j.transcript}”${j.english && j.english !== j.transcript ? ` → understood as: “${j.english}”` : ''}. Working on it…`);
             void submit({ goal: j.transcript, lang: j.language, voice: true });
           } else {
@@ -93,9 +98,10 @@ export function App() {
             if (j.language && j.language !== 'en-IN') setLang(j.language);
           }
         } catch (e) { setNote(`${(e as Error).message} Type the goal instead.`); }
+        finally { setTranscribing(false); }
       };
-      rec.start(); setListening(true); setNote('Recording… press the button again to stop (it stops by itself after 60 s).');
-      setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 60_000);
+      rec.start(); setListening(true); setNote('Recording… press the button again to stop (it stops by itself after 28 s).');
+      setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 28_000);
     } catch { toggleVoiceBrowser(); }
   };
   const attachShot = async (file?: File) => {
@@ -140,6 +146,16 @@ export function App() {
     return () => clearInterval(t);
   }, [run?.id, live, run?.receipt]);
 
+  // a run that has shown no progress for 90 s (not counting waits for you) gets a plain notice with a way out
+  const [stalled, setStalled] = useState(false);
+  const lastMove = useRef(Date.now());
+  useEffect(() => { lastMove.current = Date.now(); setStalled(false); }, [runId, run?.timeline.length, run?.phase]);
+  useEffect(() => {
+    if (!live || run?.phase === 'awaiting_approval' || run?.phase === 'paused') { setStalled(false); return; }
+    const t = setInterval(() => setStalled(Date.now() - lastMove.current > 90_000), 5000);
+    return () => clearInterval(t);
+  }, [live, run?.phase]);
+
   // reset per-run UI state when the run changes
   useEffect(() => { setVerify(null); setTamper(null); setRemembered(false); setDrawer(null); setDetail(null); setRtab('activity'); }, [runId]);
   // the receipt is the point of a run: show it as soon as it exists
@@ -150,13 +166,22 @@ export function App() {
   const isLaunch = !!run?.plan?.steps.some((s) => s.tool.startsWith('gtm.'));
   useEffect(() => { if (runId && (drawer || isLaunch)) d.detail(runId).then(setDetail).catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [runId, drawer, isLaunch, hasReceipt, run?.timeline.length]);
 
+  const voiceRun = !!(run && runMeta[run.id]?.voice);
+  const buddyMode: BuddyMode | null = listening ? 'listening' : transcribing ? 'thinking' : speaker.speaking ? 'speaking'
+    : voiceRun && run?.phase === 'awaiting_approval' ? 'attention' : voiceRun && live ? 'working' : null;
+  const buddyLine = useBuddyLine(buddyMode, talkLang);
+
   const go = (t: Tab) => { setTab(t); if (t === 'history') void d.refreshHistory(); if (t === 'memory') void d.loadMemory(); if (t === 'hub') void d.loadPlaybooks(); };
   const submit = async (o?: { goal: string; lang: string; voice: boolean }) => {
     const g = (o?.goal ?? goal).trim();
     if (!allUp || g.length < 3) return;
     const useLang = o?.lang ?? lang;
     const r = await d.start(!o && pageUrl.trim() ? `${g}\n(Work on this page: ${pageUrl.trim()})` : g, useLang);
-    if (r) setRunMeta((m) => ({ ...m, [r.id]: { lang: useLang === 'auto' ? 'en-IN' : useLang, voice: !!o?.voice } }));
+    if (r) {
+      const runLang = useLang === 'auto' ? r.language : useLang;   // typed non-English goals: the server reports the language it detected
+      setRunMeta((m) => ({ ...m, [r.id]: { lang: runLang, voice: !!o?.voice } }));
+      setTalkLang(runLang);
+    }
   };
   const status = allUp ? (d.config?.llm.replayOnly ? 'Ready · offline replay' : 'Ready · live model') : d.server === 'down' ? 'Server offline' : 'Connecting…';
 
@@ -217,6 +242,12 @@ export function App() {
             <button className="btn primary" onClick={() => { const g = run.goal; setLost(null); d.newRun(); void submit({ goal: g, lang: 'en-IN', voice: false }); }}>Run it again</button>
           </div>
         )}
+        {run && tab === 'run' && live && stalled && lost !== run.id && (
+          <div className="banner" role="status" data-testid="run-stalled">
+            <b>This is taking longer than usual.</b> No progress for 90 seconds. A slow web page or a busy model is the usual reason, and Darby gives up on its own after a few minutes. You can wait, or cancel and try again.
+            <button className="btn danger" onClick={() => void d.cancel(run.id)}>Cancel this run</button>
+          </div>
+        )}
         {run && tab === 'run' && <ApprovalCard run={run} onResolve={(s, ok) => void d.approve(run.id, s, ok)} onTakeover={() => void d.takeover(run.id)} />}
 
         {tab === 'run' && !run && (
@@ -240,7 +271,7 @@ export function App() {
               )}
               <div className="composer-bar">
                 <div className="tools">
-                  <button className={`iconbtn${listening ? ' on' : ''}`} onClick={toggleVoice} data-testid="voice-btn" aria-pressed={listening} title="Speak your goal (Chrome speech recognition, needs internet)">{Icon.mic}<span>{listening ? 'Listening… stop' : 'Speak'}</span></button>
+                  <button className={`iconbtn${listening ? ' on' : ''}`} onClick={toggleVoice} data-testid="voice-btn" aria-pressed={listening} title="Speak your goal in any Indian language or English">{Icon.mic}<span>{listening ? 'Listening… stop' : 'Speak'}</span></button>
                   <label className="iconbtn" data-testid="shot-btn" title="Attach a screenshot: the vision model describes it into the box for you to edit">
                     {Icon.image}<span>Screenshot</span><input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void attachShot(e.target.files?.[0])} />
                   </label>
@@ -329,8 +360,13 @@ export function App() {
         {tab === 'memory' && (<main className="page"><PageHead title="Memory" sub="Preferences you control. View, add and delete." /><Memory items={d.memory} onAdd={(k, v) => void d.addMemory(k, v)} onDelete={(id) => void d.deleteMemory(id)} /></main>)}
 
         {run && tab === 'run' && <EvidenceDrawer run={run} stepId={drawer} detail={detail} onClose={() => setDrawer(null)} onShot={setShot} />}
-        {speaker.speaking && !(tab === 'run' && rtab === 'result' && run?.receipt) && <button className="stop-fab btn danger" onClick={speaker.stop} data-testid="stop-speaking-global">Stop speaking</button>}
-        <Lightbox src={shot} onClose={() => setShot(null)} />
+                <Lightbox src={shot} onClose={() => setShot(null)} />
+        <Buddy mode={buddyMode} line={buddyLine} speech={speaker.text} onStop={speaker.stop} />
+        {!(tab === 'run' && !run) && (
+          <button className={`voice-fab${listening ? ' on' : ''}`} onClick={toggleVoice} disabled={transcribing} data-testid="voice-fab" aria-pressed={listening} title="Talk to Darby in your language">
+            {Icon.mic}<span>{listening ? 'Listening… tap to send' : 'Talk to Darby'}</span>
+          </button>
+        )}
       </div>
     </div>
   );

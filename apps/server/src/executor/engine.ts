@@ -84,21 +84,25 @@ export async function runEngine(ctx: RunContext): Promise<void> {
     if (ctx.opts.playbook) ctx.labels.add(`PLAYBOOK:${ctx.opts.playbook.slug}`);
     repo.updateRun(runId, { status: 'planning' });
 
+    const PLAN_DEADLINE_MS = 240_000;   // planning may retry and fall back between models, but never hang: after this it fails with a clear cause
+    const planSignal = AbortSignal.any([ctx.signal, AbortSignal.timeout(PLAN_DEADLINE_MS)]);
     try {
       if (ctx.opts.planOverride) {
         plan = await ctx.opts.planOverride(goal);
       } else if (ctx.opts.repair) {
-        const rp = await makeRepairPlan(goal, ctx.opts.repair, { cfg, catalog: deps.catalog, llm }, ctx.signal);
+        const rp = await makeRepairPlan(goal, ctx.opts.repair, { cfg, catalog: deps.catalog, llm }, planSignal);
         rp.llm.forEach((r) => ctx.noteLlm(r, 'planner'));
         plan = rp.plan;
         ctx.ledger('repair', { fromRun: ctx.opts.repair.fromRunId, cause: ctx.opts.repair.cause.slice(0, 300), tools: plan.steps.map((s) => s.tool) });
       } else {
-        const pr = await makePlan(goal, { cfg, catalog: deps.catalog, llm, memory: repo.listMemory().filter((m) => m.sourceRunId === null) }, ctx.signal);
+        const pr = await makePlan(goal, { cfg, catalog: deps.catalog, llm, memory: repo.listMemory().filter((m) => m.sourceRunId === null) }, planSignal);
         pr.llm.forEach((r) => ctx.noteLlm(r, 'planner'));
         plan = pr.plan;
       }
     } catch (e) {
-      if (ctx.signal.aborted || isAbort(e)) throw e;
+      if (ctx.signal.aborted) throw e;
+      if (planSignal.aborted) { cause = `Planning took longer than ${PLAN_DEADLINE_MS / 60_000} minutes, so Darby stopped. The model may be busy or its key may be out of quota: check the status light, then run it again.`; throw new Error(cause); }
+      if (isAbort(e)) throw e;
       cause = e instanceof PlanningError ? `${e.message} ${e.problems.slice(0, 2).join('; ')}` : (/No recorded response/.test((e as Error).message) ? 'Offline mode can only run the recorded example goals. For your own goal, switch to a live model: put GEMINI_API_KEY or SARVAM_API_KEY in .env, set LLM_PROVIDER=auto and restart (npm run demo).' : `Planning failed: ${(e as Error).message.slice(0, 200)}`);
       throw new Error(cause);
     }

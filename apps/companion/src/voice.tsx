@@ -16,6 +16,7 @@ export function useVoiceConfig(): VoiceConfig {
 /** One speaker for the whole app: Sarvam Bulbul audio when available, the browser's own voice otherwise. Stop works at any moment. */
 export function useSpeaker() {
   const [speaking, setSpeaking] = useState(false);
+  const [text, setText] = useState('');
   const audio = useRef<HTMLAudioElement | null>(null);
   const token = useRef(0);
 
@@ -31,6 +32,7 @@ export function useSpeaker() {
     stop();
     const mine = ++token.current;
     setSpeaking(true);
+    setText(text);
     try {
       if (sarvam) {
         const res = await fetch('/api/voice/speak', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ text, lang }) });
@@ -62,7 +64,7 @@ export function useSpeaker() {
   }, [stop]);
 
   useEffect(() => stop, [stop]);
-  return { speaking, speak, stop };
+  return { speaking, text, speak, stop };
 }
 
 /** "What Darby did and what it found": the agentic ending of a task. Shown for every finished run; spoken when the task was a voice task. */

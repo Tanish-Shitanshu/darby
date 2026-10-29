@@ -2,6 +2,10 @@ import { createManager } from './bootstrap';
 import { buildServer } from './server';
 import { redactSecrets } from './llm/providers';
 
+// One stray rejection (a page crash, a socket error) must not take every running task down with it: log it and keep serving.
+process.on('unhandledRejection', (r) => console.error('[server] unhandled rejection (kept running):', redactSecrets(String((r as Error)?.stack ?? r)).slice(0, 600)));
+process.on('uncaughtException', (e) => console.error('[server] uncaught exception (kept running):', redactSecrets(String(e?.stack ?? e)).slice(0, 600)));
+
 try {
   const manager = await createManager();
   const { cfg, llm } = manager.deps;

@@ -78,9 +78,20 @@ export function chunkText(text: string, max: number): string[] {
   return out;
 }
 
-/** Translate between Indian languages and English. Returns the input unchanged when source and target are the same. */
-export async function sarvamTranslate(text: string, from: string, to: string): Promise<string> {
-  if (!text.trim() || (from === to && from !== 'auto')) return text;
+const SCRIPTS: [RegExp, string][] = [
+  [/[\u0900-\u097F]/, 'hi-IN'], [/[\u0980-\u09FF]/, 'bn-IN'], [/[\u0A00-\u0A7F]/, 'pa-IN'], [/[\u0A80-\u0AFF]/, 'gu-IN'], [/[\u0B00-\u0B7F]/, 'od-IN'],
+  [/[\u0B80-\u0BFF]/, 'ta-IN'], [/[\u0C00-\u0C7F]/, 'te-IN'], [/[\u0C80-\u0CFF]/, 'kn-IN'], [/[\u0D00-\u0D7F]/, 'ml-IN'], [/[\u0600-\u06FF]/, 'ur-IN'],
+];
+/** Sarvam's translate endpoint has no auto-detect, so typed text is classified by its script (Devanagari reads as Hindi; Marathi shares the script). */
+export function detectLanguage(text: string): string {
+  for (const [re, code] of SCRIPTS) if (re.test(text)) return code;
+  return 'en-IN';
+}
+
+/** Translate between Indian languages and English, also reporting the source language Sarvam saw (useful with `from: 'auto'`). */
+export async function sarvamTranslateDetect(text: string, from: string, to: string): Promise<{ text: string; sourceLanguage: string }> {
+  if (from === 'auto') from = detectLanguage(text);
+  if (!text.trim() || from === to) return { text, sourceLanguage: from };
   if (to === 'auto') throw new SarvamError('a target language is required');
   // Sarvam-Translate keeps brand names intact (Mayura turned "Perplexity" into the word "puzzle" in Hindi) and covers all 22 languages
   const model = 'sarvam-translate:v1';
@@ -90,7 +101,12 @@ export async function sarvamTranslate(text: string, from: string, to: string): P
     const b = await call('/translate', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ input: piece, source_language_code: from, target_language_code: to, model, mode: 'formal' }) });
     out.push(String(b?.translated_text ?? ''));
   }
-  return out.join(' ').trim();
+  return { text: out.join(' ').trim(), sourceLanguage: from };
+}
+
+/** Translate between Indian languages and English. Returns the input unchanged when source and target are the same. */
+export async function sarvamTranslate(text: string, from: string, to: string): Promise<string> {
+  return (await sarvamTranslateDetect(text, from, to)).text;
 }
 
 /** Text to speech: returns WAV files (base64), one per chunk, in playback order. Falls back to English when Bulbul cannot speak the language. */

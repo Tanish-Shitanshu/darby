@@ -105,7 +105,21 @@ export class Llm {
   get replayOnly(): boolean { return this.raw === null; }
   private localize(t: string): string { return t.split(FIXTURE_PLACEHOLDER).join(this.fixtureBase.replace(/\/$/, '')); }
 
-  async complete(req: LlmRequest, signal?: AbortSignal): Promise<LlmResult> {
+  /** One model call (all retries and fallbacks included) never takes longer than this: a stuck provider becomes a clear error, not a silent freeze. */
+  static CALL_BUDGET_MS = 150_000;   // not readonly so tests can shorten it
+
+  async complete(req: LlmRequest, outer?: AbortSignal): Promise<LlmResult> {
+    const budget = AbortSignal.timeout(Llm.CALL_BUDGET_MS);
+    const signal = outer ? AbortSignal.any([outer, budget]) : budget;
+    try {
+      return await this.completeWithin(req, signal);
+    } catch (e) {
+      if (budget.aborted && !outer?.aborted) throw new Error(`The model did not answer within ${Llm.CALL_BUDGET_MS / 1000} s`);
+      throw e;
+    }
+  }
+
+  private async completeWithin(req: LlmRequest, signal: AbortSignal): Promise<LlmResult> {
     const key = requestKey(req);
     const hit = this.store.get(key);
     if (hit) {

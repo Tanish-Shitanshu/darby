@@ -10,7 +10,7 @@ import type { Deps } from './executor/context';
 import { verifyBundle, type ReceiptBundle, type SignedReceipt } from './ledger/receipt';
 import { redactSecrets } from './llm/providers';
 import { completeJson } from './llm/llm';
-import { isEnglish, languageName, LANGUAGES, sarvamEnabled, sarvamSpeak, sarvamTranscribe, sarvamTranslate, SarvamError } from './voice/sarvam';
+import { isEnglish, languageName, LANGUAGES, sarvamEnabled, sarvamSpeak, sarvamTranscribe, sarvamTranslate, sarvamTranslateDetect, SarvamError } from './voice/sarvam';
 import { buildSummary } from './voice/summary';
 import { RepairError, type RunManager } from './runs/manager';
 import { listPlaybooks, loadPlaybook, playbookFromRun, PlaybookError, savePlaybook, type PlaybookView } from './playbooks/playbook';
@@ -130,6 +130,15 @@ export function createApi(manager: RunManager): Router {
     catch (e) { throw new HttpError(502, 'tts_failed', `Sarvam could not speak this (${(e as Error).message.slice(0, 140)}).`); }
   }));
 
+  /** Short interface lines (status bubbles) in the user's language. English passes through; a Sarvam outage returns the English text. */
+  r.post('/voice/translate', express.json({ limit: '8kb' }), wrap(async (req, res) => {
+    const body = z.object({ text: z.string().trim().min(1).max(400), lang: z.string().regex(/^[a-z]{2,3}-IN$/) }).safeParse(req.body);
+    if (!body.success) throw new HttpError(400, 'bad_request', 'Send {"text": "...", "lang": "hi-IN"}.');
+    if (!sarvamEnabled() || isEnglish(body.data.lang)) { res.json({ text: body.data.text, translated: false }); return; }
+    try { res.json({ text: await sarvamTranslate(body.data.text, 'en-IN', body.data.lang), translated: true }); }
+    catch { res.json({ text: body.data.text, translated: false }); }
+  }));
+
   /** What Darby did and what it found, in plain words (and in the user's language). Built from the signed receipt and the sheet. */
   r.get('/runs/:id/summary', wrap(async (req, res) => {
     const id = String(req.params.id);
@@ -159,15 +168,16 @@ export function createApi(manager: RunManager): Router {
     let understood: string | null = null;
     const lang = body.data.lang;
     const looksEnglish = /^[\x00-\x7F]*$/.test(goal);   // plain ASCII text is treated as English unless the user chose another language
+    let language: string | null = lang && lang !== 'auto' ? lang : null;
     const translateGoal = async (from: string) => {
       if (!sarvamEnabled()) throw new HttpError(400, 'sarvam_needed', 'Other languages need SARVAM_API_KEY in .env (Sarvam translates your goal to English for the planner).');
-      try { goal = await sarvamTranslate(goal, from, 'en-IN'); understood = goal; }
+      try { const t = await sarvamTranslateDetect(goal, from, 'en-IN'); goal = t.text; understood = goal; language = t.sourceLanguage; }
       catch (e) { throw new HttpError(502, 'translate_failed', `Your goal could not be translated (${(e as Error).message.slice(0, 120)}). Try again or type it in English.`); }
     };
     if (lang && lang !== 'auto' && !isEnglish(lang)) await translateGoal(lang);
     else if ((!lang || lang === 'auto') && !looksEnglish) await translateGoal('auto');
     const id = await manager.start(goal, { mode: body.data.mode });
-    res.status(202).json({ id, goal, understood });
+    res.status(202).json({ id, goal, understood, language: language ?? 'en-IN' });
   }));
 
   r.get('/runs', (_req, res) => {
