@@ -46,6 +46,9 @@ const browser = await chromium.launch({ headless: !process.env.UI_HEADED, ...(pr
 const ctx = await browser.newContext({ viewport: sizes['1280x720'] });
 const page = await ctx.newPage();
 const shot = async (name) => {
+  await page.waitForFunction(() => !document.querySelector('.leds')?.textContent?.includes('connecting'), null, { timeout: 15_000 }).catch(() => {});
+  await page.waitForFunction(() => [...document.querySelectorAll('iframe')].every((f) => f.contentDocument === null || f.contentDocument.readyState === 'complete' || true), null, { timeout: 3_000 }).catch(() => {});
+  await sleep(1200);
   for (const [label, vp] of Object.entries(sizes)) {
     await page.setViewportSize(vp);
     const dir = path.join(outRoot, label); mkdirSync(dir, { recursive: true });
@@ -125,6 +128,9 @@ try {
   await tid('review').waitFor({ timeout: 30_000 });
   check('review panel shows hero image, voiceover, teaser video and the landing page', (await tid('review-hero').count()) + (await tid('review-audio').count()) + (await tid('review-video').count()) + (await tid('review-page').count()) >= 4);
   check('labels say what was simulated', /SIMULATED/.test(await tid('receipt').innerText()));
+  await tid('review-page').scrollIntoViewIfNeeded();
+  await page.frames().find((f) => /landing/.test(f.url()))?.waitForSelector('main', { timeout: 15_000 }).catch(() => {});
+  await sleep(1500);
   await shot('09-case3-review');
 
   console.log('\n▶ controls: deny and cancel');

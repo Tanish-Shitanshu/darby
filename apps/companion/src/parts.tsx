@@ -106,7 +106,7 @@ export function ApprovalCard({ run, onResolve, onTakeover }: { run: RunView; onR
   if (!a) return null;
   const d = a.details as Record<string, unknown>;
   const rows: [string, string][] = ([['Target', 'target'], ['Role', 'role'], ['Document', 'document'], ['Content', 'contentSummary']] as [string, string][])
-    .filter(([, k]) => d[k] !== undefined).map(([l, k]) => [l, String(d[k])]);
+    .filter(([, k]) => d[k] !== undefined).map(([l, k]) => [l, k === 'document' ? String(d[k]).split(/[\/]/).pop() ?? String(d[k]) : String(d[k])]);
   return (
     <section className="approval" data-testid="approval-card" role="alert" aria-label="Approval needed">
       <div className="approval-tag">Needs your approval</div>
@@ -141,7 +141,7 @@ export function ReviewPanel({ run, detail }: { run: RunView; detail: RunDetail |
       <h2>Review — what Darby made <span className="muted small">(look before you approve)</span></h2>
       <div className="review-grid">
         {hero && (<figure><img src={hero} alt="Hero image" data-testid="review-hero" /><figcaption>Hero image <span className="chip label">generated placeholder</span></figcaption></figure>)}
-        {teaser && (<figure><video src={teaser} controls preload="metadata" data-testid="review-video" /><figcaption>15-second teaser (hero + captions + voiceover)</figcaption></figure>)}
+        {teaser && (<figure><video src={teaser} poster={hero ?? undefined} controls preload="metadata" data-testid="review-video" /><figcaption>15-second teaser (hero + captions + voiceover)</figcaption></figure>)}
         {voice && (<figure><audio src={voice} controls preload="metadata" data-testid="review-audio" /><figcaption>Voiceover {labels.filter((l) => /^(VOICE:|PLACEHOLDER:voiceover)/.test(l)).map((l) => (<span key={l} className="chip label">{l}</span>))}</figcaption></figure>)}
         {landing && (<figure className="wide"><iframe src={landing} title="Landing page preview" sandbox="allow-scripts" data-testid="review-page" /><figcaption>Landing page (runs in a sandbox) · <a href={landing} target="_blank" rel="noreferrer">open</a>{copy && <> · <a href={copy} target="_blank" rel="noreferrer">copy.json</a></>}</figcaption></figure>)}
       </div>

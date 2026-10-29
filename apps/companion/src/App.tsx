@@ -88,8 +88,8 @@ export function App() {
         </nav>
         <ul className="leds">
           <Led name="Server" link={d.server} />
-          <Led name="Live channel" link={d.socket} />
-          <Led name="Event round-trip" link={d.echo === 'ok' ? 'up' : d.echo === 'failed' ? 'down' : 'connecting'} detail={d.echo === 'ok' ? 'validated' : undefined} />
+          <Led name="Live updates" link={d.socket} />
+          <Led name="Self-check" link={d.echo === 'ok' ? 'up' : d.echo === 'failed' ? 'down' : 'connecting'} detail={d.echo === 'ok' ? 'validated' : undefined} />
           {d.config && <Led name="Model" link="up" detail={d.config.llm.replayOnly ? 'REPLAY (recorded)' : `${d.config.llm.provider}/${d.config.llm.model}`} />}
         </ul>
       </header>
@@ -127,6 +127,13 @@ export function App() {
               {EXAMPLES.map((x) => (<button key={x.label} className="btn ghost" onClick={() => setGoal(x.goal)} data-testid={`example-${x.label.slice(0, 6).replace(/\W/g, '').toLowerCase()}`}>{x.label}</button>))}
             </div>
             {d.error && <p className="error" role="alert">{d.error}</p>}
+          </section>
+          <section className="how" aria-label="How Darby works">
+            <ol>
+              <li><span className="how-n">1</span><div><strong>Plans with proof</strong><p>Every step names what would prove it, before anything runs.</p></div></li>
+              <li><span className="how-n">2</span><div><strong>Works in real tabs</strong><p>Pages are read by an isolated reader. Risky steps wait for you.</p></div></li>
+              <li><span className="how-n">3</span><div><strong>Checks itself, then shows the receipt</strong><p>An independent verifier re-reads the result. You get a signed, tamper-evident verdict.</p></div></li>
+            </ol>
           </section>
           <History items={d.history.slice(0, 5)} onOpen={(id) => void d.open(id)} />
         </main>

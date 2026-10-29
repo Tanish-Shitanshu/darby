@@ -129,4 +129,5 @@ export function proofLine(c: EvidenceContract | null): string {
 }
 
 export const VERDICT_TEXT: Record<string, string> = { VERIFIED: 'Verified', VERIFIED_WITH_GAPS: 'Verified with gaps', FAILED: 'Failed', NEEDS_YOU: 'Needs you' };
-export const prettySlug = (s: string) => s.split('-').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+const ACRONYMS = new Set(['ai', 'ui', 'ci', 'api', 'pr']);
+export const prettySlug = (s: string) => s.split('-').map((w) => (ACRONYMS.has(w) ? w.toUpperCase() : w.charAt(0).toUpperCase() + w.slice(1))).join(' ');
