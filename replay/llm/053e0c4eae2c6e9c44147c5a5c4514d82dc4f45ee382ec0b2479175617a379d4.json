@@ -1,0 +1,9 @@
+{
+  "key": "053e0c4eae2c6e9c44147c5a5c4514d82dc4f45ee382ec0b2479175617a379d4",
+  "role": "reader",
+  "provider": "auto",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T15:00:29.600Z",
+  "promptPreview": "<<<PAGE\nSign in\nAdvertise\nRedeem Voucher\nWhy us\nWays to watch\nsupport@yupptv.com\nTV GUIDE\nCATCH-UP TV\nSign in\n0 seconds of 0 seconds\nVolume 0%\nPress shift question mark to access a list of keyboard shortcuts\nKeyboard Shortcuts\nEnabled\nDisab",
+  "response": "{\n  \"name\": \"YuppTV\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"No paid monthly subscription prices are displayed on this page; only a live cricket stream is shown.\"\n}"
+}

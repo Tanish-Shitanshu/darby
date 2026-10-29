@@ -1,0 +1,9 @@
+{
+  "key": "4d491f256ab7a49b8563b2c01d98a39f9c67cd32b64a1110a4b7e59c8d2fb101",
+  "role": "creative",
+  "provider": "auto",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T15:03:28.411Z",
+  "promptPreview": "{\"goal\":\"Research top 5 AI startups and write it into an excel sheet\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found and wrote the spreadsheet. 4 of 4 steps were proven by independent checks. Result:",
+  "response": "{\"summary\":\"Darby searched the web and built a spreadsheet on the top five AI startups, independently confirming all four of its steps even though a couple of details were still missing. Three of the five—Runway at twelve dollars, ElevenLabs at one dollar, and Jasper at fifty-nine dollars—had confirmed monthly prices, while Perplexity and Midjourney could not be verified and were marked as not found. That set a confirmed average of twenty-four dollars a month for the priced startups.\"}"
+}
