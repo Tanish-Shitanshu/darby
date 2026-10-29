@@ -18,6 +18,9 @@ Line-by-line comparison with the organiser PDF: `docs/PS1_COMPLIANCE.md`.
 | Deck truth audit | `docs/DECK_AUDIT.md` | Every slide claim mapped to proof, with the ones that need rewording |
 | AdaL usage evidence | `docs/ADAL_EVIDENCE.md`, `docs/evidence/adal-redteam/`, `docs/evidence/m*-review.md`, commit tags `Built-with: AdaL` | Honest split of AdaL work and other-assistant work; remaining sessions in `docs/ADAL_TODO_FOR_OWNER.md` |
 
+## Open-web research
+Type a goal such as "Research the top 5 AI startups and write their name, lowest paid monthly price in USD and an evidence quote in an Excel sheet". Darby searches the public web, reads only public sites (never internal addresses), extracts prices with exact quotes through the quarantined reader, re-checks every quote itself, writes the .xlsx and lets you download it. Needs a model key (not replayable offline); results vary with the live web and gaps are flagged, never guessed. Tests: `case5` (hermetic search engine), `case5b` (internal address never visited), unit tests for the public-URL gate.
+
 ## What is real, simulated or recorded
 - **Real:** Chromium tabs (3 in parallel), page reads, hash-chained Ed25519 receipts, verifier re-reads, policy decisions, the local sheet file, the fixture form and its API, the landing page test in a fresh tab, ffmpeg media probing.
 - **Simulated (labelled `SIMULATED` in the signed receipt):** sharing a sheet (local permission list), the GitHub pull request (local git repo) unless a test token is set, the attacker in red-team runs (`SIMULATED-ATTACK`; the containment is real).

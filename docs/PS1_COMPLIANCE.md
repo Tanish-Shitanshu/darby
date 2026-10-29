@@ -24,7 +24,7 @@ Status: MET (works, tested), PARTLY (works with a stated limit), NOT MET (not bu
 | Capability | Status | Evidence / limit |
 |---|---|---|
 | Context-aware assistance using the active or user-selected tab | PARTLY | Optional "Page context" field in the goal box (user-selected page, restricted to allow-listed origins). Darby does not read the user's own live Chrome tabs |
-| Multi-step browser automation and web research | MET | Case 1 (10 pages, 3 at a time), Case 3 |
+| Multi-step browser automation and web research | MET | Case 1 (10 pages, 3 at a time), Case 3, and open-web research on the real internet: `web.search` then read the hits (policy READ-002; public sites only, no forms). Live run: top-5 AI startups to `Top AI Startups.xlsx`, two prices proven by exact quotes, the rest flagged NOT FOUND. Offline test: `case5`, `case5b` |
 | Real editing of documents and spreadsheets | PARTLY | Real xlsx file written and read back from disk. Google Sheets (M4) is not configured |
 | Structured extraction and report generation | MET | Quarantined reader with a strict schema; positioning and launch-post documents |
 | Connected-app workflows via authorized APIs or browser automation | PARTLY | LeadDesk app via browser and its documented API (real, local). GitHub PR and sheet sharing are simulated and labelled unless tokens are set |

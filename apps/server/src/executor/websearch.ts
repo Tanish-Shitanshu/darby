@@ -48,9 +48,11 @@ export async function searchOnce(page: Page, query: string, perQuery: number, se
   const hrefs = await page.$$eval(searchUrl ? 'a.result__a' : 'li.b_algo h2 a', (as) => as.slice(0, 12).map((a) => (a as HTMLAnchorElement).href));
   const seen = new Set<string>();
   const hits: Hit[] = [];
-  for (const h of hrefs) {
-    const target = searchUrl ? h : decodeBingUrl(h);
-    if (!target) continue;
+  // a price comparison wants the pricing page itself: results whose path names pricing or plans come first (order is otherwise the engine's)
+  const decoded = hrefs.map((h) => (searchUrl ? h : decodeBingUrl(h))).filter((h): h is string => !!h);
+  const score = (u: string) => { try { return /pric|plans?\b|subscribe|billing/i.test(new URL(u).pathname) ? 0 : 1; } catch { return 1; } };
+  const ordered = decoded.map((u, i) => ({ u, i })).sort((a, b) => score(a.u) - score(b.u) || a.i - b.i).map((x) => x.u);
+  for (const target of ordered) {
     let origin: string;
     try { origin = new URL(target).origin; } catch { continue; }
     const host = new URL(target).hostname;

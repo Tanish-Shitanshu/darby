@@ -57,10 +57,10 @@ export function norm(s: string): string {
   return s.normalize('NFKC').replace(/[\u00a0\u2009\u202f]/g, ' ').replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/\s+/g, ' ').trim();
 }
 
-const PRICE_RE = /(?:\$|USD)\s?(\d{1,6}(?:[.,]\d{1,2})?)/gi;
+const PRICE_RE = /(?:\$|USD)\s?(\d{1,3}(?:,\d{3})+(?:\.\d{1,2})?|\d{1,6}(?:[.,]\d{1,2})?)/gi;
 /** All dollar amounts in a piece of text, in order. */
 export function parsePrices(text: string): number[] {
-  return [...text.matchAll(PRICE_RE)].map((m) => Number(m[1]!.replace(',', '.')));
+  return [...text.matchAll(PRICE_RE)].map((m) => Number(/^\d{1,3}(,\d{3})+/.test(m[1]!) ? m[1]!.replace(/,/g, '') : m[1]!.replace(',', '.')));
 }
 
 export interface ClaimItem { field: string; value: string | null; quote: string | null }

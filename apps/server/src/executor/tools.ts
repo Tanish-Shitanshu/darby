@@ -88,7 +88,34 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   if (!urls.length) throw new ToolError('No URLs to read.', 'failed');
   ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Opening ${urls.length} pages in real browser tabs (${Math.min(MAX_TABS, urls.length)} at a time)` });
   const skipped: string[] = [];
-  const pagesAll = await pMap(urls, MAX_TABS, async (url): Promise<PageData | null> => {
+  // A search hit is usually a company's home page. The only address Darby derives from it is the same site's /pricing (a fixed path, never taken
+  // from page text); it is tried first and the hit itself is the fallback. Both are public reads of the same origin.
+  const PRICE_HINT = /\$\s?\d|\bUSD\b|per (user|seat|month)|\/\s?mo\b|monthly/i;
+  const readCandidates = async (url0: string): Promise<PageData | null> => {
+    const candidates = fromSearch ? [...new Set([`${new URL(url0).origin}/pricing`, url0])] : [url0];
+    let first: PageData | null = null;
+    let lastErr: unknown;
+    for (const u of candidates) {
+      try {
+        const p = await readOne(u);
+        if (!fromSearch || PRICE_HINT.test(p.text) || u === candidates[candidates.length - 1]) return p;
+        first ??= p;
+      } catch (e) {
+        if (ctx.signal.aborted) throw e;
+        lastErr = e;
+      }
+    }
+    if (first) return first;
+    const err = lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url0}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
+    if (fromSearch) {   // on the open web some sites refuse automated readers: that one page becomes a gap, the others carry on
+      const host = new URL(url0).hostname.replace(/^www\./, '');
+      skipped.push(host);
+      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Skipped ${host}: ${err.message.slice(0, 120)} (recorded as a gap, nothing guessed)` });
+      return null;
+    }
+    throw err;
+  };
+  const readOne = async (url: string): Promise<PageData> => {
     const slug = fromSearch ? new URL(url).hostname.replace(/^www\./, '') : slugOf(url);
     let lastErr: unknown;
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -117,15 +144,9 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
         await page.close().catch(() => undefined);
       }
     }
-    const err = lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
-    if (fromSearch) {   // on the open web some sites refuse automated readers: that one page becomes a gap, the others carry on
-      const host = new URL(url).hostname.replace(/^www\./, '');
-      skipped.push(host);
-      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Skipped ${host}: ${err.message.slice(0, 120)} (recorded as a gap, nothing guessed)` });
-      return null;
-    }
-    throw err;
-  });
+    throw lastErr instanceof ToolError ? lastErr : new ToolError(`Could not load ${url}: ${(lastErr as Error)?.message?.split('\n')[0] ?? 'unknown error'}`, 'needs_you');
+  };
+  const pagesAll = await pMap(urls, MAX_TABS, readCandidates);
   const pages = pagesAll.filter((p): p is PageData => p !== null);
   if (!pages.length) throw new ToolError('None of the found pages could be read (sites may be blocking automated readers). Nothing was guessed.', 'needs_you');
   ctx.outputs.set(step.id, { pages });
