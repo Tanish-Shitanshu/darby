@@ -4,8 +4,8 @@
 //   UI_LIVE=1 ...                          (use the provider in .env instead of recordings)
 //   UI_HEADED=1 BROWSER_CHANNEL=chrome ... (watch it)
 // Screenshots: docs/evidence/ui/<viewport>/<name>.png   Report: docs/evidence/ui/walkthrough.json
-import { spawn } from 'node:child_process';
-import { mkdirSync, writeFileSync, readFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdirSync, writeFileSync, readFileSync, readdirSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
@@ -15,6 +15,7 @@ const outRoot = path.join(root, 'docs', 'evidence', 'ui');
 const goals = JSON.parse(readFileSync(path.join(root, 'fixtures', 'demo-goals.json'), 'utf8'));
 const sizes = { '1280x720': { width: 1280, height: 720 }, '1920x1080': { width: 1920, height: 1080 } };
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const playbooksBefore = new Set(readdirSync(path.join(root, 'playbooks')));
 const results = [];
 const check = (name, ok, detail = '') => { results.push({ name, ok: !!ok, detail }); console.log(`   ${ok ? 'PASS' : 'FAIL'}  ${name}${detail ? `: ${detail}` : ''}`); };
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -28,6 +29,10 @@ async function waitFor(url, ms = 90_000) {
 let stack = null;
 let base = process.env.UI_BASE;
 if (!base) {
+  for (const port of [4000, 4010, 5173]) {
+    const busy = await fetch(`http://localhost:${port}/`).then(() => true, () => false);
+    if (busy) { console.error(`Port ${port} is already in use (another Darby stack is running). Stop it first, or run against it with UI_BASE=http://localhost:5173 and UI_API=http://localhost:4000.`); process.exit(2); }
+  }
   const env = { ...process.env, LLM_PROVIDER: process.env.UI_LIVE ? (process.env.LLM_PROVIDER ?? 'gemini') : 'replay', DARBY_HEADLESS: process.env.UI_HEADED ? '0' : '1' };
   const reset = spawn(npm, ['run', '-s', 'db:reset', '--', '--runs'], { cwd: root, env, stdio: 'inherit', shell: process.platform === 'win32' });
   await new Promise((r) => reset.on('exit', r));
@@ -151,6 +156,8 @@ try {
   writeFileSync(path.join(outRoot, 'walkthrough.json'), JSON.stringify({ at: new Date().toISOString(), llm: process.env.UI_LIVE ? 'live' : 'replay', passed: results.length - failed, failed, results }, null, 2));
   console.log(`\n${failed ? `${failed} check(s) FAILED` : 'all UI checks passed'} · ${results.length - failed}/${results.length} · screenshots in docs/evidence/ui`);
   await browser.close();
-  if (stack) { if (process.platform === 'win32') spawn('taskkill', ['/pid', String(stack.pid), '/T', '/F'], { stdio: 'ignore' }); else stack.kill(); }
+  // the walkthrough saves a throwaway Playbook; leave the committed ones alone and remove only the new ones
+  for (const d of readdirSync(path.join(root, 'playbooks'))) if (!playbooksBefore.has(d)) rmSync(path.join(root, 'playbooks', d), { recursive: true, force: true });
+  if (stack) { if (process.platform === 'win32') spawnSync('taskkill', ['/pid', String(stack.pid), '/T', '/F'], { stdio: 'ignore' }); else stack.kill(); }
   process.exit(failed ? 1 : 0);
 }
