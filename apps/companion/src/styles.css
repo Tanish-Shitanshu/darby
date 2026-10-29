@@ -1,0 +1,47 @@
+:root {
+  --bg: #f6f5fb;
+  --card: #ffffff;
+  --ink: #1d1b2e;
+  --muted: #5d5a73;
+  --line: #e2e0ee;
+  --brand: #6d4aff;
+  --ok: #1a8f5a;
+  --warn: #b7791f;
+  --bad: #c0392b;
+  font-family: ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-size: 16px; /* projector-size minimum */
+  color: var(--ink);
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); line-height: 1.5; }
+
+.shell { max-width: 880px; margin: 0 auto; padding: 32px 24px 64px; }
+.top { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; color: var(--brand); }
+h2 { margin: 0 0 12px; font-size: 1.15rem; }
+.tagline { margin: 4px 0 0; color: var(--muted); }
+
+.badge { padding: 8px 14px; border-radius: 999px; font-weight: 600; border: 1px solid var(--line); background: var(--card); }
+.badge-ok { color: var(--ok); border-color: #b9e3cf; background: #eefaf4; }
+.badge-wait { color: var(--warn); border-color: #f0dcae; background: #fff8e8; }
+
+.panel { display: grid; gap: 20px; }
+.panel section { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+
+textarea { width: 100%; font: inherit; padding: 12px 14px; border: 1px solid var(--line); border-radius: 10px; resize: vertical; color: var(--ink); background: #fcfcff; }
+textarea:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+.actions { display: flex; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+button { font: inherit; font-weight: 600; padding: 10px 20px; border-radius: 10px; border: 0; background: var(--brand); color: #fff; cursor: pointer; }
+button:disabled { background: #c9c3e8; cursor: not-allowed; }
+.hint { color: var(--muted); flex: 1; min-width: 240px; }
+
+.statuses { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.status { display: grid; grid-template-columns: 14px 260px 1fr; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: var(--warn); }
+.status-up .dot { background: var(--ok); }
+.status-down .dot { background: var(--bad); }
+.status-name { font-weight: 600; }
+.status-value { color: var(--muted); }
+.status-up .status-value { color: var(--ok); }
+.status-down .status-value { color: var(--bad); }

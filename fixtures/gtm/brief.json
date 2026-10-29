@@ -1,0 +1,10 @@
+{
+  "product": "StudyLoop",
+  "oneLiner": "Turns lecture slides into spaced-repetition flashcards in one click.",
+  "audience": "University students preparing for exams, especially in STEM and medicine.",
+  "pricingIdea": "Free tier, then $6 per month.",
+  "competitorUrls": ["/competitors/studynest", "/competitors/cardcraft", "/competitors/recallr"],
+  "tone": "friendly, confident, student-first",
+  "assetsWanted": ["positioning summary", "landing-page copy", "hero image", "15-second teaser video with voiceover", "landing page (HTML/CSS/JS)", "launch post draft"],
+  "testRepo": "darby-launch-test"
+}

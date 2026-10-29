@@ -1,0 +1,23 @@
+{
+  "name": "darby",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": ["packages/*", "apps/*", "fixtures/site"],
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "concurrently -k -n server,companion,fixtures -c cyan,magenta,yellow \"npm run dev -w @darby/server\" \"npm run dev -w @darby/companion\" \"npm run fixtures\"",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "check": "npm run typecheck && npm run test",
+    "test:acceptance": "node scripts/acceptance.mjs",
+    "fixtures": "node fixtures/site/server.mjs",
+    "fixtures:check": "node scripts/fixtures-check.mjs",
+    "fixtures:selfcheck": "node fixtures/site/selfcheck.mjs"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
