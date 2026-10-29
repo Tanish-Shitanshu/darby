@@ -4,7 +4,7 @@ HackBriven Build Arena · PS1 · Team Target 9x
 
 Darby gives you an autonomous companion inside a real browser. You state a goal; Darby plans it with a proof for every step, does the work in real tabs and real documents, checks the result independently, and hands you a signed receipt with an honest verdict.
 
-> Status: **M3 companion UI done** (on top of M1 core loop and M2 policy/approvals/control) — goal → typed plan with a proof per step → real Chromium tabs → quarantined reader → independent verifier → signed receipt. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/MILESTONES.md for the build order. Built with AdaL.
+> Status: M0–M3 (core loop, policy, UI) built with AdaL; M5 (failure + repair) and M6 (GTM Studio) built with a second AI assistant (see docs/ADAL_EVIDENCE.md for who did what). Four demo cases: research to sheet, poisoned page contained, launch assets, broken form repaired. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/ARCHITECTURE.md for the diagram, docs/DEMO_SCRIPT.md for the demo.
 
 ## Setup
 ```bash
@@ -14,6 +14,7 @@ npm install
 npx playwright install chromium   # needed from M1 (the executor drives real Chromium)
 npm run dev            # server :4000, companion :5173, fixtures :4010
 ```
+**Demo in one command:** `npm run demo` (resets local state, starts everything, opens the companion; `-- --offline` answers from recordings with no internet, `npm run demo:check` is the preflight, `npm run demo:record` records the real-model runs for Cases 3 and 4 so they replay offline).
 The companion is meant to run on :5173, but if that port is busy Vite falls back to the next free one (often **:5174**) and prints the URL; the dev proxy to the server works on any port. Check the `[companion]` line in the `npm run dev` output for the real address.
 
 ## Checks
@@ -36,4 +37,4 @@ npm run replay:curate     # copy new recordings from .darby/replay to the commit
 - `npm audit` reports 4 findings (1 moderate, 1 high, 2 critical): `@vitest/mocker` and `tinypool` are dev-only test tooling; `zod` (<4.6.6) is flagged high. We deliberately keep zod at `^3.25.76` because `packages/contracts` is the pinned source of truth; revisit only after the hackathon.
 
 ## Docs
-docs/SPEC.md (architecture) · docs/MILESTONES.md · docs/HUMAN_TASKS.md · docs/ADAL_PROMPTS.md · docs/ADAL_EVIDENCE.md
+docs/ARCHITECTURE.md (diagram, trust boundaries) · docs/DEMO_SCRIPT.md · docs/SPEC.md · docs/MILESTONES.md · docs/HUMAN_TASKS.md · docs/ADAL_PROMPTS.md · docs/ADAL_EVIDENCE.md

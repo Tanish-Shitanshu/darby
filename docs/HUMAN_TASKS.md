@@ -2,7 +2,7 @@
 
 Order by urgency. Tick them off.
 
-- [ ] **H1 (5 min) LLM key.** Azure OpenAI via Microsoft Foundry: create a deployment (a GPT-4.1/4o class chat model with vision). Put `LLM_PROVIDER=azure`, endpoint, key, deployment in `.env`. Fallback: any OpenAI-compatible key (`LLM_PROVIDER=openai`). Without any key, only the `replay` provider works (tests only).
+- [x] ~~**H1 LLM key.** Azure (superseded: the project uses a free Gemini key from https://aistudio.google.com/apikey in `.env`; never enable billing).~~ Original note: Azure OpenAI via Microsoft Foundry: create a deployment (a GPT-4.1/4o class chat model with vision). Put `LLM_PROVIDER=azure`, endpoint, key, deployment in `.env`. Fallback: any OpenAI-compatible key (`LLM_PROVIDER=openai`). Without any key, only the `replay` provider works (tests only).
 - [ ] **H2 (10 min) Git + GitHub.** `git init` and the `darby` repo are done by AdaL in P0 (run `gh auth login` first; AdaL asks before inviting anyone). Otherwise create an empty GitHub repo `darby` (private ok, make public before judging if asked) and a throwaway test repo `darby-launch-test` with a README. Create a fine-grained token (contents + pull requests on `darby-launch-test` only) -> `.env` `GITHUB_TOKEN`, `GITHUB_TEST_REPO`. Set `git config user.name/email` to your own identity.
 - [ ] **H3 (20 min) Google OAuth (only for M4).** Google Cloud console -> new project -> enable Sheets API + Drive API -> OAuth consent (External, add yourself as test user) -> OAuth client "Desktop app" -> download JSON to `secrets/google-oauth.json`. Make a second Google account/alias for `SHARE_TEST_EMAIL`. If this blocks for >30 min, skip: local-xlsx adapter is the fallback and the demo still works.
 - [ ] **H4 (2 min) Machine check.** Node 20+, `ffmpeg` (`brew install ffmpeg`), Chrome/Chromium installed. AdaL installed and logged in.
@@ -10,3 +10,7 @@ Order by urgency. Tick them off.
 - [ ] **H6 Organisers.** Ask: demo video required? length? presentation time? live demo allowed, internet at venue? Power/ports? Whether Wi-Fi can be trusted -> if not, we run the `replay` provider + local fixtures.
 - [ ] **H7 Evidence capture.** Screen-record AdaL sessions (QuickTime). Keep every AdaL chat export. These are the AdaL usage evidence.
 - [ ] **H8 Team (optional, only after Tiger has M0-M2 running).** When the team joins (hour 3-4): one person each takes (a) QA/red-team with Browser Use, (b) demo script + video, (c) README/architecture diagram + submission form, (d) Google OAuth + GTM assets. Don't let two people edit the same milestone.
+
+- [ ] **H9 (15 min) Record the real-model demo runs.** On the demo machine with the Gemini key in `.env`: `npm run demo:record` (runs all cases live once, records every model answer, curates them into `replay/llm/`), then `npm run demo:check` should show all four cases "recorded", then `bash scripts/ship.sh "Record real-model runs for Cases 3 and 4"`.
+- [ ] **H10 (optional, 10 min) Real pull request.** Create the repo `darby-launch-test` on your GitHub, a fine-grained token limited to that repo (Contents + Pull requests: read/write), put `GITHUB_TOKEN` and `GITHUB_TEST_REPO=<you>/darby-launch-test` in `.env`. Without them the PR is simulated and labelled.
+- [ ] **H11 (optional) Real voice.** macOS has one built in (`say`). Elsewhere: `pip install edge-tts`.

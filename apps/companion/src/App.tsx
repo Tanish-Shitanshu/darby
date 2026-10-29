@@ -3,7 +3,8 @@ import { ApprovalCard, EvidenceDrawer, History, Lightbox, Memory, PlanList, Rece
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 
 const LINK_TEXT: Record<Link, string> = { connecting: 'connecting', up: 'connected', down: 'offline' };
-const GOAL_EXAMPLE = 'Research the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email.';
+import demoGoals from '../../../fixtures/demo-goals.json';
+const EXAMPLES = Object.values(demoGoals) as { label: string; goal: string }[];
 type Tab = 'run' | 'history' | 'memory';
 type Tamper = { original: VerifyResult; tampered: VerifyResult; edit: { index: number; type: string } };
 
@@ -88,8 +89,10 @@ export function App() {
             <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} rows={4} placeholder="Describe your goal in plain language…" aria-label="Your goal" />
             <div className="row">
               <button className="btn primary" disabled={!allUp || goal.trim().length < 3} onClick={() => void d.start(goal.trim())} data-testid="run-btn">Plan &amp; run</button>
-              <button className="btn ghost" onClick={() => setGoal(GOAL_EXAMPLE)}>Use the example goal</button>
               <span className="muted">Every step gets a proof; the run ends in a signed receipt.</span>
+            </div>
+            <div className="row examples" aria-label="Example goals"><span className="muted small">Try an example:</span>
+              {EXAMPLES.map((x) => (<button key={x.label} className="btn ghost" onClick={() => setGoal(x.goal)} data-testid={`example-${x.label.slice(0, 6).replace(/\W/g, '').toLowerCase()}`}>{x.label}</button>))}
             </div>
             {d.error && <p className="error" role="alert">{d.error}</p>}
           </section>

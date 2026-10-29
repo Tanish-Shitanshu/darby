@@ -1,7 +1,7 @@
 // npm run test:acceptance [-- case1 case2 ...] [--live]      npm run redteam  (= the red-team scenarios: case2, case2b, case2c, case2d)
 // Default: LLM_PROVIDER=replay (recorded responses, deterministic, offline). --live uses the provider in .env and records new responses.
 // Real browser (headed unless DARBY_HEADLESS=1), real fixture web, real xlsx, real verifier, real policy engine.
-import { existsSync, mkdtempSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Plan } from '@darby/contracts';
@@ -123,9 +123,10 @@ function gtmStub(): Llm {
   return new Llm('gtm-stub', 'stub-1', raw, new ReplayStore({ curated: path.join(tmpdir(), 'darby-none-curated'), record: mkdtempSync(path.join(tmpdir(), 'darby-gtm-')) }), { rpm: 1000, concurrency: 3, fixtureBase: `http://localhost:${ACCEPT_PORT}` });
 }
 
-const GTM_GOAL = 'Launch StudyLoop from the brief: research the three competitor pages, write positioning and copy, make a hero image and a 15-second teaser video with voiceover, build and test the landing page, then open a pull request on the test repo.';
+const DEMO = JSON.parse(readFileSync(path.join(getConfig().root, 'fixtures', 'demo-goals.json'), 'utf8')) as Record<'case1' | 'case3' | 'case4', { label: string; goal: string }>;
+const GTM_GOAL = DEMO.case3.goal;
 
-async function case3Run(h: Harness, approve: boolean): Promise<Check[]> {
+async function case3Run(h: Harness, approve: boolean, scripted = true): Promise<Check[]> {
   const { checks, ok } = mk();
   await h.resetFixtures();
   let statusAtApproval = '';
@@ -140,6 +141,7 @@ async function case3Run(h: Harness, approve: boolean): Promise<Check[]> {
   const run = await h.manager.wait(id);
   unsub();
   const r = receiptOf(run);
+  if (!scripted && !run.plan && /No recorded response/.test(String(r?.cause ?? ''))) return [{ name: 'case3-real needs recordings (SKIPPED, not failed)', ok: true, detail: 'run once with LLM_PROVIDER=gemini (npm run demo:record), then it replays offline; case3 (scripted) covers the logic' }];
   const ev = eventsOf(h, id);
   const tools = run.plan?.steps.map((s) => s.tool).join(' > ') ?? 'no plan';
   ok('plan covers the launch chain', /browser\.read_page > reader\.extract > gtm\.copy > gtm\.hero_image > gtm\.voiceover > gtm\.teaser > gtm\.landing_page > gtm\.test_page > github\.create_pr/.test(tools), tools);
@@ -166,7 +168,7 @@ async function case3Run(h: Harness, approve: boolean): Promise<Check[]> {
   ok('PR verified by a fresh read of the repo', evid('pr_exists', /pull request #1/), 'pr_exists passed');
   const lg = spawnSync('git', ['-C', path.join(dir, 'pr', 'darby-launch-test'), 'ls-tree', '-r', '--name-only', details.branch], { encoding: 'utf8' });
   ok('the branch really contains the landing page and the hero image', /landing\/index\.html/.test(lg.stdout) && /landing\/hero\.png/.test(lg.stdout), lg.stdout.split('\n').filter(Boolean).join(', '));
-  ok('the broken first landing page was caught by the browser test and repaired', ev.some((e) => e.type === 'step.action' && /Landing page: written by the coder model, passed the browser test on attempt 2/.test(desc(e))), 'attempt 2');
+  if (scripted) ok('the broken first landing page was caught by the browser test and repaired', ev.some((e) => e.type === 'step.action' && /Landing page: written by the coder model, passed the browser test on attempt 2/.test(desc(e))), 'attempt 2');
   ok('receipt labels say what was real: SIMULATED PR, voiceover engine, placeholder hero', !!r?.labels.includes('SIMULATED:github.create_pr') && r.labels.some((l) => /^(VOICE:|PLACEHOLDER:voiceover)/.test(l)) && r.labels.includes('GENERATED-PLACEHOLDER:hero.png'), (r?.labels ?? []).join(', '));
   ok('receipt verifies', verifyBundle(receiptBundle(h.manager.deps, id)!).valid, 'chain + signature');
   ok('assets are listed for the Review panel', (h.manager.deps.repo.listEvidence(id)).some((e) => /teaser\.mp4$/.test(e.path)), 'evidence rows');
@@ -433,7 +435,7 @@ const scenarios: Scenario[] = [
     title: 'Failure then fixed — "Saved ✓" is a claim; the read-back finds nothing; the repair uses POST /api/leads',
     run: async (h) => {
       // a clean clone has no recorded model answers for Case 4 yet: say so instead of failing (the scripted case4-stub covers the plumbing)
-      const probe = await h.manager.start('Submit a lead through the form at /app/form?mode=broken and confirm it was saved.');
+      const probe = await h.manager.start(DEMO.case4.goal);
       const pr = await h.manager.wait(probe);
       if (!pr.plan && /No recorded response/.test(String(receiptOf(pr)?.cause ?? ''))) return [{ name: 'case4 needs recordings (SKIPPED, not failed)', ok: true, detail: 'run once with LLM_PROVIDER=gemini ... --live, then npm run replay:curate; case4-stub covers the logic offline' }];
       return case4Run(h);
@@ -441,6 +443,7 @@ const scenarios: Scenario[] = [
   },
   { id: 'case4-stub', stub: 'lead', title: 'Case 4 plumbing with a scripted model (deterministic, offline): failure, plain cause, repair, verified', run: (h) => case4Run(h) },
   { id: 'case3', stub: 'gtm', title: 'GTM Studio — launch assets, browser-tested landing page, PR behind your approval (scripted model; real-model run is recorded separately)', run: (h) => case3Run(h, true) },
+  { id: 'case3-real', title: 'GTM Studio with the real model (planner, reader, creative, coder, vision): recorded once live, then replayed offline', run: (h) => case3Run(h, true, false) },
   { id: 'case3-denied', stub: 'gtm', title: 'GTM Studio — you deny the pull request: NEEDS_YOU, nothing opened', run: (h) => case3Run(h, false) },
 ];
 
@@ -449,7 +452,7 @@ async function case4Run(h: Harness): Promise<Check[]> {
     {
       const { checks, ok } = mk();
       await h.resetFixtures();
-      const goal = 'Submit a lead through the form at /app/form?mode=broken and confirm it was saved.';
+      const goal = DEMO.case4.goal;
       const idA = await h.manager.start(goal);
       const A = await h.manager.wait(idA);
       const ra = receiptOf(A);

@@ -1,0 +1,5 @@
+{
+  "case1": { "label": "Case 1 · Research to sheet", "goal": "Research the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email." },
+  "case3": { "label": "Case 3 · Launch assets", "goal": "Launch StudyLoop from the brief: research the three competitor pages, write positioning and copy, make a hero image and a 15-second teaser video with voiceover, build and test the landing page, then open a pull request on the test repo." },
+  "case4": { "label": "Case 4 · Broken form", "goal": "Submit a lead through the form at /app/form?mode=broken and confirm it was saved." }
+}

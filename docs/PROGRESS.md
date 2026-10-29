@@ -3,7 +3,7 @@
 _Last updated: 2026-10-29_
 
 ## Current state
-- **M5 and M6 done** (tags `m5-repair`, `m6-gtm`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next, in order: M8-lite (one-command demo + offline replay), M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists. Intro video (Video Producer) stays an AdaL step.
+- **M5 and M6 done** (tags `m5-repair`, `m6-gtm`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next, in order: M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists. Intro video (Video Producer) stays an AdaL step.
 - Who built what (kept honest for PS1 evidence): M0-M3, the red-team pass and the evidence screenshots were built with AdaL. From M5 onward the build continues with a second AI coding assistant (not AdaL) because the AdaL weekly credits ran out; those commits are authored by the repo owner only and are listed in `docs/ADAL_EVIDENCE.md` as NOT AdaL work.
 - Step 0 (LLM provider) done: Gemini provider verified live (`gemini-3.5-flash`, JSON + image input), fallback chain `gemini-3-flash-preview`, `gemini-3.8-flash`; free-tier limiter (sliding-window RPM, concurrency 2, backoff on 429/503/timeouts); every response cached in the replay store.
 
@@ -18,7 +18,7 @@ _Last updated: 2026-10-29_
 | M6 GTM Studio | done (code + tests, scripted-model acceptance); real-model recording + real PR still to be done on the owner's machine | m6-gtm | `case3` (approve) and `case3-denied` |
 | M7 Playbooks + Hub | todo | | |
 | M4 Google Sheets | skipped unless `secrets/google-oauth.json` exists | | SHEET_ADAPTER=local |
-| M8 demo hardening | todo | | |
+| M8 demo hardening | lite done (one-command demo, offline mode, preflight, demo script, architecture); recordings for Cases 3/4 and a clean-clone rehearsal still to do on the owner's machine | m8-lite | `npm run demo`, `demo:offline`, `demo:check`, `demo:record`, `demo:reset` |
 
 ## Commands that pass
 `npm run check` (88 tests) · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
@@ -53,6 +53,12 @@ _Last updated: 2026-10-29_
 | GitHub test repo `darby-launch-test` + `GITHUB_TOKEN` (M6 PR step) | pending |
 | Google OAuth JSON (M4, optional) | pending / may be skipped |
 | Demo video recording | pending |
+
+## M8-lite notes
+- `npm run demo` resets local state, runs the preflight (`demo:check`), starts server + companion + fixtures and opens the companion. `-- --offline` forces `LLM_PROVIDER=replay`. Start screen has one button per case (goals live in `fixtures/demo-goals.json`).
+- `demo:check` shows per case whether the planner call is recorded (offline-ready). Case 1 is; Cases 3 and 4 need `npm run demo:record` once with the Gemini key (H9 in docs/HUMAN_TASKS.md), then `bash scripts/ship.sh "..."`.
+- `case4` and `case3-real` acceptance scenarios say SKIPPED (not failed) until their recordings exist; `case4-stub`, `case3`, `case3-denied` cover the logic with a scripted model.
+- Docs: docs/DEMO_SCRIPT.md (5-min and 3-min, exact words, fallbacks), docs/ARCHITECTURE.md (Mermaid).
 
 ## M6 notes (GTM Studio, Case 3)
 - Chain (planner picks it for launch goals only): browser.read_page (3 competitor pages) -> reader.extract -> gtm.copy -> gtm.hero_image -> gtm.voiceover -> gtm.teaser -> gtm.landing_page -> gtm.test_page -> github.create_pr (external effect, approval card lists repo/branch/title/4 files/hash).

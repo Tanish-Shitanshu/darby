@@ -25,7 +25,12 @@
     "verify-receipt": "tsx scripts/verify-receipt.ts",
     "db:reset": "tsx scripts/db-reset.ts",
     "replay:curate": "tsx scripts/replay-curate.ts",
-    "redteam": "tsx tests/acceptance/run.ts --redteam"
+    "redteam": "tsx tests/acceptance/run.ts --redteam",
+    "demo": "node scripts/demo.mjs",
+    "demo:offline": "node scripts/demo.mjs --offline",
+    "demo:reset": "tsx scripts/db-reset.ts --runs",
+    "demo:check": "tsx scripts/demo-check.ts",
+    "demo:record": "tsx tests/acceptance/run.ts --live && tsx scripts/replay-curate.ts"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",
