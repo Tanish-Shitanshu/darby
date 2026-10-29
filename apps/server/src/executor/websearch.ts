@@ -46,14 +46,26 @@ export const labelOf = (query: string): string => query.replace(/\b(pricing|pric
 /** Run one query in the given tab and return up to `perQuery` hits from distinct sites. `searchUrl` (a test fixture) replaces the live engine. */
 export async function searchOnce(page: Page, query: string, perQuery: number, searchUrl?: string | null): Promise<Hit[]> {
   const url = searchUrl ? `${searchUrl}${searchUrl.includes('?') ? '&' : '?'}q=${encodeURIComponent(query)}` : `https://www.bing.com/search?q=${encodeURIComponent(query)}&setlang=en-US`;
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
-  await page.waitForLoadState('load', { timeout: 6_000 }).catch(() => undefined);
-  const hrefs = await page.$$eval(searchUrl ? 'a.result__a' : 'li.b_algo h2 a', (as) => as.slice(0, 12).map((a) => (a as HTMLAnchorElement).href));
+  const sel = searchUrl ? 'a.result__a' : 'li.b_algo h2 a';
+  let hrefs: string[] = [];
+  // Bing sometimes redirects mid-load ("Execution context was destroyed"): wait for the result list and try once more before giving up
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    try {
+      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
+      await page.waitForSelector(sel, { timeout: 8_000 }).catch(() => undefined);
+      hrefs = await page.$$eval(sel, (as) => as.slice(0, 12).map((a) => (a as HTMLAnchorElement).href));
+      break;
+    } catch (e) {
+      if (attempt === 2) throw e;
+      await page.waitForTimeout(800);
+    }
+  }
   const seen = new Set<string>();
   const hits: Hit[] = [];
   // a price comparison wants the pricing page itself: results whose path names pricing or plans come first (order is otherwise the engine's)
   const decoded = hrefs.map((h) => (searchUrl ? h : decodeBingUrl(h))).filter((h): h is string => !!h);
-  const score = (u: string) => { try { return /pric|plans?\b|subscribe|billing/i.test(new URL(u).pathname) ? 0 : 1; } catch { return 1; } };
+  const wantsPricing = /pric|plans?\b|cost|subscription/i.test(query);   // re-rank toward pricing pages only when the question is about prices
+  const score = (u: string) => { if (!wantsPricing) return 1; try { return /pric|plans?\b|subscribe|billing/i.test(new URL(u).pathname) ? 0 : 1; } catch { return 1; } };
   const ordered = decoded.map((u, i) => ({ u, i })).sort((a, b) => score(a.u) - score(b.u) || a.i - b.i).map((x) => x.u);
   for (const target of ordered) {
     let origin: string;

@@ -1,0 +1,9 @@
+{
+  "key": "e338d8f1746d3da6a7a7ca4750d97dd0cf97e4332e787cf4181de2d5a4c124d6",
+  "role": "planner",
+  "provider": "auto",
+  "model": "sarvam-105b-conversations",
+  "recordedAt": "2026-10-29T17:29:58.794Z",
+  "promptPreview": "USER GOAL:\nresearch top 5 IIMs and tell me their average package in excel sheet form",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Search top 5 IIMs average package\",\n      \"tool\": \"web.search\",\n      \"args\": {\n        \"queries\": [\n          \"IIM Ahmedabad average package 2024\",\n          \"IIM Bangalore average package 2024\",\n          \"IIM Calcutta average package 2024\",\n          \"IIM Lucknow average package 2024\",\n          \"IIM Indore average package 2024\"\n        ],\n        \"perQuery\": 2\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Read search result pages\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\n        \"s1\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Extract package details from pages\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\n        \"s2\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s4\",\n      \"title\": \"Write IIM packages to Excel sheet\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"Top IIMs Packages\",\n        \"fromStep\": \"s3\"\n      },\n      \"dependsOn\": [\n        \"s3\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

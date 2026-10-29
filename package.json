@@ -34,7 +34,8 @@
     "demo:check": "tsx scripts/demo-check.ts",
     "ui:walkthrough": "node scripts/ui-walkthrough.mjs",
     "demo:record": "tsx tests/acceptance/run.ts --live && tsx scripts/replay-curate.ts",
-    "playbook:check": "tsx scripts/playbook-check.ts"
+    "playbook:check": "tsx scripts/playbook-check.ts",
+    "doctor": "node scripts/doctor.mjs"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

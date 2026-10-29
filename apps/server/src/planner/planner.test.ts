@@ -59,4 +59,9 @@ describe('planner prompt scopes keep recorded prompts stable', () => {
     expect(gtm).toMatch(/gtm\.copy[\s\S]*gtm\.teaser[\s\S]*github\.create_pr/);
     expect(gtm).not.toMatch(/browser\.act/);
   });
+
+  it('"in excel sheet form" is a format, not a web form: such goals get the open-web research scope', () => {
+    expect(scopeOf('research top 5 IIMs and tell me their average package in excel sheet form', true)).toBe('web');
+    expect(scopeOf('Fill in the contact form at /app/form with my details', true)).toBe('lead');
+  });
 });

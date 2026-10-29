@@ -1,0 +1,9 @@
+{
+  "key": "23383dfa9d0704b7ac84863e8b6b03bd4b626ef75660985ec75d46db5b0ec168",
+  "role": "planner",
+  "provider": "auto",
+  "model": "sarvam-105b-conversations",
+  "recordedAt": "2026-10-29T17:26:37.857Z",
+  "promptPreview": "USER GOAL:\nresearch top 5 IIMs and tell me their average package in excel sheet form",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Open IIM pages in browser\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"urls\": [\n          \"http://fixture.local/startups/acme-ai\",\n          \"http://fixture.local/startups/beta-labs\",\n          \"http://fixture.local/startups/cobalt\",\n          \"http://fixture.local/startups/delta\",\n          \"http://fixture.local/startups/echo\"\n        ]\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Extract IIM names and average packages\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\n        \"s1\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Write IIM package data to Excel sheet\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"IIM Average Packages\",\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\n        \"s2\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}

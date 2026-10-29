@@ -18,7 +18,7 @@ export const PlannerOutput = z.object({ steps: z.array(PlannerStep).min(1).max(1
 export type PlannerOutput = z.infer<typeof PlannerOutput>;
 
 /** Does the goal ask to submit a lead/contact (form or API)? Scopes the form tools and their rule into the prompt. */
-export const isLeadGoal = (goal: string): boolean => /\b(leads?|contacts?|forms?|submit|leaddesk)\b/i.test(goal);
+export const isLeadGoal = (goal: string): boolean => /\b(leads?|leaddesk|submit)\b|\b(?:the|a|web|contact|signup|sign-up)\s+forms?\b|\/app\/(?:form|leads)/i.test(goal);
 /** Does the goal ask for launch assets (GTM Studio)? */
 export const isGtmGoal = (goal: string): boolean => /\b(launch|go-to-market|gtm|teaser|landing page|studyloop)\b/i.test(goal);
 /** An open-ended research goal (no fixture site named): "research the top AI startups and put them in a spreadsheet". Uses the public web. */

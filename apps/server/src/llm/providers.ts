@@ -91,12 +91,11 @@ function openAiMessages(req: LlmRequest) {
  * Sarvam AI chat models (sarvam-105b): a second, India-built brain for planning, reading and writing, so the whole voice pipeline can run on one key.
  * Sarvam chat models read text only; requests with images or audio are handled by the caller (see llm.ts).
  */
-export function sarvamChatProvider(apiKey: string, model: string): RawProvider {
-  return {
-    name: 'sarvam',
-    model,
-    async generate(req, signal) {
-      if (req.images?.length) throw new Error('Sarvam chat models read text only; image and audio steps need a Gemini key as well (GEMINI_API_KEY).');
+export function sarvamChatProvider(apiKey: string, primary: string): RawProvider {
+  // sarvam-105b is sometimes overloaded (503 model_overloaded); its conversations sibling usually still answers
+  const chain = [primary, ...['sarvam-105b-conversations', 'sarvam-105b'].filter((m) => m !== primary)];
+  const one = async (model: string, req: LlmRequest, signal?: AbortSignal) => {
+    {
       const body = await call(
         'https://api.sarvam.ai/v1/chat/completions',
         { method: 'POST', headers: { 'content-type': 'application/json', 'api-subscription-key': apiKey }, body: JSON.stringify({ model, temperature: 0, max_tokens: 3000, messages: [{ role: 'system', content: `${req.system}
@@ -108,6 +107,19 @@ Reply with ONLY one JSON object, no explanation.` }, { role: 'user', content: re
       const text = String(m0?.content || m0?.reasoning_content || '').replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
       if (!text) throw new TransientError('Sarvam returned no text');
       return { text, model };
+    }
+  };
+  return {
+    name: 'sarvam',
+    model: primary,
+    async generate(req, signal) {
+      if (req.images?.length) throw new Error('Sarvam chat models read text only; image and audio steps need a Gemini key as well (GEMINI_API_KEY).');
+      let last: unknown;
+      for (const m of chain) {
+        try { return await one(m, req, signal); }
+        catch (e) { if (signal?.aborted || !(e instanceof TransientError || e instanceof RateLimitError)) throw e; last = e; }
+      }
+      throw last;
     },
   };
 }
