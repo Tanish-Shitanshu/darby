@@ -124,6 +124,48 @@ Reply with ONLY one JSON object, no explanation.` }, { role: 'user', content: re
   };
 }
 
+/** Every Groq key found in the environment: GROQ_API_KEY, GROQ_API_KEYS (comma list) and GROQ_API_KEY_2, _3, … */
+export function groqKeysFromEnv(e: NodeJS.ProcessEnv): string[] {
+  const keys = [e.GROQ_API_KEY, ...(e.GROQ_API_KEYS ?? '').split(','), ...Object.keys(e).filter((k) => /^GROQ_API_KEY_\d+$/.test(k)).sort().map((k) => e[k])];
+  return [...new Set(keys.map((k) => (k ?? '').trim()).filter(Boolean))];
+}
+
+/**
+ * Groq (OpenAI-compatible, text only) with several keys: a key that is rate limited or failing is rested for a minute and the next key answers,
+ * so two or three free keys behave like one bigger quota.
+ */
+export function groqProvider(apiKeys: string[], model: string): RawProvider {
+  const restUntil = new Map<string, number>();
+  return {
+    name: 'groq',
+    model,
+    async generate(req, signal) {
+      if (req.images?.length) throw new Error('Groq chat models read text only; image and audio steps need Gemini.');
+      const ready = apiKeys.filter((k) => (restUntil.get(k) ?? 0) <= Date.now());
+      const order = ready.length ? ready : apiKeys;   // all resting: try anyway rather than fail without asking
+      let last: unknown = new Error('no Groq key configured');
+      for (const key of order) {
+        try {
+          const body = await call(
+            'https://api.groq.com/openai/v1/chat/completions',
+            { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` }, body: JSON.stringify({ model, temperature: 0, max_tokens: 4096, response_format: { type: 'json_object' }, messages: openAiMessages(req) }) },
+            signal,
+            apiKeys,
+          );
+          const text = String(body?.choices?.[0]?.message?.content ?? '').trim();
+          if (!text) throw new TransientError('Groq returned no text');
+          return { text, model };
+        } catch (e) {
+          if (signal?.aborted) throw e;
+          restUntil.set(key, Date.now() + 60_000);   // rate limit, outage or a bad key: rest it and let the next key answer
+          last = e;
+        }
+      }
+      throw last;
+    },
+  };
+}
+
 /** Kept working, not used by the project. */
 export function openaiProvider(apiKey: string, model: string, baseUrl = 'https://api.openai.com/v1'): RawProvider {
   return {

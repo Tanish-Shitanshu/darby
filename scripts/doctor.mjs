@@ -30,8 +30,18 @@ if (env.SARVAM_API_KEY) {
 if (env.GEMINI_API_KEY) {
   const model = env.GEMINI_MODEL?.split(/\s/)[0] || 'gemini-3.5-flash';
   const r = await hit(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': env.GEMINI_API_KEY }, body: JSON.stringify({ contents: [{ parts: [{ text: 'say ok' }] }] }) });
-  add(`Gemini ${model}`, r.status === 200, r.status === 200 ? 'answers' : r.status === 429 ? 'daily free quota used up (resets daily; Darby falls back to Sarvam)' : `HTTP ${r.status}`);
+  add(`Gemini ${model}`, r.status === 200, r.status === 200 ? 'answers' : r.status === 429 ? 'daily free quota used up (resets daily; Darby falls back to Groq, then Sarvam)' : `HTTP ${r.status}`);
 } else add('Gemini key', false, 'GEMINI_API_KEY empty');
+
+const groqKeys = [env.GROQ_API_KEY, env.GROQ_API_KEY_2, env.GROQ_API_KEY_3, ...(env.GROQ_API_KEYS || '').split(',')].map((k) => (k || '').trim()).filter(Boolean);
+if (groqKeys.length) {
+  let i = 0;
+  for (const k of groqKeys) {
+    i++;
+    const r = await hit('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + k }, body: JSON.stringify({ model: env.GROQ_MODEL || 'llama-3.3-70b-versatile', max_tokens: 10, messages: [{ role: 'user', content: 'say ok' }] }) });
+    add('Groq key ' + i, r.status === 200, r.status === 200 ? 'answers' : r.status === 429 ? 'rate limited right now' : 'HTTP ' + r.status);
+  }
+} else add('Groq keys', true, 'none set (optional backup: GROQ_API_KEY in .env)');
 
 const api = await hit('http://localhost:5173/api/voice/config');
 add('Darby server via the UI proxy', api.status === 200, api.status === 200 ? 'up' : 'not reachable — start it with `npm run dev`');

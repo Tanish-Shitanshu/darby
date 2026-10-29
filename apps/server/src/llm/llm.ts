@@ -3,7 +3,7 @@ import path from 'node:path';
 import type { ZodType } from 'zod';
 import { canonicalJson, sha256 } from '../util/canonical';
 import type { Config } from '../config';
-import { azureProvider, geminiProvider, openaiProvider, redactSecrets, sarvamChatProvider } from './providers';
+import { azureProvider, geminiProvider, groqKeysFromEnv, groqProvider, openaiProvider, redactSecrets, sarvamChatProvider } from './providers';
 import { RateLimitError, ReplayMissError, TransientError, type LlmRequest, type LlmResult, type RawProvider } from './types';
 
 /* ---------------- replay store ---------------- */
@@ -174,25 +174,38 @@ export function createLlm(cfg: Config): Llm {
     }
     case 'auto': {
       // Best available live model: Gemini first (reads pages best, handles images and audio); if it is out of quota or down, Sarvam's chat model takes over for text.
+      // Order: Gemini -> Groq (several keys) -> Sarvam. Each tier that fails is rested for a short time; Gemini is retried every 90 s, so the run moves back to it as soon as its quota is back.
       const gem = e.GEMINI_API_KEY ? geminiProvider(e.GEMINI_API_KEY, [cfg.llm.geminiModel, ...cfg.llm.geminiFallbacks.filter((m) => m !== cfg.llm.geminiModel)]) : null;
+      const groqKeys = groqKeysFromEnv(e);
+      const grq = groqKeys.length ? groqProvider(groqKeys, e.GROQ_MODEL || 'llama-3.3-70b-versatile') : null;
       const sar = e.SARVAM_API_KEY ? sarvamChatProvider(e.SARVAM_API_KEY, e.SARVAM_MODEL || 'sarvam-105b') : null;
-      if (!gem && !sar) throw new Error('LLM_PROVIDER=auto needs GEMINI_API_KEY and/or SARVAM_API_KEY in .env');
-      let gemDownUntil = 0;
+      const tiers = [gem, grq, sar].filter((t): t is RawProvider => !!t);
+      if (!tiers.length) throw new Error('LLM_PROVIDER=auto needs GEMINI_API_KEY, GROQ_API_KEY and/or SARVAM_API_KEY in .env');
+      const restUntil = new Map<string, number>();
       raw = {
-        name: 'auto', model: (gem ?? sar)!.model,
+        name: 'auto', model: tiers[0]!.model,
         async generate(req, signal) {
           const hasMedia = !!req.images?.length;
-          if (gem && (hasMedia || !sar || Date.now() > gemDownUntil)) {
-            try { return await gem.generate(req, signal); }
+          const usable = tiers.filter((t) => !hasMedia || t === gem);   // only Gemini reads images and audio
+          const awake = usable.filter((t) => (restUntil.get(t.name) ?? 0) <= Date.now());
+          let last: unknown = new Error('no live model is available');
+          for (const t of awake.length ? awake : usable) {
+            try { return await t.generate(req, signal); }
             catch (err) {
-              if (signal?.aborted || !sar || hasMedia) throw err;
-              gemDownUntil = Date.now() + 5 * 60_000;   // quota or outage: do not knock on Gemini again for five minutes
+              if (signal?.aborted) throw err;
+              restUntil.set(t.name, Date.now() + 90_000);
+              last = err;
             }
           }
-          if (!sar) throw new Error('no live model is available');
-          return sar.generate(req, signal);
+          throw last;
         },
       };
+      break;
+    }
+    case 'groq': {
+      const keys = groqKeysFromEnv(e);
+      if (!keys.length) throw new Error('LLM_PROVIDER=groq but GROQ_API_KEY is empty');
+      raw = groqProvider(keys, e.GROQ_MODEL || 'llama-3.3-70b-versatile');
       break;
     }
     case 'replay':
