@@ -11,7 +11,7 @@
 | Safety and control | `npm run redteam` (case2, 2b, 2c, 2d, 2e), `cancel`, `takeover`, `case1-denied`, `case3-denied` | 10 poisoned pages, hostile model answers, policy blocks, Cancel, Take over, Approve/Deny |
 | Multimodal and coding | `npm run test:acceptance -- case3 case3-real` | Copy, hero image, 15 s voiced teaser, model-written landing page tested in a real tab, vision checks; `09-case3-review.png` |
 | Playbooks and Hub | `npm run playbook:check`, `playbooks/startup-prices/` | Verified run saved as a skill; replay with other parameters; check badge; `05-hub.png` |
-| Whole UI, all cases | `npm run ui:walkthrough` | Drives the real UI for all four cases, Hub, deny, cancel, history; screenshots in `docs/evidence/ui/` (1280x720 and 1920x1080); report `docs/evidence/ui/walkthrough.json` |
+| Whole UI, all cases | `npm run ui:walkthrough` | Drives the real UI for all four cases, Hub, deny, cancel, history; screenshots in `docs/evidence/ui/` (1280x720 and 1920x1080); report `docs/evidence/ui/walkthrough.json` (offline). The same walkthrough also ran live with the real model in headed Chrome: `docs/evidence/ui-live/` (`UI_LIVE=1 UI_HEADED=1 BROWSER_CHANNEL=chrome npm run ui:walkthrough`) |
 | Users, value, future | `docs/VALUE.md` | |
 | Deck truth audit | `docs/DECK_AUDIT.md` | Every slide claim mapped to proof, with the ones that need rewording |
 | AdaL usage evidence | `docs/ADAL_EVIDENCE.md`, `docs/evidence/adal-redteam/`, `docs/evidence/m*-review.md`, commit tags `Built-with: AdaL` | Honest split of AdaL work and other-assistant work; remaining sessions in `docs/ADAL_TODO_FOR_OWNER.md` |

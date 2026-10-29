@@ -88,3 +88,11 @@ _Last updated: 2026-10-29_
 - M1, M2, M3, M5, M6, M7, M8-lite done. Pending: (M4 optional), owner-machine items (real-model recordings H9, real PR H10, clean-clone rehearsal). Run `npm run check` and `npm run test:acceptance` first (headless: `DARBY_HEADLESS=1`).
 - Publishing: `bash scripts/ship.sh "message"` (checks, secret guard, author check, push main + tags). Commits must carry no AI attribution; `.githooks/commit-msg` enforces it.
 - Tanish's AdaL credits are exhausted; work continues with another coding assistant and his own Gemini key.
+
+## Finals prep (29 Oct, evening)
+- Phase 0 done on Windows (Node 22 or 24; `better-sqlite3` pinned to 12.x so prebuilt binaries install without Visual Studio; `.gitattributes` forces LF).
+- Phase 1 done: Cases 3 and 4 recorded with the real model (Gemini free tier); `demo:check` shows all four recorded; `test:acceptance` has no SKIPPED scenarios.
+- Phase 2 done: `docs/DECK_AUDIT.md` (rows marked OWNER need a slide wording decision).
+- Phase 3: `case2e` (10 poisoned pages, 10 hiding techniques); voice button and screenshot attach; `npm run ui:walkthrough` passes 20/20 offline and live (headed Chrome), screenshots at 1280x720 and 1920x1080; `docs/VALUE.md`, `docs/SUBMISSION.md`, `docs/ADAL_TODO_FOR_OWNER.md`.
+- Phase 5: clean clone on Node 24 passes check, acceptance, redteam, playbook:check and the UI walkthrough.
+- Still only the owner can do: AdaL sessions, demo video, organiser questions, slide rewording from the audit, optional real PR token.

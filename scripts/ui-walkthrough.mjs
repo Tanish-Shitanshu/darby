@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { chromium } from 'playwright';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const outRoot = path.join(root, 'docs', 'evidence', 'ui');
+const outRoot = path.join(root, 'docs', 'evidence', process.env.UI_LIVE ? 'ui-live' : 'ui');
 const goals = JSON.parse(readFileSync(path.join(root, 'fixtures', 'demo-goals.json'), 'utf8'));
 const sizes = { '1280x720': { width: 1280, height: 720 }, '1920x1080': { width: 1920, height: 1080 } };
 const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
@@ -154,7 +154,7 @@ try {
   const failed = results.filter((r) => !r.ok).length;
   mkdirSync(outRoot, { recursive: true });
   writeFileSync(path.join(outRoot, 'walkthrough.json'), JSON.stringify({ at: new Date().toISOString(), llm: process.env.UI_LIVE ? 'live' : 'replay', passed: results.length - failed, failed, results }, null, 2));
-  console.log(`\n${failed ? `${failed} check(s) FAILED` : 'all UI checks passed'} · ${results.length - failed}/${results.length} · screenshots in docs/evidence/ui`);
+  console.log(`\n${failed ? `${failed} check(s) FAILED` : 'all UI checks passed'} · ${results.length - failed}/${results.length} · screenshots in ${path.relative(root, outRoot)}`);
   await browser.close();
   // the walkthrough saves a throwaway Playbook; leave the committed ones alone and remove only the new ones
   for (const d of readdirSync(path.join(root, 'playbooks'))) if (!playbooksBefore.has(d)) rmSync(path.join(root, 'playbooks', d), { recursive: true, force: true });
