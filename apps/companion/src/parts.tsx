@@ -342,13 +342,15 @@ export function EvidenceDrawer({ run, stepId, detail, onClose, onShot }: { run: 
   const result = detail?.steps.find((s) => s.stepId === stepId)?.result;
   const approvals = (detail?.approvals ?? []).filter((a) => a.stepId === stepId);
   return (
+    <>
+    <div className="drawer-backdrop" onClick={onClose} aria-hidden="true" data-testid="drawer-backdrop" />
     <aside className="drawer" data-testid="evidence-drawer" role="dialog" aria-modal="false" aria-label={`Evidence for ${step.title}`} ref={ref as never}>
       <div className="drawer-head">
         <div>
           <div className="eyebrow">Evidence · step {step.id}</div>
           <h2>{step.title}</h2>
         </div>
-        <button className="btn ghost" onClick={onClose}>Close</button>
+        <button className="btn ghost drawer-close" onClick={onClose} aria-label="Close evidence panel" data-testid="drawer-close">✕ Close</button>
       </div>
       <div className="chips"><span className={`chip st-${view?.status ?? 'pending'}`}>{STATUS_LABEL[view?.status ?? 'pending']}</span><span className={`chip risk-${step.suggestedRisk}`}>{RISK_LABEL[step.suggestedRisk]}</span></div>
 
@@ -389,6 +391,7 @@ export function EvidenceDrawer({ run, stepId, detail, onClose, onShot }: { run: 
         <pre className="json">{JSON.stringify(result, null, 2).slice(0, 1500)}</pre>
       </>)}
     </aside>
+    </>
   );
 }
 

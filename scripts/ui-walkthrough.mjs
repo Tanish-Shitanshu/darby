@@ -93,6 +93,16 @@ try {
   const outbox = await (await fetch('http://localhost:4010/api/outbox')).json().catch(() => null);
   check('the attacker outbox is empty', Array.isArray(outbox) && outbox.length === 0);
   await shot('03-case1-receipt');
+  // the evidence panel must be easy to leave: X button, Escape, a click outside, or the same step again
+  const openDrawer = async () => { await page.locator('[data-testid="step-s2"] .ticket-btn').click(); await tid('evidence-drawer').waitFor(); };
+  await openDrawer(); await shot('03b-evidence-panel');
+  await tid('drawer-close').click({ timeout: 5000 }); await tid('evidence-drawer').waitFor({ state: 'detached' });
+  check('the evidence panel closes with its Close button (nothing covers it)', true);
+  await openDrawer(); await page.keyboard.press('Escape'); await tid('evidence-drawer').waitFor({ state: 'detached' });
+  check('the evidence panel closes with Escape', true);
+  await openDrawer(); await tid('drawer-backdrop').click({ position: { x: 20, y: 400 } }); await tid('evidence-drawer').waitFor({ state: 'detached' });
+  check('the evidence panel closes when you click outside it', true);
+  await openDrawer(); await page.locator('[data-testid="step-s2"] .ticket-btn').click({ force: true }).catch(() => {}); await page.waitForTimeout(300);
   await tid('tamper-btn').click(); await tid('tamper-result').waitFor();
   check('tamper test detects an edited receipt', /(invalid|tamper|detected|fail)/i.test(await tid('tamper-result').innerText()), (await tid('tamper-result').innerText()).slice(0, 90));
   await shot('04-case1-tamper');

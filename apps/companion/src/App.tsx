@@ -118,6 +118,7 @@ export function App() {
   const [detail, setDetail] = useState<RunDetail | null>(null);
   const [shot, setShot] = useState<string | null>(null);
   const [rtab, setRtab] = useState<'activity' | 'result'>('activity');
+  const [lost, setLost] = useState<string | null>(null);
 
   const run = d.run;
   const runId = run?.id ?? null;
@@ -126,6 +127,18 @@ export function App() {
   const allUp = d.server === 'up' && d.socket === 'up' && d.echo === 'ok';
   const total = run?.plan?.steps.length ?? 0;
   const doneN = run ? Object.values(run.steps).filter((s) => ['passed', 'passed_with_gaps', 'failed', 'blocked', 'cancelled'].includes(s.status)).length : 0;
+
+  // a run whose server was restarted would otherwise look "stuck" forever: notice it and offer to start again
+  useEffect(() => {
+    if (!run || !live) return;
+    const t = setInterval(async () => {
+      try {
+        const st = (await (await fetch(`/api/runs/${run.id}`)).json())?.run?.status;
+        if (st && !['planning', 'running', 'paused', 'awaiting_approval'].includes(st) && !run.receipt) setLost(run.id);
+      } catch { /* server unreachable: the status light already says so */ }
+    }, 4000);
+    return () => clearInterval(t);
+  }, [run?.id, live, run?.receipt]);
 
   // reset per-run UI state when the run changes
   useEffect(() => { setVerify(null); setTamper(null); setRemembered(false); setDrawer(null); setDetail(null); setRtab('activity'); }, [runId]);
@@ -197,6 +210,12 @@ export function App() {
               {!live && <button className="btn ghost" onClick={() => { d.newRun(); setGoal(''); void d.refreshHistory(); }} data-testid="new-goal">{Icon.arrow} New task</button>}
             </div>
           </header>
+        )}
+        {run && tab === 'run' && lost === run.id && !run.receipt && (
+          <div className="banner" role="alert" data-testid="run-lost">
+            <b>This run stopped before it finished.</b> Darby was restarted while it was working, so nothing more will happen for it.
+            <button className="btn primary" onClick={() => { const g = run.goal; setLost(null); d.newRun(); void submit({ goal: g, lang: 'en-IN', voice: false }); }}>Run it again</button>
+          </div>
         )}
         {run && tab === 'run' && <ApprovalCard run={run} onResolve={(s, ok) => void d.approve(run.id, s, ok)} onTakeover={() => void d.takeover(run.id)} />}
 
@@ -274,7 +293,7 @@ export function App() {
           <main className="run-grid">
             <aside className="plan-col card" aria-label="Plan">
               <h2>Plan <span className="muted small">a proof for every step</span></h2>
-              <PlanList run={run} onOpen={setDrawer} active={drawer} />
+              <PlanList run={run} onOpen={(id) => setDrawer((cur) => (cur === id ? null : id))} active={drawer} />
             </aside>
             <section className="main-col">
               <div className="rtabs" role="tablist" aria-label="Run views">
