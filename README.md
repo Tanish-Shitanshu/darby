@@ -14,7 +14,7 @@ npm install
 npx playwright install chromium   # needed from M1 (the executor drives real Chromium)
 npm run dev            # server :4000, companion :5173, fixtures :4010
 ```
-If port 5173 is busy, Vite picks the next free one and prints the URL (the dev proxy to the server keeps working). Free 5173 before the demo if you want the documented address.
+The companion is meant to run on :5173, but if that port is busy Vite falls back to the next free one (often **:5174**) and prints the URL; the dev proxy to the server works on any port. Check the `[companion]` line in the `npm run dev` output for the real address.
 
 ## Checks
 ```bash
@@ -26,6 +26,9 @@ npm run test:acceptance   # lists the demo-case scenarios (placeholder until M1+
 
 ## Layout
 `apps/server` (Express + ws, `/health`, `/ws` echoes validated `RunEvent`s) · `apps/companion` (Vite + React) · `packages/contracts` (zod, source of truth) · `fixtures` · `scripts` · `docs` · `tests/acceptance`
+
+## Known issues
+- `npm audit` reports 4 findings (1 moderate, 1 high, 2 critical): `@vitest/mocker` and `tinypool` are dev-only test tooling; `zod` (<4.6.6) is flagged high. We deliberately keep zod at `^3.25.76` because `packages/contracts` is the pinned source of truth; revisit only after the hackathon.
 
 ## Docs
 docs/SPEC.md (architecture) · docs/MILESTONES.md · docs/HUMAN_TASKS.md · docs/ADAL_PROMPTS.md · docs/ADAL_EVIDENCE.md
