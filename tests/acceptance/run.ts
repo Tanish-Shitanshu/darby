@@ -262,6 +262,23 @@ const scenarios: Scenario[] = [
     },
   },
   {
+    id: 'cancel-approval',
+    title: 'Cancel while an approval card is open: the share never happens',
+    async run(h) {
+      const { checks, ok } = mk();
+      const id = await h.manager.start(CASE1_GOAL);
+      await new Promise<void>((resolve) => { const un = h.manager.deps.bus.subscribe((e) => { if (e.runId === id && e.type === 'approval.requested') { un(); resolve(); } }); });
+      h.manager.cancel(id);
+      const run = await h.manager.wait(id);
+      const ev = eventsOf(h, id);
+      ok('run cancelled, verdict NEEDS_YOU', run.status === 'cancelled' && run.verdict === 'NEEDS_YOU', `${run.status} / ${run.verdict}`);
+      ok('the open approval was closed as cancelled, not left pending', h.manager.deps.repo.listApprovals(id).every((a) => a.status === 'cancelled'), h.manager.deps.repo.listApprovals(id).map((a) => a.status).join(','));
+      ok('nothing was shared', !existsSync(path.join(h.manager.deps.cfg.workspaceDir, id, 'Competitors.xlsx.shares.json')), 'no permission list');
+      ok('the cut-off step is reported as cancelled', ev.some((e) => e.type === 'step.finished' && e.payload.stepId === 's4' && e.payload.status === 'cancelled'), 's4 cancelled');
+      return checks;
+    },
+  },
+  {
     id: 'takeover',
     title: 'Takeover pauses and resumes (page state is re-read)',
     async run(h) {

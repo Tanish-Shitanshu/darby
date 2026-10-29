@@ -8,7 +8,7 @@ import type { Repo } from '../db/repo';
 import type { Llm } from '../llm/llm';
 import type { LlmResult } from '../llm/types';
 import type { Signer } from '../ledger/receipt';
-import { TaintTracker } from '../policy/engine';
+import { TaintTracker, trustedRecipientsFrom } from '../policy/engine';
 import type { Catalog } from '../sources';
 import { sha256 } from '../util/canonical';
 import type { BrowserHost } from './browser';
@@ -74,6 +74,7 @@ export class RunContext {
   readonly approvalWaiters = new Map<string, (approved: boolean) => void>();
 
   constructor(readonly deps: Deps, readonly runId: string, readonly goal: string, readonly signal: AbortSignal, readonly opts: RunOptions = {}) {
+    this.taint.exemptHosts(...deps.cfg.allowedOrigins.map((o) => new URL(o).hostname), deps.cfg.teamEmail.split('@')[1] ?? '');
     this.shotsDir = path.join(deps.cfg.runsDir, runId, 'shots');
     mkdirSync(this.shotsDir, { recursive: true });
   }
@@ -96,6 +97,12 @@ export class RunContext {
   noteLlm(r: LlmResult, role: string): void {
     this.llmResults.push(r);
     this.ledger('llm.call', { role, source: r.source, provider: r.provider, model: r.model, requestKey: r.key });
+  }
+
+  /** Everything the policy engine needs, built from trusted data only (config, the user's goal) plus the taint set. */
+  policyContext() {
+    const cfg = this.deps.cfg;
+    return { allowedOrigins: cfg.allowedOrigins, taint: this.taint, allowedPaths: [cfg.workspaceDir, cfg.darbyDir], trustedRecipients: trustedRecipientsFrom(this.goal, cfg.teamEmail) };
   }
 
   /** Called before every action: honours cancel and pause (takeover / approval wait). */

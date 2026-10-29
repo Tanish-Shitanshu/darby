@@ -3,7 +3,7 @@
 _Last updated: 2026-10-29_
 
 ## Current state
-- **M1 (core loop) done** and tagged `m1-core-loop`. Next: M2 (policy engine tests, approvals UI flow, share.grant SIMULATED, cancel/takeover, red-team).
+- **M2 (policy, approvals, control) done**, tag `m2-policy`. M1 done (`m1-core-loop`). Next: M3 (companion UI polish: approval card at the top, evidence drawer, history, memory, receipt tamper-test button, Save as Playbook placeholder, Hub placeholder).
 - Step 0 (LLM provider) done: Gemini provider verified live (`gemini-3.5-flash`, JSON + image input), fallback chain `gemini-3-flash-preview`, `gemini-3.8-flash`; free-tier limiter (sliding-window RPM, concurrency 2, backoff on 429/503/timeouts); every response cached in the replay store.
 
 ## Milestones
@@ -11,7 +11,7 @@ _Last updated: 2026-10-29_
 |---|---|---|---|
 | M0 scaffold | done | m0-scaffold | server + companion + fixtures wired |
 | M1 core loop | done | m1-core-loop | |
-| M2 policy/approvals/control | todo | | |
+| M2 policy/approvals/control | done | m2-policy | |
 | M3 companion UI | todo | | |
 | M5 failure + repair | todo | | |
 | M6 GTM Studio | todo | | |
@@ -20,7 +20,13 @@ _Last updated: 2026-10-29_
 | M8 demo hardening | todo | | |
 
 ## Commands that pass
-`npm run check` (62 tests) · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
+`npm run check` (83 tests) · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
+
+## M2 notes
+- Policy engine hardened after an independent headless-AdaL red team (48 bypasses found -> 0): see `docs/evidence/m2-review.md`.
+- `npm run test:acceptance` (replay, offline) runs: case1 (4-step plan, approval for share.grant, SIMULATED label), case1-denied, case1-noshare, case2 (poisoned page contained, CONTAINED), case2b (compromised planner -> TAINT-002), case2c (hostile reader model), case2d (FORB-003), cancel, cancel-approval, takeover (pause + page re-read), tamper. `npm run redteam` runs the case2* group.
+- Share is SIMULATED (local sidecar permission list) until M4 (Google) exists; labelled in the UI card, step proof, receipt labels.
+- The attacker in case2 is simulated (labelled SIMULATED-ATTACK); containment is real code. The prompt injection on the Fathom page is also really read by the real Gemini reader, which ignored it.
 
 ## M1 notes
 - Case 1 (without share) verified live on Gemini and from replay alone: VERIFIED_WITH_GAPS, gaps cobalt/echo/helio, 10/10 read back, prices equal fixtures/expected.json. 11 recordings committed in `replay/llm/`.

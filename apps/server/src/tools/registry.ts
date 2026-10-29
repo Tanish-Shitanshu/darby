@@ -1,4 +1,5 @@
 import type { EvidenceContract, Risk } from '@darby/contracts';
+import { z } from 'zod';
 import type { Config } from '../config';
 import type { Catalog } from '../sources';
 
@@ -19,6 +20,12 @@ export interface ToolDef {
   /** the evidence contract (template) that proves the step; null only for pure-reasoning steps */
   contract(args: Record<string, unknown>, ctx: CompileCtx): EvidenceContract | null;
   implemented: boolean;
+  /** strict schema = the allow-list of argument names/shapes (policy FORB-003 rejects anything else) */
+  args: z.ZodTypeAny;
+  /** canonical (lower-case alphanumeric) names of arguments that decide WHERE something goes / WHAT runs: tainted values are never allowed there */
+  controlKeys: string[];
+  /** canonical names of arguments that name a person/address: the value must come from the user's goal or settings */
+  recipientKeys: string[];
 }
 
 const strs = (v: unknown): string[] => (Array.isArray(v) ? v.map((x) => String(x)) : typeof v === 'string' ? [v] : []);
@@ -39,7 +46,21 @@ export { slugOf };
 
 export const sheetPathFor = (runId: string, name: string) => `workspace/${runId}/${name}.xlsx`;
 
-const def = (d: ToolDef): [string, ToolDef] => [d.name, d];
+const Id = z.string().max(24).nullable();
+const DocName = z.string().regex(/^[\w][\w \-]{0,39}$/);
+const META: Record<string, Pick<ToolDef, 'args' | 'controlKeys' | 'recipientKeys'>> = {
+  'browser.read_page': { args: z.object({ urls: z.array(z.string().max(2048)).min(1).max(12) }).strict(), controlKeys: ['urls'], recipientKeys: [] },
+  'reader.extract': { args: z.object({ fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'sheet.write': { args: z.object({ name: DocName, fromStep: Id }).strict(), controlKeys: [], recipientKeys: [] },
+  'sheet.create': { args: z.object({ name: DocName }).strict(), controlKeys: [], recipientKeys: [] },
+  'sheet.read': { args: z.object({ sheetRef: z.string().max(200) }).strict(), controlKeys: [], recipientKeys: [] },
+  'share.grant': { args: z.object({ fromStep: Id, recipient: z.literal('team'), role: z.enum(['reader', 'commenter', 'writer']) }).strict(), controlKeys: ['recipient'], recipientKeys: ['recipient'] },
+  'email.send': { args: z.object({ to: z.string().max(320), subject: z.string().max(200).optional(), body: z.string().max(5000).optional() }).strict(), controlKeys: ['to'], recipientKeys: ['to'] },
+  'browser.act': { args: z.object({ url: z.string().max(2048), actions: z.array(z.record(z.unknown())).max(20) }).strict(), controlKeys: ['url'], recipientKeys: [] },
+  'http.request': { args: z.object({ method: z.enum(['GET', 'POST']), url: z.string().max(2048), body: z.record(z.unknown()).optional() }).strict(), controlKeys: ['url'], recipientKeys: [] },
+  'github.create_pr': { args: z.object({ repo: z.string().max(100), branch: z.string().max(100), title: z.string().max(200), body: z.string().max(5000).optional(), patchRef: z.string().max(200).optional() }).strict(), controlKeys: ['repo', 'branch'], recipientKeys: [] },
+};
+const def = (d: Omit<ToolDef, 'args' | 'controlKeys' | 'recipientKeys'>): [string, ToolDef] => [d.name, { ...d, ...META[d.name]! }];
 
 export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
   def({
@@ -102,7 +123,7 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
   }),
   def({
     name: 'email.send', risk: 'external_effect', implemented: true, description: 'Send an email (fixture outbox only). External effect.', argsHelp: '{ to, subject, body }',
-    normalize: (a, ctx) => ({ ...a, to: a.to === 'team' ? ctx.cfg.teamEmail : a.to }),
+    normalize: (a, ctx) => ({ to: a.to === 'team' ? ctx.cfg.teamEmail : a.to, ...(a.subject !== undefined ? { subject: a.subject } : {}), ...(a.body !== undefined ? { body: a.body } : {}) }),
     contract: (a, ctx) => ({ kind: 'http_json_contains', url: `${ctx.cfg.fixtureBase}/api/outbox`, path: '$', expected: { to: String(a.to ?? '') } }),
   }),
   def({

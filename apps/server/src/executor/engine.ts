@@ -93,7 +93,12 @@ export async function runEngine(ctx: RunContext): Promise<void> {
         for (const s of plan.steps) {
           if (!outcomes.some((o) => o.step.id === s.id)) outcomes.push({ step: s, outcome: 'cancelled', status: 'cancelled', summary: 'cancelled before it ran', gaps: [] });
         }
-        repo.listSteps(runId).filter((r) => r.status === 'running' || r.status === 'pending' || r.status === 'awaiting_approval' || r.status === 'verifying').forEach((r) => repo.updateStep(runId, r.stepId, { status: 'cancelled', finished: true }));
+        // tell the UI (and the ledger) about every step that was cut off, and close any approval card that was waiting
+        repo.listApprovals(runId).filter((a) => a.status === 'pending').forEach((a) => repo.resolveApproval(a.id, 'cancelled'));
+        for (const r of repo.listSteps(runId).filter((x) => ['running', 'pending', 'awaiting_approval', 'verifying'].includes(x.status))) {
+          repo.updateStep(runId, r.stepId, { status: 'cancelled', finished: true });
+          ctx.emit({ type: 'step.finished', runId, stepId: r.stepId, status: 'cancelled' });
+        }
       }
       ctx.emit({ type: 'run.cancelled', runId });
       cause = 'You cancelled the run. Nothing after the cancel point was executed.';
@@ -130,7 +135,7 @@ async function runStep(ctx: RunContext, step: PlanStep, done: StepOutcome[]): Pr
   ctx.emit({ type: 'step.started', runId, stepId: step.id });
 
   // policy: plain code decides, every decision is evented + ledgered
-  const decision = evaluatePolicy({ step, allowedOrigins: cfg.allowedOrigins, taint: ctx.taint, allowedPaths: [cfg.workspaceDir, cfg.darbyDir] });
+  const decision = evaluatePolicy({ step, ...ctx.policyContext() });
   ctx.emit({ type: 'policy.decision', runId, stepId: step.id, decision });
 
   if (decision.action === 'block') {

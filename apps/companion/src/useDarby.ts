@@ -66,7 +66,7 @@ export function useDarby() {
         const ev = RunEvent.safeParse(json);
         if (!ev.success) return;
         if (ev.data.runId === PING.runId) { setEcho('ok'); return; }
-        const e = ev.data;
+        const e = json as RunEvent; // validated above; keep the original so signed extras on the receipt (labels, cause, llm) survive zod's key stripping
         setRuns((r) => ({ ...r, [e.runId]: applyEvent(r[e.runId], e) }));
         if (e.type === 'run.started' && starting.current && !currentRef.current) { setCurrentId(e.runId); starting.current = false; }
         if (e.type === 'receipt.sealed' || e.type === 'run.started') void refreshHistory();

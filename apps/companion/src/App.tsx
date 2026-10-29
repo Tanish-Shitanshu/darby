@@ -4,7 +4,7 @@ import { prettySlug, proofLine, VERDICT_TEXT, type RunView, type StepView, type 
 import { useDarby, type Link, type VerifyResult } from './useDarby';
 
 const LINK_TEXT: Record<Link, string> = { connecting: 'Connecting…', up: 'Connected', down: 'Offline' };
-const GOAL_EXAMPLE = 'Research the 10 AI startups on the fixture site and record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors.';
+const GOAL_EXAMPLE = 'Research the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email.';
 
 function StatusDot({ name, link, detail }: { name: string; link: Link; detail?: string }) {
   return (

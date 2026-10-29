@@ -91,10 +91,13 @@ export function applyEvent(prev: RunView | undefined, ev: RunEvent): RunView {
       break;
     case 'run.cancelled':
       v.phase = 'cancelled';
+      v.approval = null;
       add({ kind: 'system', text: 'Cancelled — nothing runs after this point' });
       break;
     case 'receipt.sealed':
       v.receipt = ev.receipt as SignedReceipt;
+      v.approval = null;
+      for (const s of ev.receipt.steps) step(s.stepId).status = s.status; // the signed receipt is the final word on every step
       if (v.phase !== 'cancelled') v.phase = 'finished';
       add({ kind: 'system', text: `Receipt sealed: ${ev.receipt.verdict.replace(/_/g, ' ')}` });
       break;

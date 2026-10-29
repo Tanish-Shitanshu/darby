@@ -4,7 +4,7 @@ HackBriven Build Arena · PS1 · Team Target 9x
 
 Darby gives you an autonomous companion inside a real browser. You state a goal; Darby plans it with a proof for every step, does the work in real tabs and real documents, checks the result independently, and hands you a signed receipt with an honest verdict.
 
-> Status: **M1 core loop done** — goal → typed plan with a proof per step → real Chromium tabs → quarantined reader → independent verifier → signed receipt. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/MILESTONES.md for the build order. Built with AdaL.
+> Status: **M2 policy, approvals and control done** (on top of the M1 core loop) — goal → typed plan with a proof per step → real Chromium tabs → quarantined reader → independent verifier → signed receipt. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/MILESTONES.md for the build order. Built with AdaL.
 
 ## Setup
 ```bash
@@ -21,6 +21,7 @@ The companion is meant to run on :5173, but if that port is busy Vite falls back
 npm run check             # typecheck (all workspaces) + unit tests (vitest)
 npm run fixtures:check    # boots the fixture web on a spare port (4019), verifies it against ground truth, shuts it down
 npm run test:acceptance   # runs the implemented demo cases on recorded LLM responses (REPLAY); add `-- --live` to use your Gemini key
+npm run redteam           # poisoned page, compromised planner, hostile reader model, forbidden actions (all must be contained)
 npm run llm:ping          # one tiny model call; prints only OK or the error, never the key
 npm run verify-receipt -- docs/evidence/m1-case1-receipt.json   # recompute the hash chain + Ed25519 signature
 npm run db:reset          # recreate .darby/darby.db (versioned migrations run automatically at boot)
