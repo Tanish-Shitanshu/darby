@@ -1,0 +1,9 @@
+{
+  "key": "27cce9b4c6db383e14c07a28f0b30977e52e011b9414b5aa77d90427a42206b0",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T11:40:17.667Z",
+  "promptPreview": "<<<PAGE\nSkip to main content\nProducts\nWhat you can do in figma\nDesign and explore\nBuild and ship products\nExplore all products\nFigma Design\nDesign and prototype in one place\nFigma Make\nPrompt to code anything you can imagine\nFigma Weave\nAI ",
+  "response": "{\n  \"name\": \"Figma\",\n  \"priceUsd\": null,\n  \"quote\": null\n}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "973acd939c45154f83bb9351a330e2d337b20cbbe61ffb5d780e222d3dad2ee4",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T11:40:22.309Z",
+  "promptPreview": "<<<PAGE\nGet in touch\nMenu\nResearch\nSovereign AI\nCloud\nCustomers\nCompany\nGet in touch\nLogin\nWhy Sovereign AI\nProducts\nMethod\nSovereign AI in practice\nInference\nCompute\nEnergy & utilities\nManufacturing\nFinancial services\nPublic sector\nAll cus",
+  "response": "{\n  \"name\": \"Mistral AI\",\n  \"priceUsd\": null,\n  \"quote\": null,\n  \"note\": \"The page contains a link to pricing but does not list any specific prices or monthly rates.\"\n}"
+}

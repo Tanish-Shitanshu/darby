@@ -1,0 +1,9 @@
+{
+  "key": "f89c0dc8b873b778efe53338f08cbf7a375839fcb038560d70cfcec6ae20563d",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T11:42:25.120Z",
+  "promptPreview": "<<<PAGE\nNew\n⌃I\nComputer\nAutomations\nArtifacts\nCustomize\nProjects\nRecents\nNo recent sessions\nWhat do you want to know?\nWhat should we work on?\nWhat do you want to know?\nAsk anything…\nSearch\nComputer\nModel\nWork in a project\nPAGE>>>",
+  "response": "{\n  \"name\": \"Computer\",\n  \"priceUsd\": null,\n  \"quote\": null\n}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "8c3c9019a196cc01373fc36712afe7062dab61ada1ad02d022168712d988c3d7",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T11:43:32.159Z",
+  "promptPreview": "<<<PAGE\nJump to content\nMain menu\nMain menu\nmove to sidebar\nhide\nNavigation\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\nContribute\nHelp\nLearn to edit\nCommunity portal\nRecent changes\nUpload file\nSpecial pages\n",
+  "response": "{\n  \"name\": \"Google\",\n  \"priceUsd\": null,\n  \"quote\": null\n}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "9538ccd80a571478e0c53812a802912e02cdd756b26e295b6a78bb4a031f5b4a",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T11:42:21.451Z",
+  "promptPreview": "<<<PAGE\nWe value your privacy\nWe and our partners use cookies, scripts and certain similar technologies (“Cookies”) to collect data from visitors to this site, including IP address, clicks, and other details about them and their use of the ",
+  "response": "{\n  \"name\": \"Cohere\",\n  \"priceUsd\": 2000,\n  \"quote\": \"$2,000\"\n}"
+}

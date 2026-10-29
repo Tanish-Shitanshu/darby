@@ -1,0 +1,9 @@
+{
+  "key": "5c4875c751c6fd30714e2a554b7e298dc8d89b5197dac9ff03b682d38d1012bb",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T11:42:24.245Z",
+  "promptPreview": "<<<PAGE\nGet in touch\nMenu\nResearch\nSovereign AI\nCloud\nCustomers\nCompany\nGet in touch\nLogin\nWhy Sovereign AI\nProducts\nMethod\nSovereign AI in practice\nInference\nCompute\nEnergy & utilities\nManufacturing\nFinancial services\nPublic sector\nAll cus",
+  "response": "{\n  \"name\": \"Vibe\",\n  \"priceUsd\": 14.99,\n  \"quote\": \"$14.99\\n/mo\"\n}"
+}

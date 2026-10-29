@@ -1,0 +1,9 @@
+{
+  "key": "4c2e76f04be60b127035d45e48ef066ea6cf4daf14e5348dd9c1d49411c76d0c",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T11:40:20.099Z",
+  "promptPreview": "<<<PAGE\nNew\n⌃I\nComputer\nAutomations\nArtifacts\nCustomize\nProjects\nNo projects\nRecents\nNo recent sessions\nView plans\nSign In\nWhat do you want to know?\nWhat should we work on?\nWhat do you want to know?\nAsk anything…\nSearch\nComputer\nModel\nWork ",
+  "response": "{\"name\": \"Perplexity\", \"priceUsd\": null, \"quote\": null}"
+}

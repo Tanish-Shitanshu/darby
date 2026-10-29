@@ -1,0 +1,9 @@
+{
+  "key": "da647fd9f043f135560c5472aca59cd3dc55052e96c2bb8f1b850415fd2ef4dd",
+  "role": "reader",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T11:42:18.888Z",
+  "promptPreview": "<<<PAGE\nLowyat.NET forums\nLowyat.NET\nKopitiam\nGarage Sales\nLowyat.NET Rules and Regulations\nFAQ\nHelp\nSearch\nMembers\nWelcome Guest\n(\nLog In\n|\nRegister\n)\nLowyat.NET\n->\nKopitiam\n->\nSerious Kopitiam\nBump Topic\nAdd Reply\nRSS Feed\nBottom\n0\nnew po",
+  "response": "{\n  \"name\": \"Lowyat.NET\",\n  \"priceUsd\": null,\n  \"quote\": null\n}"
+}
