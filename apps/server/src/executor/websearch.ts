@@ -65,7 +65,18 @@ export async function searchOnce(page: Page, query: string, perQuery: number, se
   // a price comparison wants the pricing page itself: results whose path names pricing or plans come first (order is otherwise the engine's)
   const decoded = hrefs.map((h) => (searchUrl ? h : decodeBingUrl(h))).filter((h): h is string => !!h);
   const wantsPricing = /pric|plans?\b|cost|subscription/i.test(query);   // re-rank toward pricing pages only when the question is about prices
-  const score = (u: string) => { if (!wantsPricing) return 1; try { return /pric|plans?\b|subscribe|billing/i.test(new URL(u).pathname) ? 0 : 1; } catch { return 1; } };
+  // Live web: the company's own site first (its pricing page best of all), then everything else in the engine's order.
+  // Without this, any page that merely has "pricing" in its URL (a pizza menu, a forum thread) can outrank the real company.
+  const tokens = labelOf(query).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length >= 4 && !['pricing', 'price', 'plans', 'plan'].includes(t));
+  const score = (u: string) => {
+    try {
+      const url = new URL(u);
+      if (searchUrl) return wantsPricing && /pric|plans?|subscribe|billing/i.test(url.pathname) ? 0 : 1;   // fixture search keeps the simple rule
+      const official = tokens.length > 0 && tokens.some((t) => url.hostname.toLowerCase().replace(/[^a-z0-9.]/g, '').includes(t));
+      const pricingPath = wantsPricing && /pric|plans?|subscribe|billing/i.test(url.pathname);
+      return official ? (pricingPath ? 0 : 1) : 2;
+    } catch { return 2; }
+  };
   const ordered = decoded.map((u, i) => ({ u, i })).sort((a, b) => score(a.u) - score(b.u) || a.i - b.i).map((x) => x.u);
   for (const target of ordered) {
     let origin: string;

@@ -1,0 +1,9 @@
+{
+  "key": "1ec803c8eeb0d4c16b4d6f16f65ff10f01d36a02e02496a3d1d285fbdeeb7482",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T18:10:35.039Z",
+  "promptPreview": "<<<PAGE\nChat to Students\nChat to Students\nFree Counselling\nEN\nAction\nCost of Living\nAccommodation\n$9,790\n(Annual estimated amount in USD)\nFood\n$3,600\n(Annual estimated amount in USD)\nTransport\n$710\n(Annual estimated amount in USD)\nUtilities",
+  "response": "{\"name\":\"Chat to Students\",\"priceUsd\":null,\"quote\":null}"
+}

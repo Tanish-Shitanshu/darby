@@ -1,0 +1,9 @@
+{
+  "key": "408952fede1ed90aa12e41953be7deb644830499bf5895ca57664de54901e676",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T18:10:35.981Z",
+  "promptPreview": "<<<PAGE\nYou've been blocked by network security.\nIf you think you've been blocked by mistake, file a ticket below and we'll look into it.\nFile a ticket\nPAGE>>>",
+  "response": "{\"name\":\"\",\"priceUsd\":null,\"quote\":null,\"note\":\"No product name or price information found on the page.\"}"
+}

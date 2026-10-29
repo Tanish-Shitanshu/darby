@@ -1,0 +1,9 @@
+{
+  "key": "7e1b33a5654ac039527346b66100eb3cbff250ff09781429c5b423e361a70eb9",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T18:10:35.280Z",
+  "promptPreview": "<<<PAGE\nFlights\nHotels\nTrains\nCabs\nBus\nHolidays\nForex\nInsurance\nManage Booking\nMy Trips\nAccess your bookings, easy cancellation, date change and much more\nManage Your Trips\nLogin / Signup\nExclusive Offers\nEarn goCash\nManage Your Trips\nLogin",
+  "response": "{\"name\":\"Goibibo\",\"priceUsd\":null,\"quote\":null}"
+}

@@ -1,0 +1,10 @@
+node_modules/
+out/
+public/clips/*
+public/voice.*
+public/music.*
+src/assets.json
+!public/clips/.gitkeep
+public/segments/*
+!public/segments/.gitkeep
+work/

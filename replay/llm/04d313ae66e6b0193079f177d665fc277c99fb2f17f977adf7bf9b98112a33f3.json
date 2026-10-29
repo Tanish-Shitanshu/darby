@@ -1,0 +1,9 @@
+{
+  "key": "04d313ae66e6b0193079f177d665fc277c99fb2f17f977adf7bf9b98112a33f3",
+  "role": "creative",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T18:00:15.823Z",
+  "promptPreview": "{\"goal\":\"research top 5 IIMs and tell me their average package in excel sheet form\",\"verdict\":\"NEEDS_YOU\",\"facts\":\"Darby searched the web, read the pages it found. 1 of 4 steps were proven by independent checks. Result: waiting for you.\",\"h",
+  "response": "{\"summary\":\"The AI browser agent searched the web for the top five IIMs and captured screenshots of all five results, confirming the search step with independent checks. It did not proceed to read the pages or extract package details, as those steps were cancelled. The process is now waiting for your decision to continue.\"}"
+}

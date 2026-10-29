@@ -1,0 +1,9 @@
+{
+  "key": "e6e295044fc631bae48305f778bac087151aa3eb83f5d364f38baf60d538b810",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T19:51:09.154Z",
+  "promptPreview": "<<<PAGE\nOrder Pizza Online - Delivery and Takeaway\nSign in\nDelivery\nCollect From Store\nFind your nearest Hut\nEnter your address to see your local deals, coupons and offers.\nFinding location\nOur most popular deals\nDeal may vary by location, ",
+  "response": "{\"name\":\"Pizza Hut\",\"priceUsd\":null,\"quote\":null}"
+}

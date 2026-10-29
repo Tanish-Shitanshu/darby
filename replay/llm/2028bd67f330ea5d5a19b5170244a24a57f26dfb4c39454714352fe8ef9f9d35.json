@@ -1,0 +1,9 @@
+{
+  "key": "2028bd67f330ea5d5a19b5170244a24a57f26dfb4c39454714352fe8ef9f9d35",
+  "role": "creative",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T18:10:40.389Z",
+  "promptPreview": "{\"goal\":\"Research top 5 colleges in Germany and get me in excel format\",\"verdict\":\"NEEDS_YOU\",\"facts\":\"Darby searched the web, read the pages it found. 2 of 4 steps were proven by independent checks. Result: waiting for you.\",\"highlights\":[",
+  "response": "{\"summary\":\"The AI browser agent searched the web for the top five German colleges and saved screenshots of the search results and the pages it read. It captured all five college listings and three result pages, but when it tried to pull details from the Technical University of Munich page it got a 403 error. Two of the four steps have been independently verified. The process is now paused, waiting for your next instruction.\"}"
+}
