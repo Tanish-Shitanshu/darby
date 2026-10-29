@@ -1,0 +1,9 @@
+{
+  "key": "21b316599bd8e1e067b770772e8cea29404861d1a81607495e315357ee7e1185",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3-flash-preview",
+  "recordedAt": "2026-10-29T11:16:51.879Z",
+  "promptPreview": "USER GOAL:\nResearch the top 5 AI startups and write their name, lowest paid monthly price in USD and an evidence quote in an Excel sheet called Top AI Startups.",
+  "response": "{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Search for pricing of top AI startups\",\n      \"tool\": \"web.search\",\n      \"args\": {\n        \"queries\": [\n          \"OpenAI ChatGPT Plus pricing\",\n          \"Anthropic Claude Pro pricing\",\n          \"Cohere pricing\",\n          \"Mistral AI pricing\",\n          \"Perplexity Pro pricing\"\n        ],\n        \"perQuery\": 1\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Read the pricing pages\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\n        \"s1\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Extract pricing details and quotes\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\n        \"s2\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s4\",\n      \"title\": \"Write the data to a spreadsheet\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"Top AI Startups\",\n        \"fromStep\": \"s3\"\n      },\n      \"dependsOn\": [\n        \"s3\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}"
+}
