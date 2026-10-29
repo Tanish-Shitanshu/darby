@@ -24,7 +24,8 @@
     "guard": "bash scripts/guard-secrets.sh",
     "verify-receipt": "tsx scripts/verify-receipt.ts",
     "db:reset": "tsx scripts/db-reset.ts",
-    "replay:curate": "tsx scripts/replay-curate.ts"
+    "replay:curate": "tsx scripts/replay-curate.ts",
+    "redteam": "tsx tests/acceptance/run.ts --redteam"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

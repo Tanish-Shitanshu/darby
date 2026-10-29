@@ -6,6 +6,7 @@ import { verifyContract, type CheckResult } from '../verifier/verifier';
 import { RunContext, type Outcome, type StepOutcome } from './context';
 import { describeApproval } from './approval';
 import { runTool, ToolError } from './tools';
+import { simulateObeyingAgent } from './redteam';
 
 const isAbort = (e: unknown) => (e as Error)?.name === 'AbortError' || (e as any)?.code === 20;
 
@@ -83,6 +84,7 @@ export async function runEngine(ctx: RunContext): Promise<void> {
       await ctx.checkpoint();
       outcomes.push(await runStep(ctx, step, outcomes));
     }
+    if (ctx.opts.redteam?.simulateObeyingAgent) await simulateObeyingAgent(ctx);
   } catch (e) {
     if (ctx.signal.aborted || isAbort(e)) {
       cancelled = true;
@@ -128,7 +130,7 @@ async function runStep(ctx: RunContext, step: PlanStep, done: StepOutcome[]): Pr
   ctx.emit({ type: 'step.started', runId, stepId: step.id });
 
   // policy: plain code decides, every decision is evented + ledgered
-  const decision = evaluatePolicy({ step, allowedOrigins: cfg.allowedOrigins, taint: ctx.taint });
+  const decision = evaluatePolicy({ step, allowedOrigins: cfg.allowedOrigins, taint: ctx.taint, allowedPaths: [cfg.workspaceDir, cfg.darbyDir] });
   ctx.emit({ type: 'policy.decision', runId, stepId: step.id, decision });
 
   if (decision.action === 'block') {

@@ -38,7 +38,7 @@ export interface Deps {
 
 export interface RunOptions {
   /** extra tools the executor should treat as an attack injected into the run (red-team): see redteam/ */
-  redteam?: { compromisedPlanner?: boolean };
+  redteam?: { simulateObeyingAgent?: boolean };
   repairOf?: string | null;
   /** replace the planner (used by the compromised-planner red-team variant and by Playbook replay) */
   planOverride?: (goal: string) => Promise<import('@darby/contracts').Plan>;

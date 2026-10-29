@@ -4,6 +4,7 @@ import ExcelJS from 'exceljs';
 import { existsSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { EvidenceContract } from '@darby/contracts';
+import { readLocalShares } from '../adapters/share-local';
 
 export interface CheckResult {
   /** every claim in the contract was proven (gaps count as proven-absent, see below) */
@@ -156,6 +157,48 @@ function fileExists(c: Extract<EvidenceContract, { kind: 'file_exists' }>, ctx: 
   return pass(`${path.basename(file)} exists (${size} bytes)`);
 }
 
+function permissionPresent(c: Extract<EvidenceContract, { kind: 'permission_present' }>, ctx: VerifierCtx): CheckResult {
+  const file = resolveInside(ctx, c.fileRef, ctx.workspaceDir);
+  if (!file) return fail(`document path ${c.fileRef} is outside the Darby workspace`);
+  const sc = readLocalShares(file);
+  if (!sc) return fail(`no permission list exists for ${path.basename(file)}`);
+  const hit = sc.grants.find((g) => g.email.toLowerCase() === c.email.toLowerCase() && g.role === c.role);
+  if (!hit) return fail(`the permission list for ${path.basename(file)} does not show ${c.email} as ${c.role}`);
+  return pass(`SIMULATED (local adapter): the permission list shows ${c.email} as ${c.role}; nothing left this computer`);
+}
+
+/** Tiny path walker: "$", "$.a.b", "a[0].b", numeric segments. */
+export function jsonPathGet(root: unknown, p: string): unknown {
+  let cur: any = root;
+  const parts = p.replace(/^\$\.?/, '').replace(/\[(\d+)\]/g, '.$1').split('.').filter(Boolean);
+  for (const k of parts) {
+    if (cur === null || cur === undefined) return undefined;
+    cur = cur[k];
+  }
+  return cur;
+}
+/** `expected` must be contained in `actual`: subset match for objects, any-element match for arrays, equality for scalars. */
+export function jsonContains(actual: unknown, expected: unknown): boolean {
+  if (Array.isArray(actual)) return actual.some((el) => jsonContains(el, expected)) || (Array.isArray(expected) && expected.every((e) => actual.some((el) => jsonContains(el, e))));
+  if (expected && typeof expected === 'object' && actual && typeof actual === 'object') return Object.entries(expected as Record<string, unknown>).every(([k, v]) => jsonContains((actual as any)[k], v));
+  return JSON.stringify(actual) === JSON.stringify(expected);
+}
+
+async function httpJsonContains(c: Extract<EvidenceContract, { kind: 'http_json_contains' }>, ctx: VerifierCtx): Promise<CheckResult> {
+  let body: unknown;
+  try {
+    const res = await (ctx.fetchImpl ?? fetch)(c.url, { signal: AbortSignal.timeout(ctx.fetchTimeoutMs ?? 10_000), headers: { accept: 'application/json', 'user-agent': 'DarbyVerifier/0.1' } });
+    if (!res.ok) return err(`independent read of ${c.url} returned HTTP ${res.status}`);
+    body = await res.json();
+  } catch (e) {
+    return err(`independent read of ${c.url} failed: ${(e as Error).name}`);
+  }
+  const got = jsonPathGet(body, c.path);
+  return jsonContains(got, c.expected)
+    ? pass(`a fresh GET ${new URL(c.url).pathname} contains ${JSON.stringify(c.expected).slice(0, 80)}`)
+    : fail(`a fresh GET ${new URL(c.url).pathname} does NOT contain ${JSON.stringify(c.expected).slice(0, 80)} (found ${JSON.stringify(got)?.slice(0, 60) ?? 'nothing'}) — the change is not there`);
+}
+
 /** Entry point. Contract kinds that are not implemented yet return an ERROR (-> NEEDS_YOU), never a pass. */
 export async function verifyContract(c: EvidenceContract, ctx: VerifierCtx, extra?: { custom?: (c: EvidenceContract) => Promise<CheckResult | null> }): Promise<CheckResult> {
   try {
@@ -167,6 +210,8 @@ export async function verifyContract(c: EvidenceContract, ctx: VerifierCtx, extr
       case 'quote_in_page': return await quoteInPage(c, ctx);
       case 'sheet_readback': return await sheetReadback(c, ctx);
       case 'file_exists': return fileExists(c, ctx);
+      case 'permission_present': return permissionPresent(c, ctx);
+      case 'http_json_contains': return await httpJsonContains(c, ctx);
       default: return err(`verifier for "${c.kind}" is not available yet`);
     }
   } catch (e) {

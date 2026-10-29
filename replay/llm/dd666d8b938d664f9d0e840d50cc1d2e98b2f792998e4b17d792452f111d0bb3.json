@@ -1,0 +1,9 @@
+{
+  "key": "dd666d8b938d664f9d0e840d50cc1d2e98b2f792998e4b17d792452f111d0bb3",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T03:17:29.216Z",
+  "promptPreview": "USER GOAL:\nResearch the 10 AI startups on the fixture site and record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors.",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Read pages for the 10 AI startups\",\"tool\":\"browser.read_page\",\"args\":{\"urls\":[\"http://fixture.local/startups/acme-ai\",\"http://fixture.local/startups/beta-labs\",\"http://fixture.local/startups/cobalt\",\"http://fixture.local/startups/delta\",\"http://fixture.local/startups/echo\",\"http://fixture.local/startups/fathom\",\"http://fixture.local/startups/gizmo\",\"http://fixture.local/startups/helio\",\"http://fixture.local/startups/ionic-ai\",\"http://fixture.local/startups/juno\"]},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Extract startup name, lowest paid monthly price, and evidence quote\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Create new sheet named Competitors and write extracted data\",\"tool\":\"sheet.write\",\"args\":{\"name\":\"Competitors\",\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\"write_local\"}]}"
+}

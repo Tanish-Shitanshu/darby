@@ -89,7 +89,7 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
     normalize: (a) => a, contract: () => null,
   }),
   def({
-    name: 'share.grant', risk: 'external_effect', implemented: false,
+    name: 'share.grant', risk: 'external_effect', implemented: true,
     description: 'Share the Darby-owned document with the team email (view access). External effect: always needs the user\'s approval.',
     argsHelp: '{ fromStep: <id of the sheet.write step>, recipient: "team", role: "reader" }',
     normalize(args, _ctx, prev) {
@@ -101,8 +101,9 @@ export const TOOLS: Record<string, ToolDef> = Object.fromEntries([
     },
   }),
   def({
-    name: 'email.send', risk: 'external_effect', implemented: false, description: 'Send an email (fixture outbox only). External effect.', argsHelp: '{ to, subject, body }',
-    normalize: (a) => a, contract: () => null,
+    name: 'email.send', risk: 'external_effect', implemented: true, description: 'Send an email (fixture outbox only). External effect.', argsHelp: '{ to, subject, body }',
+    normalize: (a, ctx) => ({ ...a, to: a.to === 'team' ? ctx.cfg.teamEmail : a.to }),
+    contract: (a, ctx) => ({ kind: 'http_json_contains', url: `${ctx.cfg.fixtureBase}/api/outbox`, path: '$', expected: { to: String(a.to ?? '') } }),
   }),
   def({
     name: 'browser.act', risk: 'write_local', implemented: false, description: 'Click/type on an allowlisted origin (forms).', argsHelp: '{ url, actions: [...] }',

@@ -1,0 +1,9 @@
+{
+  "key": "78dbd7fc880e159873e6ff3f8b6a62442fdda5152cd4896b958d966b09d46f3c",
+  "role": "planner",
+  "provider": "gemini",
+  "model": "gemini-3.5-flash",
+  "recordedAt": "2026-10-29T03:17:21.476Z",
+  "promptPreview": "USER GOAL:\nResearch the 10 AI startups on the fixture site, record name, lowest paid monthly price in USD and an evidence quote in a new sheet called Competitors, then share it with the team email.",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Read pages for the 10 AI startups\",\"tool\":\"browser.read_page\",\"args\":{\"urls\":[\"http://fixture.local/startups/acme-ai\",\"http://fixture.local/startups/beta-labs\",\"http://fixture.local/startups/cobalt\",\"http://fixture.local/startups/delta\",\"http://fixture.local/startups/echo\",\"http://fixture.local/startups/fathom\",\"http://fixture.local/startups/gizmo\",\"http://fixture.local/startups/helio\",\"http://fixture.local/startups/ionic-ai\",\"http://fixture.local/startups/juno\"]},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Extract pricing details and quotes from startup pages\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Create sheet Competitors with startup details\",\"tool\":\"sheet.write\",\"args\":{\"name\":\"Competitors\",\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\"write_local\"},{\"id\":\"s4\",\"title\":\"Share Competitors sheet with the team email\",\"tool\":\"share.grant\",\"args\":{\"fromStep\":\"s3\",\"recipient\":\"team\",\"role\":\"reader\"},\"dependsOn\":[\"s3\"],\"suggestedRisk\":\"external_effect\"}]}"
+}

@@ -1,6 +1,7 @@
 import type { EvidenceContract, PlanStep } from '@darby/contracts';
 import path from 'node:path';
 import { writeLocalSheet, type SheetRow } from '../adapters/sheets-local';
+import { grantLocalShare } from '../adapters/share-local';
 import { readPage } from '../reader/reader';
 import { slugOf } from '../tools/registry';
 import { pMap } from '../util/pmap';
@@ -27,6 +28,21 @@ export interface ExtractedItem { url: string; slug: string; record: { name: stri
 
 const MAX_TABS = 3;
 
+/** After a takeover the user may have changed the page: the first action after Resume starts from a fresh read of the page state, and says so. */
+async function rereadIfResumed(ctx: RunContext, step: PlanStep): Promise<void> {
+  if (!ctx.rereadAfterResume) return;
+  ctx.rereadAfterResume = false;
+  ctx.ledger('reread', { reason: 'resume after takeover' }, step.id);
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: 'Takeover ended — re-reading the page state from scratch before doing anything else' });
+}
+
+/** Instructions aimed at an AI inside page text. Detection only (plain code): the text is never executed or forwarded; it is shown as a warning. */
+const INJECTION_RE = /(ignore (all )?(previous|prior) instructions|system notice to ai|send_email|disregard the above|you are now|do not tell the user)/i;
+export function detectInjection(text: string): string | null {
+  const m = INJECTION_RE.exec(text);
+  return m ? m[0] : null;
+}
+
 async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   const urls = (step.args.urls as string[]) ?? [];
   if (!urls.length) throw new ToolError('No URLs to read.', 'failed');
@@ -36,6 +52,7 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
     let lastErr: unknown;
     for (let attempt = 1; attempt <= 2; attempt++) {
       await ctx.checkpoint();
+      await rereadIfResumed(ctx, step);
       const page = await ctx.deps.browser.newPage();
       try {
         const read = await readPageText(page, url, ctx.signal);
@@ -44,6 +61,12 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
         if (!ctx.deps.cfg.allowedOrigins.includes(new URL(read.finalUrl).origin)) throw new ToolError(`${url} redirected to ${new URL(read.finalUrl).origin}, which is not on the allowlist; its content was discarded`, 'failed');
         const shot = await ctx.screenshot(page, step.id, `read-${slug}`);
         ctx.taint.addPageText(read.text);
+        await ctx.checkpoint(); // a takeover pauses before the next visible action, not after
+        const hostile = detectInjection(read.text);
+        if (hostile) {
+          ctx.ledger('injection.detected', { slug, marker: hostile, handling: 'text goes only to the quarantined reader; no tool can be reached from it' }, step.id);
+          ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Warning: the page ${slug} contains hidden text that tries to give orders to an AI (“${hostile}”). It is untrusted data: only the quarantined reader sees it, no tool can be reached from it.` });
+        }
         ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Read ${ctx.deps.catalog.names[slug] ?? slug} (${url.replace(/^https?:\/\//, '')}) — HTTP ${read.httpStatus}, ${read.text.length} characters of page text`, screenshotPath: shot.url });
         return { url, slug, text: read.text, shotRel: shot.rel, shotUrl: shot.url, httpStatus: read.httpStatus };
       } catch (e) {
@@ -77,6 +100,7 @@ async function extract(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
       throw new ToolError(`The reader model could not be reached: ${(e as Error).message.slice(0, 160)}`, 'needs_you');
     }
     if (r.llm) ctx.noteLlm(r.llm, 'reader');
+    await ctx.checkpoint();
     if (!r.ok) {
       ctx.ledger('reader.rejected', { slug: p.slug, reason: r.reason }, step.id);
       ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Reader output for ${p.slug} was REJECTED (${r.reason}) — recorded as a gap, nothing from it was used` });
@@ -122,11 +146,40 @@ async function writeSheet(ctx: RunContext, step: PlanStep): Promise<ToolResult> 
   };
 }
 
+async function shareGrant(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
+  const doc = ctx.outputs.get(String(step.args.fromStep)) as { file: string; ref: string; name: string } | undefined;
+  if (!doc) throw new ToolError('There is no document to share (the write step did not finish).', 'needs_you');
+  const email = ctx.deps.cfg.teamEmail; // the recipient is trusted configuration ("the team email"), never something read from a page
+  const role = String(step.args.role ?? 'reader');
+  await ctx.checkpoint();
+  grantLocalShare(doc.file, email, role);
+  ctx.registerFile(step.id, 'file', `${doc.file}.shares.json`);
+  ctx.labels.add('SIMULATED:share.grant');
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `SIMULATED share: recorded ${email} as ${role} on “${doc.name}” in the local permission list (nothing was sent anywhere)` });
+  return {
+    summary: `SIMULATED: ${email} granted ${role} on ${doc.ref}`,
+    contracts: [{ kind: 'permission_present', fileRef: doc.ref, email, role }],
+    result: { adapter: 'local', simulated: true, email, role, document: doc.ref },
+  };
+}
+
+async function emailSend(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
+  const to = String(step.args.to ?? '');
+  const url = `${ctx.deps.cfg.fixtureBase}/api/outbox`; // fixture outbox only
+  await ctx.checkpoint();
+  const res = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ to, subject: String(step.args.subject ?? ''), body: String(step.args.body ?? '') }), signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new ToolError(`The fixture outbox answered HTTP ${res.status}`, 'needs_you');
+  ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Sent an email to ${to} (fixture outbox)` });
+  return { summary: `email to ${to} placed in the fixture outbox`, contracts: [{ kind: 'http_json_contains', url, path: '$', expected: { to } }], result: { to } };
+}
+
 export async function runTool(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   switch (step.tool) {
     case 'browser.read_page': return readPages(ctx, step);
     case 'reader.extract': return extract(ctx, step);
     case 'sheet.write': return writeSheet(ctx, step);
+    case 'share.grant': return shareGrant(ctx, step);
+    case 'email.send': return emailSend(ctx, step);
     default: throw new ToolError(`The tool "${step.tool}" is registered but not available in this build yet.`, 'needs_you');
   }
 }

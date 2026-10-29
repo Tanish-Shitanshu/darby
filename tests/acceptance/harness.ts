@@ -10,6 +10,10 @@ export const STATE_DIR = path.join(ROOT, '.darby', 'acceptance');
 
 export interface Harness {
   base: string;
+  /** every approval the UI would have been asked for (tool names), filled by autoApprove */
+  approvals: string[];
+  /** answer approval cards automatically (a test stands in for the user clicking Approve / Deny) */
+  autoApprove(decide?: (details: Record<string, unknown>) => boolean): () => void;
   manager: import('../../apps/server/src/runs/manager').RunManager;
   stop(): Promise<void>;
   resetFixtures(): Promise<void>;
@@ -25,7 +29,7 @@ async function waitUp(base: string): Promise<void> {
 }
 
 /** opts.replay=true forces LLM_PROVIDER=replay (deterministic, offline). */
-export async function startHarness(opts: { replay: boolean; headless?: boolean; keepState?: boolean }): Promise<Harness> {
+export async function startHarness(opts: { replay: boolean; headless?: boolean; keepState?: boolean; llm?: import('../../apps/server/src/llm/llm').Llm }): Promise<Harness> {
   const base = `http://localhost:${ACCEPT_PORT}`;
   const fx: ChildProcess = spawn(process.execPath, ['fixtures/site/server.mjs'], { cwd: ROOT, env: { ...process.env, FIXTURE_PORT: String(ACCEPT_PORT) }, stdio: ['ignore', 'ignore', 'inherit'] });
   await waitUp(base);
@@ -40,10 +44,19 @@ export async function startHarness(opts: { replay: boolean; headless?: boolean; 
   if (opts.headless !== undefined) process.env.DARBY_HEADLESS = opts.headless ? '1' : '0';
 
   const { createManager } = await import('../../apps/server/src/bootstrap');
-  const manager = await createManager();
+  const manager = await createManager(opts.llm ? { llm: opts.llm } : {});
+  const approvals: string[] = [];
   return {
     base,
     manager,
+    approvals,
+    autoApprove(decide = () => true) {
+      return manager.deps.bus.subscribe((ev) => {
+        if (ev.type !== 'approval.requested') return;
+        approvals.push(String((ev.details as any).action));
+        setTimeout(() => manager.resolveApproval(ev.runId, ev.stepId, decide(ev.details)), 150);
+      });
+    },
     async stop() {
       await manager.shutdown();
       fx.kill();
