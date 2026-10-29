@@ -302,7 +302,7 @@ export function Hub({ items, busy, onRun }: { items: PlaybookItem[]; busy: boole
     <section className="card" aria-labelledby="hub-h">
       <h2 id="hub-h">Hub — Playbooks you can re-run</h2>
       <p className="muted">A Playbook is a verified run saved as a recipe. Each replay is planned by code from the saved steps, goes through the same policy and approvals, and ends in its own signed receipt. The CI badge appears only after <code>npm run playbook:check</code> passes for this exact version.</p>
-      {items.length === 0 ? <p className="muted" data-testid="hub-empty">No Playbooks yet. Finish a run, then press “Save as Playbook” on its receipt.</p> : (
+      {items.length === 0 ? <div className="empty" data-testid="hub-empty"><b>No Playbooks yet</b>Finish a run, then press “Save as Playbook” on its receipt. It becomes a re-runnable skill here.</div> : (
         <ul className="playbooks" data-testid="hub">{items.map((pb) => (<PlaybookCard key={pb.slug + pb.sha256} pb={pb} busy={busy} onRun={onRun} />))}</ul>
       )}
     </section>
@@ -431,7 +431,7 @@ export function Memory({ items, onAdd, onDelete }: { items: MemoryItem[]; onAdd:
         <input value={v} onChange={(e) => setV(e.target.value)} placeholder="Note (up to 300 characters)" aria-label="Memory note" maxLength={300} />
         <button className="btn primary" type="submit" disabled={!k.trim() || !v.trim()}>Remember</button>
       </form>
-      {items.length === 0 ? <p className="muted" data-testid="memory-empty">Nothing remembered.</p> : (
+      {items.length === 0 ? <div className="empty" data-testid="memory-empty"><b>Nothing remembered yet</b>Add a preference above, or press “Remember this run” on a receipt.</div> : (
         <ul className="memory" data-testid="memory">
           {items.map((m) => (
             <li key={m.id}>

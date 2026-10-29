@@ -4,7 +4,7 @@ import { applyEvent, foldEvents, type RunView } from './state';
 
 export type Link = 'connecting' | 'up' | 'down';
 export interface RunSummary { id: string; goal: string; status: string; verdict: string | null; labels: string[]; repairOf: string | null; createdAt: string; blocked: number }
-export interface AppConfig { llm: { provider: string; model: string; replayOnly: boolean }; headless: boolean; teamEmail: string; signerFingerprint: string }
+export interface AppConfig { llm: { provider: string; model: string; replayOnly: boolean }; headless: boolean; teamEmail: string; signerFingerprint: string; allowedOrigins?: string[] }
 export interface MemoryItem { id: string; key: string; value: string; sourceRunId: string | null; createdAt: string }
 export interface EvidenceRow { id: number; stepId: string | null; kind: string; path: string; sha256: string; bytes: number }
 export interface RunDetail { evidence: EvidenceRow[]; steps: { stepId: string; result: Record<string, unknown> | null; args: Record<string, unknown> }[]; approvals: { stepId: string; status: string; contentHash: string; summary: string }[] }

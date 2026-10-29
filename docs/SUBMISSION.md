@@ -1,5 +1,7 @@
 # Submission map (PS1 section 9 deliverables)
 
+Line-by-line comparison with the organiser PDF: `docs/PS1_COMPLIANCE.md`.
+
 | Deliverable | Where | How to see it |
 |---|---|---|
 | Working prototype | whole repo | `npm install`, `cp .env.example .env`, `npm run demo:offline` (no key needed) or `npm run demo` (live model) |

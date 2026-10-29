@@ -220,3 +220,13 @@ textarea { resize: vertical; font-size: 1.05rem; min-height: 112px; }
 @media (max-width: 760px) { .pb-head { flex-direction: column; } .shell { padding: 0 16px 32px; } .top { margin-inline: -16px; padding-inline: 16px; } .mem-form { grid-template-columns: 1fr; } .receipt { padding: 18px; } .tamper { grid-template-columns: 1fr; } }
 .pb-check input { margin: 0; width: auto; padding: 0; box-shadow: none; }
 @media print { .top, .runbar, .btn { display: none !important; } }
+
+.history .linkbtn { text-decoration: none; font-size: 1.02rem; }
+.history .linkbtn:hover { text-decoration: underline; }
+.hub-intro { max-width: 70ch; }
+.stack > *, .col > *, .cols > * { min-width: 0; }
+code { overflow-wrap: anywhere; }
+.top { min-width: 0; } .shell { overflow-x: clip; }
+@media (max-width: 760px) { .tagline { display: none; } .tabs { margin-inline: -4px; } .lede { padding-top: 10px; } .trust { grid-template-columns: 1fr; } .runbar { flex-direction: column; align-items: stretch; top: 112px; } .runbar-goal { white-space: normal; } .approval { padding: 16px; } .approval dl, .kv { grid-template-columns: 1fr; gap: 0 } dt { margin-top: 8px; } .review-grid iframe { height: 320px; } }
+
+.ctx { display: grid; gap: 4px; margin-top: 14px; } .ctx input { padding: 9px 12px; font-size: .95rem; }

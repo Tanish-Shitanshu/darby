@@ -24,6 +24,7 @@ export function App() {
   const d = useDarby();
   const [tab, setTab] = useState<Tab>('run');
   const [goal, setGoal] = useState('');
+  const [pageUrl, setPageUrl] = useState('');
   const [listening, setListening] = useState(false);
   const [note, setNote] = useState('');
   const recRef = useRef<any>(null);
@@ -125,7 +126,8 @@ export function App() {
             <h2 id="goal-h">What should Darby get done?</h2>
             <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} rows={4} placeholder="Describe your goal in plain language…" aria-label="Your goal" />
             <div className="row">
-              <button className="btn primary" disabled={!allUp || goal.trim().length < 3} onClick={() => void d.start(goal.trim())} data-testid="run-btn">Plan &amp; run</button>
+              <button className="btn primary" disabled={!allUp || goal.trim().length < 3} onClick={() => void d.start(pageUrl.trim() ? `${goal.trim()}
+(Work on this page: ${pageUrl.trim()})` : goal.trim())} data-testid="run-btn">Plan &amp; run</button>
               <button className={`btn ghost${listening ? ' on' : ''}`} onClick={toggleVoice} data-testid="voice-btn" aria-pressed={listening} title="Speak your goal (Chrome speech recognition, needs internet)">{listening ? '● Listening… stop' : '🎤 Speak'}</button>
               <label className="btn ghost" data-testid="shot-btn" title="Attach a screenshot: the vision model describes it into the goal box for you to edit">
                 📎 Screenshot<input type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={(e) => void attachShot(e.target.files?.[0])} />
@@ -133,6 +135,10 @@ export function App() {
               <span className="muted">Every step gets a proof; the run ends in a signed receipt.</span>
             </div>
             {note && <p className="muted small" role="status" data-testid="input-note">{note}</p>}
+            <label className="ctx"><span className="muted small">Page context (optional): the page Darby should start from</span>
+              <input value={pageUrl} onChange={(e) => setPageUrl(e.target.value)} placeholder={d.config?.allowedOrigins?.[0] ? `${d.config.allowedOrigins[0]}/startups/acme-ai` : 'https://…'} aria-label="Page to work on" data-testid="page-context" inputMode="url" />
+              <span className="muted small">{d.config?.allowedOrigins?.length ? `Darby may only read: ${d.config.allowedOrigins.join(', ')}. Anything else is blocked by policy.` : ''}</span>
+            </label>
             <div className="row examples" aria-label="Example goals"><span className="muted small">Try an example:</span>
               {EXAMPLES.map((x) => (<button key={x.label} className="btn ghost" onClick={() => setGoal(x.goal)} data-testid={`example-${x.label.slice(0, 6).replace(/\W/g, '').toLowerCase()}`}>{x.label}</button>))}
             </div>
