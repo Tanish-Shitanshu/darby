@@ -1,0 +1,9 @@
+{
+  "key": "12a50282a62f3b73ee92f59eed3a6fb156ffbb21ff9b34fb0b78c55e0fc7d3cc",
+  "role": "reader",
+  "provider": "auto",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:46:49.013Z",
+  "promptPreview": "<<<PAGE\nSNOOOP\n©\nWilderer Alm\nWilderer-Alm\nKatschberghöhe 424\n,\n5582\nSt. Michael im Lungau\n+436766803842\nMerken\nBeschreibung\nKontakt\nKategorie\nKarte\nÜber uns\nEinkehrschwung in der Wilderer-Alm Die Wilderer-Alm befindet sich im Skigebiet Ain",
+  "response": "{\"name\":\"Wilderer-Alm\",\"priceUsd\":null,\"quote\":null,\"note\":\"No monthly paid price information found on the page.\"}"
+}

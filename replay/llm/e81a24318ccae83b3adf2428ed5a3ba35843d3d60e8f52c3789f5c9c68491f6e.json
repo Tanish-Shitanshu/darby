@@ -1,0 +1,9 @@
+{
+  "key": "e81a24318ccae83b3adf2428ed5a3ba35843d3d60e8f52c3789f5c9c68491f6e",
+  "role": "planner",
+  "provider": "auto",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:38:37.499Z",
+  "promptPreview": "USER GOAL:\nResearch top 5 AI startups and write it into an excel sheet",
+  "response": "```json\n{\n  \"steps\": [\n    {\n      \"id\": \"s1\",\n      \"title\": \"Search for Perplexity, Jasper, Midjourney, Runway, and ElevenLabs pricing\",\n      \"tool\": \"web.search\",\n      \"args\": {\n        \"queries\": [\n          \"Perplexity pricing\",\n          \"Jasper pricing\",\n          \"Midjourney pricing\",\n          \"Runway pricing\",\n          \"ElevenLabs pricing\"\n        ],\n        \"perQuery\": 2\n      },\n      \"dependsOn\": [],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s2\",\n      \"title\": \"Read the search results pages\",\n      \"tool\": \"browser.read_page\",\n      \"args\": {\n        \"fromStep\": \"s1\"\n      },\n      \"dependsOn\": [\n        \"s1\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s3\",\n      \"title\": \"Extract startup and pricing data from pages\",\n      \"tool\": \"reader.extract\",\n      \"args\": {\n        \"fromStep\": \"s2\"\n      },\n      \"dependsOn\": [\n        \"s2\"\n      ],\n      \"suggestedRisk\": \"read\"\n    },\n    {\n      \"id\": \"s4\",\n      \"title\": \"Write top 5 AI startups into spreadsheet\",\n      \"tool\": \"sheet.write\",\n      \"args\": {\n        \"name\": \"Top AI Startups\",\n        \"fromStep\": \"s3\"\n      },\n      \"dependsOn\": [\n        \"s3\"\n      ],\n      \"suggestedRisk\": \"write_local\"\n    }\n  ]\n}\n```"
+}

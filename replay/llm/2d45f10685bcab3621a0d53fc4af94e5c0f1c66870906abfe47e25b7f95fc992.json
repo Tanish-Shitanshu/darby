@@ -1,0 +1,9 @@
+{
+  "key": "2d45f10685bcab3621a0d53fc4af94e5c0f1c66870906abfe47e25b7f95fc992",
+  "role": "reader",
+  "provider": "auto",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:50:58.003Z",
+  "promptPreview": "<<<PAGE\nElevenAPI\nAPI\nMonthly billing\nMonthly billing\nYearly billing\nFree\n$0\nper month\nBuild for free\nText to Speech\nSpeech to Text\n3 Projects in Studio\n10k credits\nper month\nStarter\nUntil Nov 1\n$6\nFirst month 83% off\n$1\nper month\nChoose St",
+  "response": "{\"name\":\"ElevenAPI\",\"priceUsd\":6,\"quote\":\"$6\",\"note\":\"Lowest paid monthly plan is Starter; discounted first-month prices excluded.\"}"
+}

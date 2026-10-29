@@ -1,0 +1,9 @@
+{
+  "key": "0fbdcd8a1ed945895f2fcd555a0cb3cf82674cd814083b59337836b7894a451f",
+  "role": "creative",
+  "provider": "auto",
+  "model": "sarvam-105b",
+  "recordedAt": "2026-10-29T14:44:13.660Z",
+  "promptPreview": "{\"goal\":\"Research top 5 AI startups and write it into an excel sheet\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found and wrote the spreadsheet. 4 of 4 steps were proven by independent checks. Result:",
+  "response": "{\"summary\":\"Darby searched the web and read the pages it found to research the top five AI startups, then wrote the results into an Excel spreadsheet called \\\"Top AI Startups.\\\" Four of the steps were proven by independent checks, though the result was verified with gaps. The most useful finding was that public paid prices could not be confirmed for Perplexity, Jasper, Midjourney, Runway, and ElevenLabs, so those were marked NOT FOUND and were not guessed.\"}"
+}
