@@ -152,3 +152,23 @@ textarea { resize: vertical; }
 .review-grid iframe{width:100%;height:420px;border:1px solid var(--line,#d8d4c8);border-radius:12px;background:#fff}
 .review-grid figcaption{font-size:16px}
 .pr-line{margin:16px 0 0;font-size:17px}
+
+/* ---------- Hub / Playbooks (M7) ---------- */
+.playbooks { list-style: none; margin: 14px 0 0; padding: 0; display: grid; gap: 14px; }
+.pbcard { border: 1px solid var(--rule); border-radius: 10px; padding: 16px 18px; background: var(--card2); }
+.pb-head { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; }
+.pb-title { font-family: var(--serif); font-size: 1.2rem; text-transform: none; letter-spacing: 0; color: var(--ink); margin: 0 0 2px; }
+.pb-perms { margin: 10px 0; }
+.perm-read { background: var(--b-bg); color: var(--blue); } .perm-write { background: var(--o-bg); color: var(--ochre); } .perm-ext { background: var(--r-bg); color: var(--red); }
+.pb-steps { margin: 6px 0 10px; } .pb-steps summary { cursor: pointer; color: var(--muted); } .pb-steps ol { margin: 6px 0 0; padding-left: 22px; }
+.pb-params { display: grid; gap: 10px; }
+.pb-field { display: grid; gap: 4px; border: 0; padding: 0; margin: 0; font-weight: 600; } .pb-field legend { font-weight: 700; padding: 0; }
+.pb-field input[type=text], .pb-field input:not([type]) { font: inherit; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: #fff; max-width: 340px; }
+.pb-checks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pb-check { display: inline-flex; gap: 6px; align-items: center; padding: 4px 10px; border: 1px solid var(--rule); border-radius: 999px; background: #fff; font-weight: 600; font-size: .92rem; cursor: pointer; }
+.pb-check.on { border-color: var(--teal); background: var(--t-bg); }
+.pb-check-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.pb-form input { font: inherit; padding: 8px 10px; border: 1px solid var(--rule); border-radius: 6px; background: #fff; min-width: 260px; }
+.pb-saved { margin: 12px 0 0; color: var(--green); font-weight: 600; }
+@media (max-width: 760px) { .pb-head { flex-direction: column; } }
+.pb-check input { margin: 0; width: auto; padding: 0; }

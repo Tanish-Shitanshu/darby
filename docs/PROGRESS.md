@@ -3,7 +3,7 @@
 _Last updated: 2026-10-29_
 
 ## Current state
-- **M5 and M6 done** (tags `m5-repair`, `m6-gtm`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next, in order: M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists. Intro video (Video Producer) stays an AdaL step.
+- **M5, M6, M7 and M8-lite done** (tags `m5-repair`, `m6-gtm`, `m8-lite`, `m7-playbooks`). M1 `m1-core-loop`, M2 `m2-policy`, M3 `m3-ui` done. Next: M4 only if `secrets/google-oauth.json` exists (else `SHEET_ADAPTER=local`), then the owner-machine items below (real-model recordings for Cases 3/4, real PR, clean-clone rehearsal = tag `m8-demo`). Intro video (Video Producer) stays an AdaL step.
 - Who built what (kept honest for PS1 evidence): M0-M3, the red-team pass and the evidence screenshots were built with AdaL. From M5 onward the build continues with a second AI coding assistant (not AdaL) because the AdaL weekly credits ran out; those commits are authored by the repo owner only and are listed in `docs/ADAL_EVIDENCE.md` as NOT AdaL work.
 - Step 0 (LLM provider) done: Gemini provider verified live (`gemini-3.5-flash`, JSON + image input), fallback chain `gemini-3-flash-preview`, `gemini-3.8-flash`; free-tier limiter (sliding-window RPM, concurrency 2, backoff on 429/503/timeouts); every response cached in the replay store.
 
@@ -16,17 +16,17 @@ _Last updated: 2026-10-29_
 | M3 companion UI | done | m3-ui | |
 | M5 failure + repair | done (code + tests); real-model replay recordings for Case 4 still to be curated on the owner's machine | m5-repair | `case4` (replay/live) and `case4-stub` (scripted model, deterministic, runs anywhere) |
 | M6 GTM Studio | done (code + tests, scripted-model acceptance); real-model recording + real PR still to be done on the owner's machine | m6-gtm | `case3` (approve) and `case3-denied` |
-| M7 Playbooks + Hub | todo | | |
+| M7 Playbooks + Hub | done (code, 9 unit tests, `playbook` acceptance scenario, UI walked in a browser); example Playbook `playbooks/startup-prices` committed with a passed check | m7-playbooks | `npm run playbook:check` |
 | M4 Google Sheets | skipped unless `secrets/google-oauth.json` exists | | SHEET_ADAPTER=local |
 | M8 demo hardening | lite done (one-command demo, offline mode, preflight, demo script, architecture); recordings for Cases 3/4 and a clean-clone rehearsal still to do on the owner's machine | m8-lite | `npm run demo`, `demo:offline`, `demo:check`, `demo:record`, `demo:reset` |
 
 ## Commands that pass
-`npm run check` (88 tests) · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
+`npm run check` (101 tests) · `npm run test:acceptance -- playbook` · `npm run playbook:check` · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
 
 ## M3 notes
 - UI: Run / History / Memory tabs; sticky run bar (Cancel, Take over, Resume); approval card on top; plan as clickable tickets -> evidence drawer (contract, policy decision, verification results, screenshots, files with sha256, stored result); lightbox; receipt with stamp, labels, CONTAINED badge, server-verified "chain valid", tamper test, download JSON, "Remember this run".
 - Memory: user notes are shown to the planner (only when present; the replay recordings assume an EMPTY memory, so delete test notes before a replay demo); run summaries are stored but never sent to a model.
-- Not in M3 by design: Save as Playbook and the Hub view (M7).
+- Save as Playbook and the Hub tab were added in M7 (see below).
 
 ## M2 notes
 - Policy engine hardened after an independent headless-AdaL red team (48 bypasses found -> 0): see `docs/evidence/m2-review.md`.
@@ -54,6 +54,15 @@ _Last updated: 2026-10-29_
 | Google OAuth JSON (M4, optional) | pending / may be skipped |
 | Demo video recording | pending |
 
+## M7 notes (Playbooks + Hub)
+- **Save**: the receipt of a VERIFIED / VERIFIED_WITH_GAPS run shows *Save as Playbook* (`POST /api/runs/:id/playbook`). It writes `playbooks/<slug>/playbook.json` (format `darby-playbook/1`: the plan steps with portable URLs, two parameters `urls` + `sheetName`, a permission manifest) and a generated `SKILL.md` (agent-skill file with `name`/`description` frontmatter, readable by people). Contracts and verdicts are never stored: the plan compiler rebuilds the evidence contracts on every run.
+- **Replay**: Hub tab (or `POST /api/playbooks/:slug/run {params}`). `RunManager.startPlaybook` validates the manifest, resolves parameters (an off-origin page or a path-like sheet name is rejected, not silently dropped), compiles through `compilePlan`, and runs the unchanged engine with `planOverride`: policy engine, approvals (`share.grant` still asks), taint tracking, independent verifier, own signed receipt labelled `PLAYBOOK:<slug>` with the playbook sha256 in the signed ledger (`run.config`).
+- **Permission manifest** is derived from the steps by code (reads / writes / external effects / recipients / needs approval). A hand-edited manifest that hides an effect makes the Playbook invalid and it cannot run.
+- **CI badge**: `npm run playbook:check [-- slug] [--live]` (private fixture web on port 4018, replay by default) checks (1) manifest valid and equal to the steps, (2) compiles with every step carrying a contract, (3) dry run verified with the saved parameters, (4) dry run verified with different parameters, (5) injection suite: poisoned page in scope + simulated obeying agent => outbox empty, attempt blocked in the receipt. Result: `playbooks/<slug>/check.json` bound to the sha256 of `playbook.json`; edit the Playbook and the Hub shows *CI stale* until you re-run it. Not signed: it is a local, tamper-evident-by-hash marker, not a security boundary.
+- Fixed on the way: the `share.grant` proof named `Competitors` even when the sheet had another name (compiler now points it at the sheet being shared).
+- Playbooks that contain Case 3/4 steps replay only if their model roles are recorded (or live): `playbook:check` reports the missing recording as a failed check, never a pass.
+- Not done / owner: install `playbooks/startup-prices/SKILL.md` in AdaL and log it (PS1 evidence "skills"); Hub cards for Case 3/4 Playbooks need real-model recordings first.
+
 ## M8-lite notes
 - `npm run demo` resets local state, runs the preflight (`demo:check`), starts server + companion + fixtures and opens the companion. `-- --offline` forces `LLM_PROVIDER=replay`. Start screen has one button per case (goals live in `fixtures/demo-goals.json`).
 - `demo:check` shows per case whether the planner call is recorded (offline-ready). Case 1 is; Cases 3 and 4 need `npm run demo:record` once with the Gemini key (H9 in docs/HUMAN_TASKS.md), then `bash scripts/ship.sh "..."`.
@@ -76,6 +85,6 @@ _Last updated: 2026-10-29_
 - TODO (needs the owner's machine, real Gemini): `npm run replay:curate` after a live Case 4 run so `case4` also passes offline. `case4-stub` already proves the plumbing offline.
 
 ## Handover note (Tanish, 29 Oct)
-- M1, M2, M3, M5 done. Pending: M6, M8-lite, M7, (M4 optional). Run `npm run check` and `npm run test:acceptance` first (headless: `DARBY_HEADLESS=1`).
+- M1, M2, M3, M5, M6, M7, M8-lite done. Pending: (M4 optional), owner-machine items (real-model recordings H9, real PR H10, clean-clone rehearsal). Run `npm run check` and `npm run test:acceptance` first (headless: `DARBY_HEADLESS=1`).
 - Publishing: `bash scripts/ship.sh "message"` (checks, secret guard, author check, push main + tags). Commits must carry no AI attribution; `.githooks/commit-msg` enforces it.
 - Tanish's AdaL credits are exhausted; work continues with another coding assistant and his own Gemini key.

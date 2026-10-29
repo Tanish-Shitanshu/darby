@@ -8,6 +8,16 @@ export interface AppConfig { llm: { provider: string; model: string; replayOnly:
 export interface MemoryItem { id: string; key: string; value: string; sourceRunId: string | null; createdAt: string }
 export interface EvidenceRow { id: number; stepId: string | null; kind: string; path: string; sha256: string; bytes: number }
 export interface RunDetail { evidence: EvidenceRow[]; steps: { stepId: string; result: Record<string, unknown> | null; args: Record<string, unknown> }[]; approvals: { stepId: string; status: string; contentHash: string; summary: string }[] }
+export interface PlaybookParamView { key: string; label: string; type: 'urls' | 'text'; default: string | string[]; choices?: string[] }
+export interface PlaybookItem {
+  slug: string; name: string; description: string; createdAt: string;
+  createdFrom: { runId: string; verdict: string; goal: string; gaps: string[] };
+  params: PlaybookParamView[];
+  steps: { id: string; title: string; tool: string; proof: string | null }[];
+  manifest: { tools: { tool: string; risk: string }[]; reads: string[]; writes: string[]; externalEffects: { tool: string; what: string }[]; recipients: string[]; needsApproval: boolean };
+  sha256: string; badge: 'passed' | 'stale' | 'failed' | 'none';
+  check: { passed: boolean; at: string; llm: string; checks: { name: string; ok: boolean; detail: string }[] } | null;
+}
 export interface VerifyResult { valid: boolean; checks: { name: string; ok: boolean; detail: string }[]; signerFingerprint?: string }
 
 const PING: RunEvent = { type: 'run.started', runId: 'm0-ping', goal: 'connection check' };
@@ -29,6 +39,7 @@ export function useDarby() {
   const [history, setHistory] = useState<RunSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [memory, setMemory] = useState<MemoryItem[]>([]);
+  const [playbooks, setPlaybooks] = useState<PlaybookItem[]>([]);
   const starting = useRef(false);
   const liveBuf = useRef<Record<string, RunEvent[]>>({}); // every live event since page load, per run (capped)
   const currentRef = useRef<string | null>(null);
@@ -120,6 +131,11 @@ export function useDarby() {
   }, []);
   useEffect(() => { if (server === 'up') void loadMemory(); }, [server, loadMemory]);
 
+  const loadPlaybooks = useCallback(async () => {
+    try { setPlaybooks(await call<PlaybookItem[]>('/api/playbooks')); } catch { /* shown via status */ }
+  }, []);
+  useEffect(() => { if (server === 'up') void loadPlaybooks(); }, [server, loadPlaybooks]);
+
   const act = useCallback(async (path: string, body?: unknown) => {
     try { await call(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) }); } catch (e) { setError((e as Error).message); }
   }, []);
@@ -127,7 +143,19 @@ export function useDarby() {
   return {
     server, socket, echo, config, history, error, currentId,
     run: currentId ? runs[currentId] ?? null : null,
-    memory, loadMemory,
+    memory, loadMemory, playbooks, loadPlaybooks,
+    /** returns the saved Playbook, or null (the reason is shown through `error`) */
+    savePlaybook: async (runId: string, name: string, description = ''): Promise<PlaybookItem | null> => {
+      setError(null);
+      try { const pb = await call<PlaybookItem>(`/api/runs/${runId}/playbook`, { method: 'POST', body: JSON.stringify({ name, description }) }); await loadPlaybooks(); return pb; } catch (e) { setError((e as Error).message); return null; }
+    },
+    runPlaybook: async (slug: string, params: Record<string, unknown>): Promise<boolean> => {
+      setError(null);
+      starting.current = true;
+      setCurrentId(null);
+      try { const { id } = await call<{ id: string }>(`/api/playbooks/${slug}/run`, { method: 'POST', body: JSON.stringify({ params }) }); starting.current = false; setCurrentId(id); setRuns((r) => (r[id] ? r : { ...r, [id]: foldEvents(id, []) })); return true; }
+      catch (e) { starting.current = false; setError((e as Error).message); return false; }
+    },
     addMemory: async (key: string, value: string) => { try { await call('/api/memory', { method: 'POST', body: JSON.stringify({ key, value }) }); await loadMemory(); } catch (e) { setError((e as Error).message); } },
     deleteMemory: async (id: string) => { try { await call(`/api/memory/${id}`, { method: 'DELETE' }); await loadMemory(); } catch (e) { setError((e as Error).message); } },
     remember: async (id: string) => { try { await call(`/api/runs/${id}/remember`, { method: 'POST' }); await loadMemory(); } catch (e) { setError((e as Error).message); } },

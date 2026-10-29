@@ -1,7 +1,7 @@
 // npm run test:acceptance [-- case1 case2 ...] [--live]      npm run redteam  (= the red-team scenarios: case2, case2b, case2c, case2d)
 // Default: LLM_PROVIDER=replay (recorded responses, deterministic, offline). --live uses the provider in .env and records new responses.
 // Real browser (headed unless DARBY_HEADLESS=1), real fixture web, real xlsx, real verifier, real policy engine.
-import { existsSync, mkdtempSync, readFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Plan } from '@darby/contracts';
@@ -12,6 +12,8 @@ import { loadBrief, templateCopy } from '../../apps/server/src/gtm/brief';
 import { getConfig } from '../../apps/server/src/config';
 import { spawnSync } from 'node:child_process';
 import type { RawProvider } from '../../apps/server/src/llm/types';
+import { checkPlaybook } from '../../apps/server/src/playbooks/check';
+import { loadPlaybook, playbookFromRun, PlaybookError, savePlaybook } from '../../apps/server/src/playbooks/playbook';
 import { verifyBundle, type SignedReceipt } from '../../apps/server/src/ledger/receipt';
 import { htmlToText } from '../../apps/server/src/verifier/verifier';
 import { ACCEPT_PORT, expected, readSheetRows, startHarness, type Check, type Harness } from './harness';
@@ -439,6 +441,72 @@ const scenarios: Scenario[] = [
       const pr = await h.manager.wait(probe);
       if (!pr.plan && /No recorded response/.test(String(receiptOf(pr)?.cause ?? ''))) return [{ name: 'case4 needs recordings (SKIPPED, not failed)', ok: true, detail: 'run once with LLM_PROVIDER=gemini ... --live, then npm run replay:curate; case4-stub covers the logic offline' }];
       return case4Run(h);
+    },
+  },
+  {
+    id: 'playbook',
+    title: 'Playbooks (M7) — save Case 1 as a Playbook, replay it with other pages and another sheet name, re-verify; CI check gives the badge; edits remove it',
+    async run(h) {
+      const { checks, ok } = mk();
+      const { cfg } = h.manager.deps;
+      const stop = h.autoApprove();
+      const idA = await h.manager.start(CASE1_GOAL);
+      const A = await h.manager.wait(idA);
+      stop();
+      ok('source run is verified (Case 1)', A.verdict === 'VERIFIED_WITH_GAPS', `got ${A.verdict}`);
+
+      // save
+      const view = savePlaybook(cfg, playbookFromRun(A, 'Startup Prices', 'Reads startup pricing pages, writes a proven sheet, shares it with the team', cfg));
+      const pb = view.playbook;
+      ok('saved playbooks/startup-prices/{playbook.json, SKILL.md}', existsSync(path.join(cfg.playbooksDir, 'startup-prices', 'playbook.json')) && existsSync(path.join(cfg.playbooksDir, 'startup-prices', 'SKILL.md')), `${pb.steps.length} steps; params: ${pb.params.map((p) => p.key).join(', ')}`);
+      ok('permission manifest lists the one external effect and the team recipient', pb.manifest.externalEffects.length === 1 && pb.manifest.externalEffects[0]!.tool === 'share.grant' && pb.manifest.needsApproval, JSON.stringify(pb.manifest.externalEffects));
+      ok('no badge before any check', view.badge === 'none', view.badge);
+
+      // replay with different parameters
+      const five = ['acme-ai', 'beta-labs', 'cobalt', 'delta', 'echo'];
+      h.approvals.length = 0;
+      const stop2 = h.autoApprove();
+      const { id: idB } = await h.manager.startPlaybook('startup-prices', { urls: five.map((x) => `/startups/${x}`), sheetName: 'TopFive' });
+      const B = await h.manager.wait(idB);
+      stop2();
+      const rb = receiptOf(B);
+      ok('replay: VERIFIED_WITH_GAPS with exactly the gaps among the 5 chosen pages (cobalt, echo)', B.verdict === 'VERIFIED_WITH_GAPS' && JSON.stringify([...(rb?.gaps ?? [])].sort()) === JSON.stringify(['cobalt', 'echo']), `got ${B.verdict} [${(rb?.gaps ?? []).join(', ')}]${rb?.cause ? ` — ${rb.cause.slice(0, 160)}` : ''}`);
+      const rowsB = await readSheetRows(path.join(cfg.workspaceDir, idB, 'TopFive.xlsx')).catch(() => [] as string[][]);
+      const exp = expected().startups.filter((s) => five.includes(s.slug));
+      const bad = exp.filter((s) => { const row = rowsB.find((x) => x[3] === `${h.base}${s.url}`); return !row || row[1] !== (s.priceUsd === null ? 'NOT FOUND' : String(s.priceUsd)) || row[2] !== (s.quote === null ? 'NOT FOUND' : s.quote); });
+      ok('new sheet “TopFive” has header + 5 rows equal to fixtures/expected.json', rowsB.length === 6 && bad.length === 0, `${rowsB.length - 1} data rows${bad.length ? `; wrong: ${bad.map((b) => b.slug).join(', ')}` : ''}`);
+      ok('the old sheet name was not used', !existsSync(path.join(cfg.workspaceDir, idB, 'Competitors.xlsx')), 'no Competitors.xlsx in the replay run');
+      ok('the share still waited for approval and is proven for the NEW sheet', JSON.stringify(h.approvals) === JSON.stringify(['share.grant']) && !!B.plan?.steps.find((s) => s.tool === 'share.grant')?.contract && (B.plan!.steps.find((s) => s.tool === 'share.grant')!.contract as { fileRef: string }).fileRef.endsWith('/TopFive.xlsx'), `approvals: ${h.approvals.join(', ')}`);
+      ok('the run is labelled PLAYBOOK:startup-prices and its signed ledger records the playbook hash', (rb?.labels ?? []).includes('PLAYBOOK:startup-prices') && h.manager.deps.repo.getLedger(idB).some((e) => e.type === 'run.config' && (e.payload as any).playbook?.sha256 === view.sha256), (rb?.labels ?? []).join(', '));
+      const vb = receiptBundle(h.manager.deps, idB);
+      ok('replay receipt verifies (chain + signature)', !!vb && verifyBundle(vb).valid, 'valid');
+
+      // parameters and tampering are rejected, not silently fixed
+      const err = async (fn: () => Promise<unknown>) => { try { await fn(); return 'no error'; } catch (e) { return e instanceof PlaybookError ? e.code : (e as Error).message; } };
+      ok('an off-origin page is refused (READ-001 at the door)', (await err(() => h.manager.startPlaybook('startup-prices', { urls: ['http://evil.test/x'] }))) === 'bad_param', 'bad_param');
+      ok('a path-like sheet name is refused', (await err(() => h.manager.startPlaybook('startup-prices', { sheetName: '../../x' }))) === 'bad_param', 'bad_param');
+
+      // you say no on the replay
+      const stop3 = h.autoApprove(() => false);
+      const { id: idC } = await h.manager.startPlaybook('startup-prices', { urls: ['/startups/acme-ai', '/startups/beta-labs'], sheetName: 'Denied' });
+      const C = await h.manager.wait(idC);
+      stop3();
+      ok('replay with the share denied: NEEDS_YOU and nothing shared', C.verdict === 'NEEDS_YOU' && !existsSync(path.join(cfg.workspaceDir, idC, 'Denied.xlsx.shares.json')), `got ${C.verdict}`);
+
+      // CI check -> badge; edit -> stale
+      const chk = await checkPlaybook(h, 'startup-prices');
+      for (const c of chk.checks) checks.push({ name: `playbook:check · ${c.name}`, ok: c.ok, detail: c.detail });
+      ok('playbook:check passed and the badge is on', chk.passed && loadPlaybook(cfg, 'startup-prices')?.badge === 'passed', loadPlaybook(cfg, 'startup-prices')?.badge ?? 'missing');
+      const file = path.join(cfg.playbooksDir, 'startup-prices', 'playbook.json');
+      writeFileSync(file, readFileSync(file, 'utf8').replace('"Competitors"', '"Rivals"'));
+      ok('editing playbook.json removes the badge (stale)', loadPlaybook(cfg, 'startup-prices')?.badge === 'stale', loadPlaybook(cfg, 'startup-prices')?.badge ?? 'missing');
+      ok('a Playbook whose manifest was edited to hide permissions cannot run', (await err(async () => {
+        const raw = JSON.parse(readFileSync(file, 'utf8'));
+        raw.manifest.externalEffects = []; raw.manifest.needsApproval = false;
+        writeFileSync(file, JSON.stringify(raw, null, 2));
+        await h.manager.startPlaybook('startup-prices', {});
+      })) === 'invalid', 'invalid (manifest does not match the steps)');
+      return checks;
     },
   },
   { id: 'case4-stub', stub: 'lead', title: 'Case 4 plumbing with a scripted model (deterministic, offline): failure, plain cause, repair, verified', run: (h) => case4Run(h) },

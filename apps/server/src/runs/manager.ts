@@ -3,6 +3,7 @@ import { RunContext, type Deps, type RunOptions } from '../executor/context';
 import { runEngine } from '../executor/engine';
 import type { RunRow } from '../db/repo';
 import { MAX_REPAIRS } from '../planner/replanner';
+import { instantiate, loadPlaybook, PlaybookError, validateManifest } from '../playbooks/playbook';
 
 interface Active {
   ctx: RunContext;
@@ -35,6 +36,18 @@ export class RunManager {
       .finally(() => this.active.delete(id));
     this.active.set(id, { ctx, controller, done });
     return id;
+  }
+
+  /** Replay a saved Playbook with parameters. The plan is rebuilt by the compiler (contracts, risks, args normalised) and then runs through the unchanged engine: policy, approvals, taint, verifier. */
+  async startPlaybook(slug: string, params: Record<string, unknown> | undefined, extra: Pick<RunOptions, 'redteam'> = {}): Promise<{ id: string; goal: string }> {
+    const { cfg, catalog } = this.deps;
+    const view = loadPlaybook(cfg, slug);
+    if (!view) throw new PlaybookError('not_found', 'No such Playbook.', 404);
+    const problems = validateManifest(view.playbook, cfg);
+    if (problems.length) throw new PlaybookError('invalid', `This Playbook is not valid: ${problems.map((p) => p.detail).join('; ')}`, 422);
+    const { plan, params: used, goal } = instantiate(view.playbook, params, { cfg, catalog });
+    const id = await this.start(goal, { ...extra, planOverride: async () => plan, playbook: { slug, sha256: view.sha256, params: used } });
+    return { id, goal };
   }
 
   /** How many repair runs already sit behind this run (A <- B <- C ...). */

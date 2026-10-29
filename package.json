@@ -30,7 +30,8 @@
     "demo:offline": "node scripts/demo.mjs --offline",
     "demo:reset": "tsx scripts/db-reset.ts --runs",
     "demo:check": "tsx scripts/demo-check.ts",
-    "demo:record": "tsx tests/acceptance/run.ts --live && tsx scripts/replay-curate.ts"
+    "demo:record": "tsx tests/acceptance/run.ts --live && tsx scripts/replay-curate.ts",
+    "playbook:check": "tsx scripts/playbook-check.ts"
   },
   "devDependencies": {
     "concurrently": "^9.2.0",

@@ -21,11 +21,12 @@ AdaL's weekly credits ran out after M3. From 29 Oct (about 12:30 IST) the remain
 |---|------|-----------|------|------|----------|
 | 10 | 2026-10-29 | M5 | other assistant (not AdaL) | Failure + repair (Case 4): `browser.act` / `http.request`, vision check, replanner, UI repair button; scoped the lead tools into the planner prompt so Case 1/2 recordings stay valid; scripted-model Case 4 plumbing test | `npm run test:acceptance -- case4-stub` PASS; Case 4 passed live against Gemini once before the handover |
 | 11 | 2026-10-29 | M6 | other assistant (not AdaL) | GTM Studio: copy, hero, voiceover, teaser, coder-written landing page with browser test + repair loop, `page_assertions` / `media_probe` / `pr_exists` verifiers, PR behind approval, Review panel | `npm run test:acceptance -- case3 case3-denied` PASS (scripted model); 92 unit tests |
+| 12 | 2026-10-29 | M7 | other assistant (not AdaL) | Playbooks + Hub: save a verified run as `playbooks/<slug>/{playbook.json,SKILL.md}`, parameterised replay through the unchanged policy/approval/verifier path, derived permission manifest, `npm run playbook:check` (manifest, dry runs with saved and different parameters, injection suite) writing a hash-bound `check.json`, Hub tab with CI badge | `npm run test:acceptance -- playbook` PASS (20 checks); 101 unit tests; Hub walked in a headless browser |
 
 ## Required evidence by the end
 - [ ] Build: commit log with `Built-with: AdaL` trailers and milestone tags m0..m8
 - [ ] Browser Use: recording of AdaL testing the companion UI (Case 1) and the poisoned page (Case 2)
 - [ ] Headless: `adal -q` red-team run log (`docs/evidence/redteam-*.jsonl`)
 - [ ] Video Producer / image: the demo intro or teaser clip and hero image generated through AdaL
-- [ ] Skills: a Darby Playbook (`SKILL.md`) run or installed in AdaL
+- [ ] Skills: a Darby Playbook (`SKILL.md`) run or installed in AdaL (the file exists: `playbooks/startup-prices/SKILL.md`; installing/running it inside AdaL still has to be done and logged in an AdaL session)
 - [ ] Debug story: one real bug AdaL found and fixed (screenshot + commit)

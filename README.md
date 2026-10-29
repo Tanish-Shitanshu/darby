@@ -4,7 +4,7 @@ HackBriven Build Arena · PS1 · Team Target 9x
 
 Darby gives you an autonomous companion inside a real browser. You state a goal; Darby plans it with a proof for every step, does the work in real tabs and real documents, checks the result independently, and hands you a signed receipt with an honest verdict.
 
-> Status: M0–M3 (core loop, policy, UI) built with AdaL; M5 (failure + repair) and M6 (GTM Studio) built with a second AI assistant (see docs/ADAL_EVIDENCE.md for who did what). Four demo cases: research to sheet, poisoned page contained, launch assets, broken form repaired. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/ARCHITECTURE.md for the diagram, docs/DEMO_SCRIPT.md for the demo.
+> Status: M0–M3 (core loop, policy, UI) built with AdaL; M5 (failure + repair), M6 (GTM Studio) and M7 (Playbooks + Hub) built with a second AI assistant (see docs/ADAL_EVIDENCE.md for who did what). Four demo cases: research to sheet, poisoned page contained, launch assets, broken form repaired. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/ARCHITECTURE.md for the diagram, docs/DEMO_SCRIPT.md for the demo.
 
 ## Setup
 ```bash

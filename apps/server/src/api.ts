@@ -7,9 +7,12 @@ import type { Deps } from './executor/context';
 import { verifyBundle, type ReceiptBundle, type SignedReceipt } from './ledger/receipt';
 import { redactSecrets } from './llm/providers';
 import { RepairError, type RunManager } from './runs/manager';
+import { listPlaybooks, loadPlaybook, playbookFromRun, PlaybookError, savePlaybook, type PlaybookView } from './playbooks/playbook';
 
 const StartBody = z.object({ goal: z.string().trim().min(3).max(2000), mode: z.enum(['fixture', 'live']).default('fixture') });
 const ApprovalBody = z.object({ approved: z.boolean() });
+const SaveBody = z.object({ name: z.string().trim().min(2).max(80), description: z.string().trim().max(300).default('') });
+const RunPbBody = z.object({ params: z.record(z.unknown()).default({}) });
 const MemoryBody = z.object({ key: z.string().trim().min(1).max(80), value: z.string().trim().min(1).max(300) });
 
 class HttpError extends Error {
@@ -138,6 +141,45 @@ export function createApi(manager: RunManager): Router {
     if (!body.success) throw new HttpError(400, 'bad_request', 'Send {"approved": true|false}');
     if (!manager.resolveApproval(String(req.params.id), String(req.params.stepId), body.data.approved)) throw new HttpError(409, 'no_pending_approval', 'Nothing is waiting for approval on that step');
     res.json({ ok: true });
+  }));
+
+  /* ---------------- Playbooks (M7) ---------------- */
+  const pbJson = (v: PlaybookView) => {
+    const pb = v.playbook;
+    const portable = (u: string) => { try { const x = new URL(u, cfg.fixtureBase); return x.origin === new URL(cfg.fixtureBase).origin ? `${x.pathname}${x.search}` : u; } catch { return u; } };
+    const all = deps.catalog.sources.flatMap((x) => x.urls.map(portable));
+    return {
+      slug: pb.slug, name: pb.name, description: pb.description, createdAt: pb.createdAt, createdFrom: pb.createdFrom,
+      params: pb.params.map((p) => (p.type === 'urls' ? { ...p, choices: all.filter((u) => u.replace(/[^/]*$/, '') === String(p.default[0]).replace(/[^/]*$/, '')) } : p)),
+      steps: pb.steps.map((s) => ({ id: s.id, title: s.title, tool: s.tool, proof: s.proof })),
+      manifest: pb.manifest, sha256: v.sha256, badge: v.badge,
+      check: v.check ? { passed: v.check.passed, at: v.check.at, llm: v.check.llm, checks: v.check.checks } : null,
+    };
+  };
+  r.get('/playbooks', (_req, res) => { res.json(listPlaybooks(cfg).map(pbJson)); });
+  r.get('/playbooks/:slug', wrap((req, res) => {
+    const v = loadPlaybook(cfg, String(req.params.slug));
+    if (!v) throw new HttpError(404, 'not_found', 'No such Playbook');
+    res.json(pbJson(v));
+  }));
+  /** Save a verified run as a Playbook (playbooks/<slug>/playbook.json + SKILL.md). */
+  r.post('/runs/:id/playbook', wrap((req, res) => {
+    const body = SaveBody.safeParse(req.body);
+    if (!body.success) throw new HttpError(400, 'bad_request', 'Send {"name": "<2-80 characters>", "description": "<optional>"}');
+    const run = repo.getRun(String(req.params.id));
+    if (!run) throw new HttpError(404, 'not_found', 'No such run');
+    try { res.status(201).json(pbJson(savePlaybook(cfg, playbookFromRun(run, body.data.name, body.data.description, cfg)))); } catch (e) {
+      if (e instanceof PlaybookError) throw new HttpError(e.status, e.code, e.message);
+      throw e;
+    }
+  }));
+  r.post('/playbooks/:slug/run', wrap(async (req, res) => {
+    const body = RunPbBody.safeParse(req.body ?? {});
+    if (!body.success) throw new HttpError(400, 'bad_request', 'Send {"params": {...}}');
+    try { res.status(202).json(await manager.startPlaybook(String(req.params.slug), body.data.params)); } catch (e) {
+      if (e instanceof PlaybookError) throw new HttpError(e.status, e.code, e.message);
+      throw e;
+    }
   }));
 
   r.get('/memory', (_req, res) => { res.json(repo.listMemory()); });

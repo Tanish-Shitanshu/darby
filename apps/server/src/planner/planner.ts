@@ -4,7 +4,7 @@ import { completeJson, type Llm } from '../llm/llm';
 import type { LlmResult } from '../llm/types';
 import type { Catalog } from '../sources';
 import type { Config } from '../config';
-import { describeToolsForPlanner, isRegistered, riskOf, TOOLS, type CompileCtx, type PlannerScope } from '../tools/registry';
+import { describeToolsForPlanner, isRegistered, riskOf, sheetPathFor, TOOLS, type CompileCtx, type PlannerScope } from '../tools/registry';
 
 const PlannerStep = z.object({
   id: z.string().min(1).max(24),
@@ -67,7 +67,13 @@ export function compilePlan(goal: string, out: PlannerOutput, ctx: CompileCtx, i
     if (def.name === 'reader.extract' && !args.fromStep) problems.push(`step ${s.id}: reader.extract needs an earlier browser.read_page step`);
     if (def.name === 'sheet.write' && !args.fromStep) problems.push(`step ${s.id}: sheet.write needs an earlier reader.extract step`);
     if (def.name === 'share.grant' && !args.fromStep) problems.push(`step ${s.id}: share.grant needs an earlier sheet.write step`);
-    steps.push({ id: s.id, title: s.title, tool: s.tool, args, dependsOn, suggestedRisk: riskOf(s.tool), contract: def.contract(args, ctx) });
+    let contract = def.contract(args, ctx);
+    if (def.name === 'share.grant' && contract?.kind === 'permission_present') {
+      // the proof must name the document that was actually shared (not always "Competitors")
+      const sheet = steps.find((p) => p.id === args.fromStep && p.tool === 'sheet.write');
+      if (sheet) contract = { ...contract, fileRef: sheetPathFor('{runId}', String(sheet.args.name)) };
+    }
+    steps.push({ id: s.id, title: s.title, tool: s.tool, args, dependsOn, suggestedRisk: riskOf(s.tool), contract });
     seen.push({ id: s.id, tool: s.tool });
   }
   if (problems.length) return { problems };

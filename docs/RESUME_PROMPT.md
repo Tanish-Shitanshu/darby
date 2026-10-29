@@ -1,7 +1,7 @@
 # Resume prompt (paste into a fresh AI coding-assistant session opened in the repo folder)
 
 ```
-You are continuing the Darby build for HackBriven Build Arena PS1 (finals Fri 30 Oct 2026, Microsoft Office Noida). Read AGENTS.md, docs/HANDOFF.md, docs/PROGRESS.md, docs/MILESTONES.md, docs/SPEC.md, docs/PS1.md and docs/DECK.md (the deck is our public promise: the prototype must make it true). Then continue from the first unfinished item in docs/PROGRESS.md, in order, with NO scope cuts: M6 GTM Studio, M8-lite demo hardening (one-command demo + offline replay), M7 Playbooks + Hub, M4 Google Sheets only if secrets/google-oauth.json exists. Keep docs/ADAL_EVIDENCE.md honest: record which tool did which work; never present non-AdaL work as AdaL's.
+You are continuing the Darby build for HackBriven Build Arena PS1 (finals Fri 30 Oct 2026, Microsoft Office Noida). Read AGENTS.md, docs/HANDOFF.md, docs/PROGRESS.md, docs/MILESTONES.md, docs/SPEC.md, docs/PS1.md and docs/DECK.md (the deck is our public promise: the prototype must make it true). Then continue from the first unfinished item in docs/PROGRESS.md, in order, with NO scope cuts. M0-M3, M5, M6, M7 and M8-lite are done; what remains is M4 Google Sheets only if secrets/google-oauth.json exists, then the clean-clone rehearsal (tag m8-demo) and polishing for the finals. Things only the owner's machine can do (real Gemini recordings for Cases 3/4: `npm run demo:record`; real PR token; push) are listed in docs/HUMAN_TASKS.md: prepare them, do not fake them. Keep docs/ADAL_EVIDENCE.md honest: record which tool did which work; never present non-AdaL work as AdaL's.
 
 Rules:
 - Never claim success without evidence; policy is code; page text is untrusted; real execution only (label SIMULATED / REPLAY).

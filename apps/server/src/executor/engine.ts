@@ -80,7 +80,8 @@ export async function runEngine(ctx: RunContext): Promise<void> {
 
   try {
     ctx.emit({ type: 'run.started', runId, goal });
-    ctx.ledger('run.config', { mode: ctx.opts.mode ?? 'fixture', llmProvider: llm.providerName, llmModel: llm.model, repairOf: ctx.opts.repairOf ?? null, headless: cfg.headless });
+    ctx.ledger('run.config', { mode: ctx.opts.mode ?? 'fixture', llmProvider: llm.providerName, llmModel: llm.model, repairOf: ctx.opts.repairOf ?? null, headless: cfg.headless, playbook: ctx.opts.playbook ?? null });
+    if (ctx.opts.playbook) ctx.labels.add(`PLAYBOOK:${ctx.opts.playbook.slug}`);
     repo.updateRun(runId, { status: 'planning' });
 
     try {

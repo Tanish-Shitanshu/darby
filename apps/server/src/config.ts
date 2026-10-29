@@ -31,6 +31,7 @@ export interface Config {
   keysDir: string;
   profileDir: string;
   workspaceDir: string;
+  playbooksDir: string;
   replayCuratedDir: string;
   replayRecordDir: string;
   migrationsDir: string;
@@ -58,6 +59,7 @@ export function getConfig(): Config {
     keysDir: path.join(darbyDir, 'keys'),
     profileDir: path.join(darbyDir, 'profile'),
     workspaceDir: path.resolve(e.DARBY_WORKSPACE || path.join(ROOT, 'workspace')),
+    playbooksDir: path.resolve(e.DARBY_PLAYBOOKS_DIR || path.join(ROOT, 'playbooks')),
     replayCuratedDir: path.join(ROOT, 'replay', 'llm'),
     replayRecordDir: path.resolve(e.DARBY_REPLAY_DIR || path.join(ROOT, '.darby', 'replay')),
     migrationsDir: path.join(ROOT, 'apps', 'server', 'db', 'migrations'),

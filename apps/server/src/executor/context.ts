@@ -45,6 +45,8 @@ export interface RunOptions {
   /** replace the planner (used by the compromised-planner red-team variant and by Playbook replay) */
   planOverride?: (goal: string) => Promise<import('@darby/contracts').Plan>;
   mode?: string;
+  /** set when the run replays a saved Playbook: recorded in the signed ledger and receipt labels */
+  playbook?: { slug: string; sha256: string; params: Record<string, unknown> };
 }
 
 export type Outcome = 'ok' | 'gap' | 'failed' | 'needs_you' | 'blocked' | 'cancelled';

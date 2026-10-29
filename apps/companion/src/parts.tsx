@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { EvidenceContract, PlanStep } from '@darby/contracts';
 import { prettySlug, proofLine, VERDICT_TEXT, type RunView, type StepView, type TimelineItem } from './state';
-import type { EvidenceRow, MemoryItem, RunDetail, RunSummary, VerifyResult } from './useDarby';
+import type { EvidenceRow, MemoryItem, PlaybookItem, RunDetail, RunSummary, VerifyResult } from './useDarby';
 
 export const RISK_LABEL: Record<string, string> = { read: 'reads', write_local: 'writes locally', external_effect: 'external effect', forbidden: 'forbidden' };
 export const STATUS_LABEL: Record<string, string> = {
@@ -155,9 +155,10 @@ export function ReviewPanel({ run, detail }: { run: RunView; detail: RunDetail |
 }
 
 /* ---------- receipt ---------- */
-export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered, onRepair }: {
+export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered, onRepair, onSavePlaybook, onOpenHub }: {
   run: RunView; verify: VerifyResult | null; tamper: { original: VerifyResult; tampered: VerifyResult; edit: { index: number; type: string } } | null;
   onTamper: () => void; onRemember: () => void; remembered: boolean; onRepair?: () => void;
+  onSavePlaybook?: (name: string) => Promise<PlaybookItem | null>; onOpenHub?: () => void;
 }) {
   const r = run.receipt;
   if (!r) return null;
@@ -210,6 +211,7 @@ export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered,
         <a className="btn ghost" href={`/api/runs/${run.id}/receipt`} download>Download receipt (JSON)</a>
         <button className="btn ghost" onClick={onRemember} disabled={remembered}>{remembered ? 'Remembered' : 'Remember this run'}</button>
       </div>
+      {onSavePlaybook && (r.verdict === 'VERIFIED' || r.verdict === 'VERIFIED_WITH_GAPS') && <SavePlaybook goal={run.goal} onSave={onSavePlaybook} onOpenHub={onOpenHub} />}
       {tamper && (
         <div className="tamper" data-testid="tamper-result">
           <div className="tamper-col"><strong>Original receipt</strong><span className={`chip ${tamper.original.valid ? 'chain-ok' : 'chain-bad'}`}>{tamper.original.valid ? 'VALID ✓' : 'INVALID'}</span></div>
@@ -217,6 +219,91 @@ export function Receipt({ run, verify, tamper, onTamper, onRemember, remembered,
           <div className="tamper-col"><strong>Edited copy</strong><span className={`chip ${tamper.tampered.valid ? 'chain-ok' : 'chain-bad'}`}>{tamper.tampered.valid ? 'VALID' : 'INVALID ✗'}</span>
             <span className="muted small">{tamper.tampered.checks.find((c) => !c.ok)?.detail}</span></div>
         </div>
+      )}
+    </section>
+  );
+}
+
+/* ---------- Playbooks (M7) ---------- */
+function SavePlaybook({ goal, onSave, onOpenHub }: { goal: string; onSave: (name: string) => Promise<PlaybookItem | null>; onOpenHub?: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState('');
+  const [saved, setSaved] = useState<PlaybookItem | null>(null);
+  if (saved) return (<p className="pb-saved" data-testid="pb-saved">Saved as <code>playbooks/{saved.slug}/</code> — a re-runnable skill with its own permission manifest. {onOpenHub && <button className="linkbtn" onClick={onOpenHub}>Open the Hub</button>}</p>);
+  if (!open) return (<div className="row"><button className="btn primary" onClick={() => { setOpen(true); setName(goal.replace(/[^\w ]+/g, ' ').trim().split(/\s+/).slice(0, 4).join(' ')); }} data-testid="save-playbook-btn">Save as Playbook</button><span className="muted small">Reuse this proven recipe with new inputs; it is verified again every time.</span></div>);
+  return (
+    <form className="row pb-form" onSubmit={(e) => { e.preventDefault(); void onSave(name.trim()).then((pb) => pb && setSaved(pb)); }}>
+      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Playbook name" aria-label="Playbook name" maxLength={80} data-testid="pb-name" autoFocus />
+      <button className="btn primary" type="submit" disabled={name.trim().length < 2} data-testid="save-playbook-go">Save</button>
+      <button className="btn ghost" type="button" onClick={() => setOpen(false)}>Cancel</button>
+    </form>
+  );
+}
+
+const BADGE: Record<PlaybookItem['badge'], { cls: string; text: string; tip: string }> = {
+  passed: { cls: 'chain-ok', text: 'CI passed ✓', tip: 'npm run playbook:check passed for exactly this version of the Playbook' },
+  stale: { cls: 'gap', text: 'CI stale', tip: 'playbook.json changed after the last check: run npm run playbook:check' },
+  failed: { cls: 'chain-bad', text: 'CI failed ✗', tip: 'the last npm run playbook:check failed: see the check results' },
+  none: { cls: 'label', text: 'not checked yet', tip: 'no badge until npm run playbook:check passes' },
+};
+const pageName = (u: string) => prettySlug(u.replace(/[?#].*$/, '').split('/').filter(Boolean).pop() ?? u);
+
+function PlaybookCard({ pb, busy, onRun }: { pb: PlaybookItem; busy: boolean; onRun: (slug: string, params: Record<string, unknown>) => void }) {
+  const init = useMemo(() => Object.fromEntries(pb.params.map((p) => [p.key, p.default])) as Record<string, string | string[]>, [pb]);
+  const [vals, setVals] = useState<Record<string, string | string[]>>(init);
+  const [showCheck, setShowCheck] = useState(false);
+  const b = BADGE[pb.badge];
+  const m = pb.manifest;
+  const urlsOk = pb.params.every((p) => p.type !== 'urls' || (vals[p.key] as string[]).length > 0);
+  return (
+    <li className="pbcard" data-testid={`playbook-${pb.slug}`}>
+      <div className="pb-head">
+        <div><h3 className="pb-title">{pb.name}</h3><div className="muted">{pb.description}</div></div>
+        <span className={`chip ${b.cls}`} title={b.tip} data-testid="pb-badge" data-badge={pb.badge}>{b.text}</span>
+      </div>
+      <div className="chips pb-perms" aria-label="Permission manifest">
+        {m.reads.map((x) => (<span key={x} className="chip perm-read" title="pages this Playbook may read">reads · {x}</span>))}
+        {m.writes.map((x) => (<span key={x} className="chip perm-write">writes · {x}</span>))}
+        {m.externalEffects.map((x) => (<span key={x.tool} className="chip perm-ext" title="always waits for your approval">external · {x.what}</span>))}
+        {m.externalEffects.length === 0 && <span className="chip chain-ok">no external effects</span>}
+        {m.needsApproval && <span className="chip label">asks you before it acts</span>}
+      </div>
+      <details className="pb-steps"><summary>{pb.steps.length} steps · saved from run {pb.createdFrom.runId.slice(4, 19)} ({pb.createdFrom.verdict.replace(/_/g, ' ').toLowerCase()})</summary>
+        <ol>{pb.steps.map((s) => (<li key={s.id}><code>{s.tool}</code> — {s.title}{s.proof ? <span className="muted"> · proof: {s.proof}</span> : null}</li>))}</ol>
+      </details>
+      <form className="pb-params" onSubmit={(e) => { e.preventDefault(); onRun(pb.slug, vals); }}>
+        {pb.params.map((p) => p.type === 'urls' ? (
+          <fieldset key={p.key} className="pb-field"><legend>{p.label} <span className="muted small">({(vals[p.key] as string[]).length} selected)</span></legend>
+            <div className="pb-checks">{(p.choices ?? (p.default as string[])).map((c) => {
+              const on = (vals[p.key] as string[]).includes(c);
+              return (<label key={c} className={`pb-check ${on ? 'on' : ''}`}><input type="checkbox" checked={on} onChange={() => setVals((v) => ({ ...v, [p.key]: on ? (v[p.key] as string[]).filter((x) => x !== c) : [...(v[p.key] as string[]), c] }))} />{pageName(c)}</label>);
+            })}</div>
+          </fieldset>
+        ) : (
+          <label key={p.key} className="pb-field">{p.label}<input value={vals[p.key] as string} onChange={(e) => setVals((v) => ({ ...v, [p.key]: e.target.value }))} maxLength={40} data-testid={`pb-param-${p.key}`} /></label>
+        ))}
+        <div className="row">
+          <button className="btn primary" type="submit" disabled={busy || !urlsOk} data-testid={`run-playbook-${pb.slug}`}>Run this Playbook</button>
+          <button className="btn ghost" type="button" onClick={() => setVals(init)}>Reset inputs</button>
+          {pb.check && <button className="btn ghost" type="button" onClick={() => setShowCheck((x) => !x)}>{showCheck ? 'Hide' : 'Show'} check results</button>}
+          {pb.badge !== 'passed' && <span className="muted small">Run <code>npm run playbook:check</code> to earn the badge.</span>}
+        </div>
+      </form>
+      {showCheck && pb.check && (
+        <ul className="pb-check-list" data-testid="pb-check-list">{pb.check.checks.map((c, i) => (<li key={i}><span className={`chip ${c.ok ? 'chain-ok' : 'chain-bad'}`}>{c.ok ? 'pass' : 'FAIL'}</span> <strong>{c.name}</strong><div className="muted small">{c.detail}</div></li>))}
+          <li className="muted small">checked {new Date(pb.check.at).toLocaleString()} · {pb.check.llm}</li></ul>
+      )}
+    </li>
+  );
+}
+
+export function Hub({ items, busy, onRun }: { items: PlaybookItem[]; busy: boolean; onRun: (slug: string, params: Record<string, unknown>) => void }) {
+  return (
+    <section className="card" aria-labelledby="hub-h">
+      <h2 id="hub-h">Hub — Playbooks you can re-run</h2>
+      <p className="muted">A Playbook is a verified run saved as a recipe. Each replay is planned by code from the saved steps, goes through the same policy and approvals, and ends in its own signed receipt. The CI badge appears only after <code>npm run playbook:check</code> passes for this exact version.</p>
+      {items.length === 0 ? <p className="muted" data-testid="hub-empty">No Playbooks yet. Finish a run, then press “Save as Playbook” on its receipt.</p> : (
+        <ul className="playbooks" data-testid="hub">{items.map((pb) => (<PlaybookCard key={pb.slug + pb.sha256} pb={pb} busy={busy} onRun={onRun} />))}</ul>
       )}
     </section>
   );

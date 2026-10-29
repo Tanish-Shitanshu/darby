@@ -39,6 +39,20 @@ flowchart LR
 ## Evidence contracts
 `quote_in_page` · `sheet_readback` · `permission_present` · `http_json_contains` · `page_assertions` · `file_exists` · `vision_check` · `media_probe` · `pr_exists` (`packages/contracts`).
 
+## Playbooks (M7)
+A verified run can be saved as `playbooks/<slug>/{playbook.json, SKILL.md}`. Only the plan is stored (steps, portable URLs, two parameters, a permission manifest derived from the steps); never a contract, verdict or permission. A replay rebuilds the plan through the same plan compiler and runs the same engine, so policy, approvals, taint and the independent verifier apply again and the run gets its own signed receipt labelled `PLAYBOOK:<slug>`.
+
+```mermaid
+flowchart LR
+  R[Verified receipt] -->|Save as Playbook| F[playbook.json + SKILL.md<br/>params + derived manifest]
+  F -->|Hub: new parameters| I[instantiate<br/>reject off-origin pages / bad names]
+  I --> K[Plan compiler<br/>contracts rebuilt by code]
+  K --> E[Same executor, policy, approvals]
+  E --> V[Independent verifier] --> N[New signed receipt<br/>PLAYBOOK:slug]
+  F -.-> CI[npm run playbook:check<br/>manifest, 2 dry runs, injection suite]
+  CI -.->|check.json bound to sha256 of playbook.json| H[Hub badge: passed / stale / failed]
+```
+
 ## A failed run and its repair (Case 4)
 ```mermaid
 sequenceDiagram

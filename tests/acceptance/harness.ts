@@ -29,7 +29,7 @@ async function waitUp(base: string): Promise<void> {
 }
 
 /** opts.replay=true forces LLM_PROVIDER=replay (deterministic, offline). */
-export async function startHarness(opts: { replay: boolean; headless?: boolean; keepState?: boolean; llm?: import('../../apps/server/src/llm/llm').Llm }): Promise<Harness> {
+export async function startHarness(opts: { replay: boolean; headless?: boolean; keepState?: boolean; playbooksDir?: string; llm?: import('../../apps/server/src/llm/llm').Llm }): Promise<Harness> {
   const base = `http://localhost:${ACCEPT_PORT}`;
   const fx: ChildProcess = spawn(process.execPath, ['fixtures/site/server.mjs'], { cwd: ROOT, env: { ...process.env, FIXTURE_PORT: String(ACCEPT_PORT) }, stdio: ['ignore', 'ignore', 'inherit'] });
   await waitUp(base);
@@ -38,6 +38,8 @@ export async function startHarness(opts: { replay: boolean; headless?: boolean; 
   mkdirSync(STATE_DIR, { recursive: true });
   process.env.DARBY_DIR = STATE_DIR;
   process.env.DARBY_WORKSPACE = path.join(STATE_DIR, 'workspace');
+  // acceptance runs never write into the repo's real playbooks/ folder unless a caller (playbook:check) asks for it
+  process.env.DARBY_PLAYBOOKS_DIR = opts.playbooksDir ?? path.join(STATE_DIR, 'playbooks');
   process.env.FIXTURE_PORT = String(ACCEPT_PORT);
   process.env.FIXTURE_URL = base;
   if (opts.replay) process.env.LLM_PROVIDER = 'replay';

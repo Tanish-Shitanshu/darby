@@ -61,4 +61,4 @@ Local state lives in `.darby/` (db, signing keys, browser profile, runs, screens
 - Do not edit `fixtures/expected.json` or `packages/contracts` without saying why in the commit message.
 
 ## 7. Human-only steps (see `docs/HUMAN_TASKS.md` and `docs/PROGRESS.md` for status)
-GitHub test repo `darby-launch-test` + token (M6 PR step), Google OAuth JSON in `secrets/google-oauth.json` (M4, optional), collaborator invites, demo video recording.
+GitHub test repo `darby-launch-test` + token (M6 PR step), real-model recordings for Cases 3/4 (`npm run demo:record`), re-run `npm run playbook:check` after any change to `playbooks/`, Google OAuth JSON in `secrets/google-oauth.json` (M4, optional), collaborator invites, demo video recording.

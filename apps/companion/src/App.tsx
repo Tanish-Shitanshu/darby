@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { ApprovalCard, EvidenceDrawer, History, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
+import { ApprovalCard, EvidenceDrawer, History, Hub, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 
 const LINK_TEXT: Record<Link, string> = { connecting: 'connecting', up: 'connected', down: 'offline' };
 import demoGoals from '../../../fixtures/demo-goals.json';
 const EXAMPLES = Object.values(demoGoals) as { label: string; goal: string }[];
-type Tab = 'run' | 'history' | 'memory';
+type Tab = 'run' | 'history' | 'memory' | 'hub';
 type Tamper = { original: VerifyResult; tampered: VerifyResult; edit: { index: number; type: string } };
 
 function Led({ name, link, detail }: { name: string; link: Link; detail?: string }) {
@@ -45,7 +45,7 @@ export function App() {
   const isLaunch = !!run?.plan?.steps.some((s) => s.tool.startsWith('gtm.'));
   useEffect(() => { if (runId && (drawer || isLaunch)) d.detail(runId).then(setDetail).catch(() => undefined); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [runId, drawer, isLaunch, hasReceipt, run?.timeline.length]);
 
-  const go = (t: Tab) => { setTab(t); if (t === 'history') void d.refreshHistory(); if (t === 'memory') void d.loadMemory(); };
+  const go = (t: Tab) => { setTab(t); if (t === 'history') void d.refreshHistory(); if (t === 'memory') void d.loadMemory(); if (t === 'hub') void d.loadPlaybooks(); };
 
   return (
     <div className="shell">
@@ -55,8 +55,8 @@ export function App() {
           <div><h1>Darby</h1><p className="tagline">The AI-native browser where “done” means proven.</p></div>
         </div>
         <nav className="tabs" aria-label="Sections">
-          {(['run', 'history', 'memory'] as Tab[]).map((t) => (
-            <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => go(t)} aria-current={tab === t ? 'page' : undefined} data-testid={`tab-${t}`}>{t === 'run' ? 'Run' : t === 'history' ? 'History' : 'Memory'}</button>
+          {(['run', 'history', 'memory', 'hub'] as Tab[]).map((t) => (
+            <button key={t} className={`tab ${tab === t ? 'on' : ''}`} onClick={() => go(t)} aria-current={tab === t ? 'page' : undefined} data-testid={`tab-${t}`}>{t === 'run' ? 'Run' : t === 'history' ? 'History' : t === 'memory' ? 'Memory' : 'Hub'}</button>
           ))}
         </nav>
         <ul className="leds">
@@ -112,7 +112,8 @@ export function App() {
               <Receipt run={run} verify={verify} tamper={tamper} remembered={remembered}
                 onTamper={() => void d.verifyReceipt(run.id).then(setTamper)}
                 onRemember={() => void d.remember(run.id).then(() => setRemembered(true))}
-                onRepair={run.receipt.verdict === 'FAILED' ? () => void d.repair(run.id) : undefined} />
+                onRepair={run.receipt.verdict === 'FAILED' ? () => void d.repair(run.id) : undefined}
+                onSavePlaybook={(name) => d.savePlaybook(run.id, name)} onOpenHub={() => go('hub')} />
             )}
           </div>
           <div className="col">
@@ -126,6 +127,7 @@ export function App() {
       )}
 
       {tab === 'history' && (<main className="stack"><History items={d.history} onOpen={(id) => { setTab('run'); void d.open(id); }} /></main>)}
+      {tab === 'hub' && (<main className="stack"><Hub items={d.playbooks} busy={live} onRun={(slug, params) => void d.runPlaybook(slug, params).then((ok) => ok && setTab('run'))} />{d.error && <p className="error" role="alert">{d.error}</p>}</main>)}
       {tab === 'memory' && (<main className="stack"><Memory items={d.memory} onAdd={(k, v) => void d.addMemory(k, v)} onDelete={(id) => void d.deleteMemory(id)} /></main>)}
 
       {run && tab === 'run' && <EvidenceDrawer run={run} stepId={drawer} detail={detail} onClose={() => setDrawer(null)} onShot={setShot} />}
