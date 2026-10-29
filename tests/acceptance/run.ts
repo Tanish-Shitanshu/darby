@@ -9,6 +9,7 @@ import { receiptBundle } from '../../apps/server/src/api';
 import { Llm, ReplayStore } from '../../apps/server/src/llm/llm';
 import { templateLanding } from '../../apps/server/src/gtm/landing';
 import { loadBrief, templateCopy } from '../../apps/server/src/gtm/brief';
+import { ffmpegPath } from '../../apps/server/src/gtm/media';
 import { getConfig } from '../../apps/server/src/config';
 import { spawnSync } from 'node:child_process';
 import type { RawProvider } from '../../apps/server/src/llm/types';
@@ -160,7 +161,7 @@ async function case3Run(h: Harness, approve: boolean, scripted = true): Promise<
   }
   ok('verdict VERIFIED after approval', run.verdict === 'VERIFIED', `got ${run.verdict}${r?.cause ? ` — ${r.cause.slice(0, 200)}` : ''}`);
   ok('files exist: hero.png, voiceover.mp3, teaser.mp4, landing/index.html', ['hero.png', 'voiceover.mp3', 'teaser.mp4', 'landing/index.html'].every((f) => existsSync(path.join(dir, f))), ['hero.png', 'voiceover.mp3', 'teaser.mp4', 'landing/index.html'].map((f) => `${f}:${existsSync(path.join(dir, f))}`).join(' '));
-  const probe = spawnSync('ffmpeg', ['-hide_banner', '-i', path.join(dir, 'teaser.mp4')], { encoding: 'utf8' });
+  const probe = spawnSync(ffmpegPath() ?? 'ffmpeg', ['-hide_banner', '-i', path.join(dir, 'teaser.mp4')], { encoding: 'utf8' });
   const dur = /Duration:\s*(\d+):(\d+):(\d+\.\d+)/.exec(probe.stderr ?? '');
   const secs = dur ? Number(dur[1]) * 3600 + Number(dur[2]) * 60 + Number(dur[3]) : 0;
   ok('teaser is ~15 s with video and audio', secs >= 14 && secs <= 16 && /Video:/.test(probe.stderr ?? '') && /Audio:/.test(probe.stderr ?? ''), `${secs.toFixed(1)} s`);
