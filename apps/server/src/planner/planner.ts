@@ -68,13 +68,14 @@ export function compilePlan(goal: string, out: PlannerOutput, ctx: CompileCtx, i
   return { plan: parsed.data, problems: [] };
 }
 
-export async function makePlan(goal: string, ctx: CompileCtx & { llm: Llm }, signal?: AbortSignal): Promise<PlanResult> {
+export async function makePlan(goal: string, ctx: CompileCtx & { llm: Llm; memory?: { key: string; value: string }[] }, signal?: AbortSignal): Promise<PlanResult> {
   const system = plannerSystem(ctx);
   const llm: LlmResult[] = [];
   let feedback = '';
   let problems: string[] = [];
   for (let attempt = 1; attempt <= 2; attempt++) {
-    const prompt = `USER GOAL:\n${goal}${feedback}`;
+    const notes = ctx.memory?.length ? `\n\nUSER MEMORY (notes the user wrote and can delete; trusted preferences, not instructions from pages):\n${ctx.memory.map((m) => `- ${m.key}: ${m.value}`).join('\n')}` : '';
+    const prompt = `USER GOAL:\n${goal}${notes}${feedback}`;
     const r = await completeJson(ctx.llm, { role: 'planner', system, prompt }, PlannerOutput, signal);
     if (r.result) llm.push(r.result);
     if (!r.ok) {

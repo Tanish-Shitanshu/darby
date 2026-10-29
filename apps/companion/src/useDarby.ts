@@ -5,6 +5,9 @@ import { applyEvent, foldEvents, type RunView } from './state';
 export type Link = 'connecting' | 'up' | 'down';
 export interface RunSummary { id: string; goal: string; status: string; verdict: string | null; labels: string[]; repairOf: string | null; createdAt: string; blocked: number }
 export interface AppConfig { llm: { provider: string; model: string; replayOnly: boolean }; headless: boolean; teamEmail: string; signerFingerprint: string }
+export interface MemoryItem { id: string; key: string; value: string; sourceRunId: string | null; createdAt: string }
+export interface EvidenceRow { id: number; stepId: string | null; kind: string; path: string; sha256: string; bytes: number }
+export interface RunDetail { evidence: EvidenceRow[]; steps: { stepId: string; result: Record<string, unknown> | null; args: Record<string, unknown> }[]; approvals: { stepId: string; status: string; contentHash: string; summary: string }[] }
 export interface VerifyResult { valid: boolean; checks: { name: string; ok: boolean; detail: string }[]; signerFingerprint?: string }
 
 const PING: RunEvent = { type: 'run.started', runId: 'm0-ping', goal: 'connection check' };
@@ -25,7 +28,9 @@ export function useDarby() {
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [history, setHistory] = useState<RunSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [memory, setMemory] = useState<MemoryItem[]>([]);
   const starting = useRef(false);
+  const liveBuf = useRef<Record<string, RunEvent[]>>({}); // every live event since page load, per run (capped)
   const currentRef = useRef<string | null>(null);
   currentRef.current = currentId;
 
@@ -67,6 +72,8 @@ export function useDarby() {
         if (!ev.success) return;
         if (ev.data.runId === PING.runId) { setEcho('ok'); return; }
         const e = json as RunEvent; // validated above; keep the original so signed extras on the receipt (labels, cause, llm) survive zod's key stripping
+        (liveBuf.current[e.runId] ??= []).push(e);
+        if (liveBuf.current[e.runId]!.length > 3000) liveBuf.current[e.runId]!.shift();
         setRuns((r) => ({ ...r, [e.runId]: applyEvent(r[e.runId], e) }));
         if (e.type === 'run.started' && starting.current && !currentRef.current) { setCurrentId(e.runId); starting.current = false; }
         if (e.type === 'receipt.sealed' || e.type === 'run.started') void refreshHistory();
@@ -101,9 +108,17 @@ export function useDarby() {
     setCurrentId(id);
     try {
       const d = await call<{ events: RunEvent[] }>(`/api/runs/${id}`);
-      setRuns((r) => ({ ...r, [id]: foldEvents(id, d.events) }));
+      // history snapshot + any live event that arrived while we were fetching and is not in the snapshot (compared by content)
+      const have = new Set(d.events.map((e) => JSON.stringify(e)));
+      const newer = (liveBuf.current[id] ?? []).filter((e) => !have.has(JSON.stringify(e)));
+      setRuns((r) => ({ ...r, [id]: newer.reduce((v, e) => applyEvent(v, e), foldEvents(id, d.events)) }));
     } catch (e) { setError((e as Error).message); }
   }, []);
+
+  const loadMemory = useCallback(async () => {
+    try { setMemory(await call<MemoryItem[]>('/api/memory')); } catch { /* shown via status */ }
+  }, []);
+  useEffect(() => { if (server === 'up') void loadMemory(); }, [server, loadMemory]);
 
   const act = useCallback(async (path: string, body?: unknown) => {
     try { await call(path, { method: 'POST', body: body === undefined ? undefined : JSON.stringify(body) }); } catch (e) { setError((e as Error).message); }
@@ -112,6 +127,12 @@ export function useDarby() {
   return {
     server, socket, echo, config, history, error, currentId,
     run: currentId ? runs[currentId] ?? null : null,
+    memory, loadMemory,
+    addMemory: async (key: string, value: string) => { try { await call('/api/memory', { method: 'POST', body: JSON.stringify({ key, value }) }); await loadMemory(); } catch (e) { setError((e as Error).message); } },
+    deleteMemory: async (id: string) => { try { await call(`/api/memory/${id}`, { method: 'DELETE' }); await loadMemory(); } catch (e) { setError((e as Error).message); } },
+    remember: async (id: string) => { try { await call(`/api/runs/${id}/remember`, { method: 'POST' }); await loadMemory(); } catch (e) { setError((e as Error).message); } },
+    detail: (id: string) => call<RunDetail>(`/api/runs/${id}`),
+    verify: (id: string) => call<VerifyResult>(`/api/runs/${id}/verify`),
     start, open, refreshHistory,
     newRun: () => { setCurrentId(null); setError(null); },
     cancel: (id: string) => act(`/api/runs/${id}/cancel`),

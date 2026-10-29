@@ -66,7 +66,7 @@ export async function runEngine(ctx: RunContext): Promise<void> {
       if (ctx.opts.planOverride) {
         plan = await ctx.opts.planOverride(goal);
       } else {
-        const pr = await makePlan(goal, { cfg, catalog: deps.catalog, llm }, ctx.signal);
+        const pr = await makePlan(goal, { cfg, catalog: deps.catalog, llm, memory: repo.listMemory().filter((m) => m.sourceRunId === null) }, ctx.signal);
         pr.llm.forEach((r) => ctx.noteLlm(r, 'planner'));
         plan = pr.plan;
       }

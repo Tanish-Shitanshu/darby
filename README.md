@@ -4,7 +4,7 @@ HackBriven Build Arena · PS1 · Team Target 9x
 
 Darby gives you an autonomous companion inside a real browser. You state a goal; Darby plans it with a proof for every step, does the work in real tabs and real documents, checks the result independently, and hands you a signed receipt with an honest verdict.
 
-> Status: **M2 policy, approvals and control done** (on top of the M1 core loop) — goal → typed plan with a proof per step → real Chromium tabs → quarantined reader → independent verifier → signed receipt. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/MILESTONES.md for the build order. Built with AdaL.
+> Status: **M3 companion UI done** (on top of M1 core loop and M2 policy/approvals/control) — goal → typed plan with a proof per step → real Chromium tabs → quarantined reader → independent verifier → signed receipt. See docs/PROGRESS.md for what is built and what is next, docs/HANDOFF.md to take over, docs/MILESTONES.md for the build order. Built with AdaL.
 
 ## Setup
 ```bash

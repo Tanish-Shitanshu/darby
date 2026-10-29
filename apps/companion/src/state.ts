@@ -30,6 +30,9 @@ export interface RunView {
 }
 
 let seq = 0;
+/** Screenshots must be same-origin paths served by our own API; anything else in an event is dropped, never rendered. */
+const SAFE_SHOT = /^\/api\/runs\/run_[\w-]+\/shots\/[\w.-]+\.(?:png|jpe?g)$/i;
+export const safeShot = (p: string | undefined): string | undefined => (p && SAFE_SHOT.test(p) ? p : undefined);
 const empty = (id: string, goal = ''): RunView => ({ id, goal, phase: 'planning', plan: null, steps: {}, timeline: [], receipt: null, approval: null });
 
 /** Folds one RunEvent into the view of its run. The same function replays stored events when you open an old run. */
@@ -55,7 +58,7 @@ export function applyEvent(prev: RunView | undefined, ev: RunEvent): RunView {
       add({ kind: 'status', stepId: ev.stepId, text: 'Started' });
       break;
     case 'step.action':
-      add({ kind: 'action', stepId: ev.stepId, text: ev.description, shot: ev.screenshotPath });
+      add({ kind: 'action', stepId: ev.stepId, text: ev.description, shot: safeShot(ev.screenshotPath) });
       break;
     case 'policy.decision': {
       step(ev.stepId).decision = ev.decision;
@@ -74,7 +77,7 @@ export function applyEvent(prev: RunView | undefined, ev: RunEvent): RunView {
       add({ kind: 'approval', stepId: ev.stepId, ok: ev.approved, text: ev.approved ? 'You approved' : 'You denied' });
       break;
     case 'step.evidence':
-      step(ev.stepId).evidence = [...step(ev.stepId).evidence, { contract: ev.contract, passed: ev.passed, detail: ev.detail }];
+    { const sv = step(ev.stepId); sv.evidence = [...sv.evidence, { contract: ev.contract, passed: ev.passed, detail: ev.detail }]; }
       add({ kind: 'evidence', stepId: ev.stepId, ok: ev.passed, text: ev.detail });
       break;
     case 'step.finished':

@@ -10,6 +10,7 @@ import type { RunManager } from './runs/manager';
 
 const StartBody = z.object({ goal: z.string().trim().min(3).max(2000), mode: z.enum(['fixture', 'live']).default('fixture') });
 const ApprovalBody = z.object({ approved: z.boolean() });
+const MemoryBody = z.object({ key: z.string().trim().min(1).max(80), value: z.string().trim().min(1).max(300) });
 
 class HttpError extends Error {
   constructor(public status: number, public code: string, message: string) { super(message); }
@@ -72,6 +73,13 @@ export function createApi(manager: RunManager): Router {
     res.json(bundle);
   }));
 
+  /** Recompute the hash chain + Ed25519 signature of this run's receipt (what the green "chain valid" badge shows). */
+  r.get('/runs/:id/verify', wrap((req, res) => {
+    const bundle = receiptBundle(deps, String(req.params.id));
+    if (!bundle) throw new HttpError(404, 'not_found', 'This run has no receipt yet');
+    res.json(verifyBundle(bundle));
+  }));
+
   /** The UI's "tamper test": edit one entry in a COPY of the bundle and show the verifier rejecting it. The original is untouched. */
   r.post('/runs/:id/tamper-test', wrap((req, res) => {
     const bundle = receiptBundle(deps, String(req.params.id));
@@ -113,6 +121,22 @@ export function createApi(manager: RunManager): Router {
   }));
 
   r.get('/memory', (_req, res) => { res.json(repo.listMemory()); });
+  r.post('/memory', wrap((req, res) => {
+    const body = MemoryBody.safeParse(req.body);
+    if (!body.success) throw new HttpError(400, 'bad_request', 'Send {"key": "...", "value": "..."} (value up to 300 characters)');
+    const id = `mem_${Math.random().toString(36).slice(2, 10)}`;
+    repo.addMemory({ id, key: body.data.key, value: body.data.value });
+    res.status(201).json({ id });
+  }));
+  /** "Remember this run": stores only trusted facts about the run (id, document path, counts), never page text. */
+  r.post('/runs/:id/remember', wrap((req, res) => {
+    const run = repo.getRun(String(req.params.id));
+    if (!run?.receipt) throw new HttpError(404, 'not_found', 'This run has no receipt yet');
+    const doc = repo.listEvidence(run.id).find((e) => e.kind === 'file' && e.path.endsWith('.xlsx'));
+    const id = `mem_${Math.random().toString(36).slice(2, 10)}`;
+    repo.addMemory({ id, key: `Run ${run.id.slice(4, 19)}`, value: `${run.receipt.verdict.replace(/_/g, ' ').toLowerCase()}; ${run.receipt.gaps.length} gaps${doc ? `; document ${doc.path}` : ''}`.slice(0, 300), sourceRunId: run.id });
+    res.status(201).json({ id });
+  }));
   r.delete('/memory/:id', wrap((req, res) => {
     if (!repo.deleteMemory(String(req.params.id))) throw new HttpError(404, 'not_found', 'No such memory');
     res.json({ ok: true });

@@ -3,7 +3,7 @@
 _Last updated: 2026-10-29_
 
 ## Current state
-- **M2 (policy, approvals, control) done**, tag `m2-policy`. M1 done (`m1-core-loop`). Next: M3 (companion UI polish: approval card at the top, evidence drawer, history, memory, receipt tamper-test button, Save as Playbook placeholder, Hub placeholder).
+- **M3 (companion UI) done**, tag `m3-ui`. M1 `m1-core-loop`, M2 `m2-policy` done. Next: intro video (Video Producer), then M5 (failure + repair, Case 4), M6 (GTM Studio), M7 (Playbooks + Hub), M4 only if `secrets/google-oauth.json` exists, M8.
 - Step 0 (LLM provider) done: Gemini provider verified live (`gemini-3.5-flash`, JSON + image input), fallback chain `gemini-3-flash-preview`, `gemini-3.8-flash`; free-tier limiter (sliding-window RPM, concurrency 2, backoff on 429/503/timeouts); every response cached in the replay store.
 
 ## Milestones
@@ -12,7 +12,7 @@ _Last updated: 2026-10-29_
 | M0 scaffold | done | m0-scaffold | server + companion + fixtures wired |
 | M1 core loop | done | m1-core-loop | |
 | M2 policy/approvals/control | done | m2-policy | |
-| M3 companion UI | todo | | |
+| M3 companion UI | done | m3-ui | |
 | M5 failure + repair | todo | | |
 | M6 GTM Studio | todo | | |
 | M7 Playbooks + Hub | todo | | |
@@ -21,6 +21,11 @@ _Last updated: 2026-10-29_
 
 ## Commands that pass
 `npm run check` (83 tests) · `npm run redteam` · `npm run fixtures:check` · `npm run llm:ping` · `npm run test:acceptance -- case1` (replay) · `npm run test:acceptance -- case1 --live` · `npm run verify-receipt -- docs/evidence/m1-case1-receipt.json` · `npm run db:reset` · `npm run replay:curate`
+
+## M3 notes
+- UI: Run / History / Memory tabs; sticky run bar (Cancel, Take over, Resume); approval card on top; plan as clickable tickets -> evidence drawer (contract, policy decision, verification results, screenshots, files with sha256, stored result); lightbox; receipt with stamp, labels, CONTAINED badge, server-verified "chain valid", tamper test, download JSON, "Remember this run".
+- Memory: user notes are shown to the planner (only when present; the replay recordings assume an EMPTY memory, so delete test notes before a replay demo); run summaries are stored but never sent to a model.
+- Not in M3 by design: Save as Playbook and the Hub view (M7).
 
 ## M2 notes
 - Policy engine hardened after an independent headless-AdaL red team (48 bypasses found -> 0): see `docs/evidence/m2-review.md`.
