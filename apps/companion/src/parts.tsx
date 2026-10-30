@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { EvidenceContract, PlanStep } from '@darby/contracts';
 import { prettySlug, proofLine, VERDICT_TEXT, type RunView, type StepView, type TimelineItem } from './state';
 import type { EvidenceRow, MemoryItem, PlaybookItem, RunDetail, RunSummary, VerifyResult } from './useDarby';
+import { Icon } from './extras';
 
 export const RISK_LABEL: Record<string, string> = { read: 'reads', write_local: 'writes locally', external_effect: 'external effect', forbidden: 'forbidden' };
 export const STATUS_LABEL: Record<string, string> = {
@@ -256,7 +257,7 @@ function PlaybookCard({ pb, busy, onRun }: { pb: PlaybookItem; busy: boolean; on
   const m = pb.manifest;
   const urlsOk = pb.params.every((p) => p.type !== 'urls' || (vals[p.key] as string[]).length > 0);
   return (
-    <li className="pbcard" data-testid={`playbook-${pb.slug}`}>
+    <li className="pbcard" data-testid={`playbook-${pb.slug}`} data-reveal>
       <div className="pb-head">
         <div><h3 className="pb-title">{pb.name}</h3><div className="muted">{pb.description}</div></div>
         <span className={`chip ${b.cls}`} title={b.tip} data-testid="pb-badge" data-badge={pb.badge}>{b.text}</span>
@@ -302,7 +303,7 @@ export function Hub({ items, busy, onRun }: { items: PlaybookItem[]; busy: boole
     <section className="card" aria-labelledby="hub-h">
       <h2 id="hub-h">Hub — Playbooks you can re-run</h2>
       <p className="muted">A Playbook is a verified run saved as a recipe. Each replay is planned by code from the saved steps, goes through the same policy and approvals, and ends in its own signed receipt. The CI badge appears only after <code>npm run playbook:check</code> passes for this exact version.</p>
-      {items.length === 0 ? <div className="empty" data-testid="hub-empty"><b>No Playbooks yet</b>Finish a run, then press “Save as Playbook” on its receipt. It becomes a re-runnable skill here.</div> : (
+      {items.length === 0 ? <div className="empty" data-testid="hub-empty"><EmptyArt kind="recipes" /><b>No Playbooks yet</b>Finish a run, then press “Save as Playbook” on its receipt. It becomes a re-runnable skill here.</div> : (
         <ul className="playbooks" data-testid="hub">{items.map((pb) => (<PlaybookCard key={pb.slug + pb.sha256} pb={pb} busy={busy} onRun={onRun} />))}</ul>
       )}
     </section>
@@ -396,26 +397,64 @@ export function EvidenceDrawer({ run, stepId, detail, onClose, onShot }: { run: 
 }
 
 /* ---------- history ---------- */
+/** "12 min ago", "3 h ago", or the date: easier to read than a timestamp. The full time stays in the tooltip. */
+export function relTime(iso: string, now = Date.now()): string {
+  const s = Math.max(0, (now - new Date(iso).getTime()) / 1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+  if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
+  return new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+}
+const dayLabel = (iso: string): string => {
+  const d = new Date(iso); const t = new Date();
+  const same = (a: Date, b: Date) => a.toDateString() === b.toDateString();
+  if (same(d, t)) return 'Today';
+  const y = new Date(t); y.setDate(t.getDate() - 1);
+  return same(d, y) ? 'Yesterday' : d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+};
+const HIST_ICON: Record<string, ReactNode> = { VERIFIED: Icon.check, VERIFIED_WITH_GAPS: Icon.check, FAILED: Icon.x, NEEDS_YOU: Icon.clock };
+const EmptyArt = ({ kind }: { kind: 'runs' | 'notes' | 'recipes' }) => (
+  <svg className="empty-art" viewBox="0 0 120 90" width="132" height="99" fill="none" aria-hidden="true">
+    <ellipse cx="60" cy="80" rx="38" ry="6" fill="rgba(15,122,92,.10)" />
+    <rect x="22" y="14" width="76" height="58" rx="12" fill="#fff" stroke="#cfe6dc" strokeWidth="2" />
+    {kind === 'runs' && <><path d="M36 34h30M36 46h48M36 58h38" stroke="#bcd9cc" strokeWidth="4" strokeLinecap="round" /><circle cx="88" cy="34" r="9" fill="#e5f5ed" stroke="#0f7a5c" strokeWidth="2" /><path d="M84 34l3 3 5-6" stroke="#0f7a5c" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></>}
+    {kind === 'notes' && <><rect x="34" y="26" width="52" height="14" rx="5" fill="#fff6d6" stroke="#ecd98a" strokeWidth="1.5" /><rect x="34" y="46" width="36" height="14" rx="5" fill="#e8f1ff" stroke="#bcd0f2" strokeWidth="1.5" /><path d="M94 22l4 4-14 14-5 1 1-5z" fill="#0f7a5c" /></>}
+    {kind === 'recipes' && <><path d="M36 30h48M36 42h34" stroke="#bcd9cc" strokeWidth="4" strokeLinecap="round" /><path d="M42 58l6-8 6 5 8-10 8 6" stroke="#0f7a5c" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" /></>}
+  </svg>
+);
+
 export function History({ items, onOpen }: { items: RunSummary[]; onOpen: (id: string) => void }) {
   const [q, setQ] = useState('');
   const shown = items.filter((h) => !q || h.goal.toLowerCase().includes(q.toLowerCase()) || (h.verdict ?? '').toLowerCase().includes(q.toLowerCase()));
+  let lastDay = '';
   return (
     <section className="card" aria-labelledby="hist-h">
       <div className="card-head"><h2 id="hist-h">Recent runs</h2><input className="search" placeholder="Filter by goal or verdict" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter history" /></div>
-      {shown.length === 0 ? <div className="empty"><b>{q ? 'No matching runs' : 'No runs yet'}</b>{q ? 'Try a different word.' : 'Pick an example above or describe a goal. Finished runs and their receipts appear here.'}</div> : (
+      {shown.length === 0 ? <div className="empty"><EmptyArt kind="runs" /><b>{q ? 'No matching runs' : 'No runs yet'}</b>{q ? 'Try a different word.' : 'Pick an example above or describe a goal. Finished runs and their receipts appear here.'}</div> : (
         <ul className="history" data-testid="history">
-          {shown.map((h) => (
-            <li key={h.id}>
-              <button className="linkbtn" onClick={() => onOpen(h.id)}>{h.goal.slice(0, 110)}{h.goal.length > 110 ? '…' : ''}</button>
-              <div className="chips">
-                <span className={`chip v-${h.verdict ?? 'none'}`}>{h.verdict ? VERDICT_TEXT[h.verdict] : h.status}</span>
-                {h.labels.map((l) => (<span key={l} className="chip label">{l}</span>))}
-                {h.blocked > 0 && <span className="chip contained">CONTAINED · {h.blocked}</span>}
-                {h.repairOf && <span className="chip label">repair</span>}
-                <span className="muted small">{new Date(h.createdAt).toLocaleString()}</span>
-              </div>
-            </li>
-          ))}
+          {shown.map((h) => {
+            const day = dayLabel(h.createdAt);
+            const head = day !== lastDay ? (lastDay = day, <li className="hist-day" key={`d-${h.id}`} aria-hidden="true">{day}</li>) : null;
+            return (
+              <Fragment key={h.id}>
+                {head}
+                <li className={`hist v-${h.verdict ?? 'none'}`} onClick={() => onOpen(h.id)} data-reveal>
+                  <span className="hist-ico" aria-hidden="true">{h.verdict ? HIST_ICON[h.verdict] : Icon.run}</span>
+                  <div className="hist-main">
+                    <button className="linkbtn" onClick={(e) => { e.stopPropagation(); onOpen(h.id); }}>{h.goal.slice(0, 110)}{h.goal.length > 110 ? '…' : ''}</button>
+                    <div className="chips">
+                      <span className={`chip v-${h.verdict ?? 'none'}`}>{h.verdict ? VERDICT_TEXT[h.verdict] : h.status}</span>
+                      {h.labels.map((l) => (<span key={l} className="chip label">{l}</span>))}
+                      {h.blocked > 0 && <span className="chip contained">CONTAINED · {h.blocked}</span>}
+                      {h.repairOf && <span className="chip label">repair</span>}
+                      <span className="muted small" title={new Date(h.createdAt).toLocaleString()}>{relTime(h.createdAt)}</span>
+                    </div>
+                  </div>
+                  <span className="hist-go" aria-hidden="true">{Icon.arrow}</span>
+                </li>
+              </Fragment>
+            );
+          })}
         </ul>
       )}
     </section>
@@ -435,10 +474,10 @@ export function Memory({ items, onAdd, onDelete }: { items: MemoryItem[]; onAdd:
         <input value={v} onChange={(e) => setV(e.target.value)} placeholder="Note (up to 300 characters)" aria-label="Memory note" maxLength={300} />
         <button className="btn primary" type="submit" disabled={!k.trim() || !v.trim()}>Remember</button>
       </form>
-      {items.length === 0 ? <div className="empty" data-testid="memory-empty"><b>Nothing remembered yet</b>Add a preference above, or press “Remember this run” on a receipt.</div> : (
+      {items.length === 0 ? <div className="empty" data-testid="memory-empty"><EmptyArt kind="notes" /><b>Nothing remembered yet</b>Add a preference above, or press “Remember this run” on a receipt.</div> : (
         <ul className="memory" data-testid="memory">
           {items.map((m) => (
-            <li key={m.id}>
+            <li key={m.id} className={m.sourceRunId ? 'note from-run' : 'note mine'} data-reveal>
               <div><strong>{m.key}</strong> {m.sourceRunId ? <span className="chip label">from a run</span> : <span className="chip gap">your note</span>}<div className="muted">{m.value}</div></div>
               <button className="btn warn" onClick={() => onDelete(m.id)} aria-label={`Delete memory ${m.key}`}>Delete</button>
             </li>

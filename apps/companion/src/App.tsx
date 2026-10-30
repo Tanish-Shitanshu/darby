@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ApprovalCard, EvidenceDrawer, History, Hub, Lightbox, Memory, PlanList, Receipt, ReviewPanel, Timeline } from './parts';
 import { Icon, ResultHero, SheetPreview } from './extras';
 import { Buddy, useBuddyLine, type BuddyMode } from './buddy';
+import { DepthField, useDepthEffects } from './depth';
 import { SummaryCard, useSpeaker, useVoiceConfig } from './voice';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 import demoGoals from '../../../fixtures/demo-goals.json';
@@ -171,6 +172,8 @@ export function App() {
     : voiceRun && run?.phase === 'awaiting_approval' ? 'attention' : voiceRun && live ? 'working' : null;
   const buddyLine = useBuddyLine(buddyMode, talkLang);
 
+  useDepthEffects(`${tab}|${runId ?? ''}|${hasReceipt ? 'r' : ''}`);
+
   const go = (t: Tab) => { setTab(t); if (t === 'history') void d.refreshHistory(); if (t === 'memory') void d.loadMemory(); if (t === 'hub') void d.loadPlaybooks(); };
   const submit = async (o?: { goal: string; lang: string; voice: boolean }) => {
     const g = (o?.goal ?? goal).trim();
@@ -194,6 +197,7 @@ export function App() {
 
   return (
     <div className="app">
+      <DepthField />
       <aside className="side">
         <div className="brand">
           <span className="logo" aria-hidden="true"><img src="/darby-logo.svg" alt="" width="38" height="38" /></span>
@@ -253,13 +257,13 @@ export function App() {
         {tab === 'run' && !run && (
           <main className="home">
             <div className="hero-glow" aria-hidden="true" />
-            <section className="lede" aria-label="What Darby is">
+            <section className="lede" aria-label="What Darby is" data-reveal>
               <p className="kicker">The AI-native browser workspace</p>
               <h2>Work done. <em>Proven</em> by Darby.</h2>
               <p>Darby plans the job, does it in real browser tabs, re-checks every claim on its own, and hands you a signed receipt with an honest verdict.</p>
             </section>
 
-            <section className="composer card" aria-labelledby="goal-h">
+            <section className="composer card" aria-labelledby="goal-h" data-reveal>
               <h2 id="goal-h" className="sr">What should Darby get done?</h2>
               <textarea data-testid="goal-box" value={goal} onChange={(e) => setGoal(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); void submit(); } }}
                 rows={3} placeholder="Describe what you want done, e.g. “Research the top 5 AI startups and put their prices in a spreadsheet”" aria-label="Your goal" />
@@ -293,13 +297,13 @@ export function App() {
               {d.error && <p className="error" role="alert">{d.error}</p>}
             </section>
 
-            <p className="langs" aria-label="Languages you can speak or type"><b>Speak or type in</b>{voiceCfg.languages.slice(1, 9).map((l) => <span key={l.code}>{l.native}</span>)}<span>English</span></p>
+            <p className="langs" aria-label="Languages you can speak or type" data-reveal><b>Speak or type in</b>{voiceCfg.languages.slice(1, 9).map((l) => <span key={l.code}>{l.native}</span>)}<span>English</span></p>
 
             <section aria-label="Try an example">
               <h3 className="sec">Try an example</h3>
               <div className="sugg-grid">
                 {SUGGESTIONS.map((x) => (
-                  <button key={x.testid} className={`sugg tone-${x.tone}`} onClick={() => setGoal(x.goal)} data-testid={x.testid}>
+                  <button key={x.testid} className={`sugg tone-${x.tone}`} onClick={() => setGoal(x.goal)} data-testid={x.testid} data-reveal data-tilt>
                     <span className="sugg-icon">{x.icon}</span>
                     <strong>{x.title}</strong>
                     <span className="sugg-text">{x.text}</span>
@@ -309,11 +313,11 @@ export function App() {
               </div>
             </section>
 
-            <ul className="trust" aria-label="What you can rely on">
-              <li>{Icon.check}<div><b>Proof for every step</b>Each step names what would prove it.</div></li>
-              <li>{Icon.shield}<div><b>Pages stay in quarantine</b>Web text never reaches the planner.</div></li>
-              <li>{Icon.lock}<div><b>You approve what matters</b>Sends, shares and posts always wait.</div></li>
-              <li>{Icon.sheet}<div><b>Signed receipt</b>Tamper-evident and verifiable by anyone.</div></li>
+            <ul className="trust" aria-label="What you can rely on" data-reveal>
+              <li data-tilt>{Icon.check}<div><b>Proof for every step</b>Each step names what would prove it.</div></li>
+              <li data-tilt>{Icon.shield}<div><b>Pages stay in quarantine</b>Web text never reaches the planner.</div></li>
+              <li data-tilt>{Icon.lock}<div><b>You approve what matters</b>Sends, shares and posts always wait.</div></li>
+              <li data-tilt>{Icon.sheet}<div><b>Signed receipt</b>Tamper-evident and verifiable by anyone.</div></li>
             </ul>
 
             <History items={d.history.slice(0, 5)} onOpen={(id) => void d.open(id)} />
@@ -355,9 +359,9 @@ export function App() {
           </main>
         )}
 
-        {tab === 'history' && (<main className="page"><PageHead title="History" sub="Every task Darby has run, with its receipt." /><History items={d.history} onOpen={(id) => { setTab('run'); void d.open(id); }} /></main>)}
-        {tab === 'hub' && (<main className="page"><PageHead title="Playbooks" sub="Verified runs saved as re-runnable skills." /><Hub items={d.playbooks} busy={live} onRun={(slug, params) => void d.runPlaybook(slug, params).then((ok) => ok && setTab('run'))} />{d.error && <p className="error" role="alert">{d.error}</p>}</main>)}
-        {tab === 'memory' && (<main className="page"><PageHead title="Memory" sub="Preferences you control. View, add and delete." /><Memory items={d.memory} onAdd={(k, v) => void d.addMemory(k, v)} onDelete={(id) => void d.deleteMemory(id)} /></main>)}
+        {tab === 'history' && (<main className="page"><PageHead title="History" sub="Every task Darby has run, with its receipt." icon={Icon.history} stats={[{ n: d.history.length, label: 'tasks' }, { n: d.history.filter((h) => h.verdict === 'VERIFIED' || h.verdict === 'VERIFIED_WITH_GAPS').length, label: 'proven', tone: 'good' }, { n: d.history.filter((h) => h.verdict === 'NEEDS_YOU' || h.verdict === 'FAILED').length, label: 'need a look', tone: 'warn' }]} /><History items={d.history} onOpen={(id) => { setTab('run'); void d.open(id); }} /></main>)}
+        {tab === 'hub' && (<main className="page"><PageHead title="Playbooks" sub="Verified runs saved as re-runnable skills." icon={Icon.hub} stats={[{ n: d.playbooks.length, label: 'saved recipes' }]} /><Hub items={d.playbooks} busy={live} onRun={(slug, params) => void d.runPlaybook(slug, params).then((ok) => ok && setTab('run'))} />{d.error && <p className="error" role="alert">{d.error}</p>}</main>)}
+        {tab === 'memory' && (<main className="page"><PageHead title="Memory" sub="Preferences you control. View, add and delete." icon={Icon.memory} stats={[{ n: d.memory.length, label: 'notes' }]} /><Memory items={d.memory} onAdd={(k, v) => void d.addMemory(k, v)} onDelete={(id) => void d.deleteMemory(id)} /></main>)}
 
         {run && tab === 'run' && <EvidenceDrawer run={run} stepId={drawer} detail={detail} onClose={() => setDrawer(null)} onShot={setShot} />}
                 <Lightbox src={shot} onClose={() => setShot(null)} />
@@ -372,6 +376,12 @@ export function App() {
   );
 }
 
-function PageHead({ title, sub }: { title: string; sub: string }) {
-  return <div className="pagehead"><h2>{title}</h2><p className="muted">{sub}</p></div>;
+function PageHead({ title, sub, icon, stats }: { title: string; sub: string; icon?: ReactNode; stats?: { n: number | string; label: string; tone?: string }[] }) {
+  return (
+    <div className="pagehead" data-reveal>
+      {icon && <span className="ph-ico" aria-hidden="true">{icon}</span>}
+      <div className="ph-text"><h2>{title}</h2><p className="muted">{sub}</p></div>
+      {stats && <ul className="ph-stats" aria-label="At a glance">{stats.map((x) => <li key={x.label} className={x.tone ?? ''}><b>{x.n}</b><span>{x.label}</span></li>)}</ul>}
+    </div>
+  );
 }

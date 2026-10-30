@@ -1,0 +1,139 @@
+/* Skin v4: the inner pages (task, history, memory, playbooks, evidence).
+   Same content and the same places for every word; only the look changes. The idea: calm surfaces, clear colour meaning
+   (green = proven, amber = gaps or waiting for you, red = failed, blue = needs you), big readable type, soft depth. */
+:root {
+  --ok: #0f7a5c; --ok-bg: #e6f6ee; --ok-line: #bfe3d0;
+  --gap: #a76100; --gap-bg: #fff3de; --gap-line: #f1d49b;
+  --bad: #b3261e; --bad-bg: #fdecea; --bad-line: #f4c6c1;
+  --need: #2f4fb8; --need-bg: #e9efff; --need-line: #c6d3f6;
+  --card-shadow: 0 1px 2px rgba(27,27,34,.04), 0 26px 50px -34px rgba(35,35,63,.32);
+}
+
+/* ---------- page header ---------- */
+.pagehead { display: flex; align-items: center; gap: 18px; padding: 10px 0 26px; flex-wrap: wrap; }
+.ph-ico { flex: none; width: 58px; height: 58px; border-radius: 19px; display: grid; place-items: center; color: var(--ok);
+  background: linear-gradient(150deg, #effaf4, #cdeedd); box-shadow: inset 0 0 0 1px rgba(15,122,92,.16), 0 14px 26px -16px rgba(15,122,92,.55); position: relative; overflow: hidden; }
+.ph-ico svg { width: 27px; height: 27px; position: relative; }
+.ph-ico::after { content: ''; position: absolute; inset: -40% auto auto -30%; width: 70%; height: 180%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.65), transparent); transform: translateX(-120%) rotate(8deg); animation: ph-shine 5.5s ease-in-out infinite 1.2s; }
+@keyframes ph-shine { 0%, 55% { transform: translateX(-120%) rotate(8deg); } 80%, 100% { transform: translateX(380%) rotate(8deg); } }
+.ph-text { flex: 1; min-width: 220px; } .pagehead h2 { font-size: 2rem; letter-spacing: -.03em; margin: 0 0 4px; font-weight: 650; } .pagehead .muted { font-size: 1.0625rem; margin: 0; }
+.ph-stats { display: flex; gap: 10px; list-style: none; margin: 0; padding: 0; }
+.ph-stats li { display: grid; gap: 1px; min-width: 88px; padding: 10px 16px; border-radius: 16px; background: rgba(255,255,255,.85); border: 1px solid var(--line); box-shadow: var(--card-shadow); }
+.ph-stats b { font-size: 1.5rem; line-height: 1.1; letter-spacing: -.02em; } .ph-stats span { font-size: .75rem; color: var(--muted); }
+.ph-stats li.good b { color: var(--ok); } .ph-stats li.warn b { color: var(--gap); }
+
+/* ---------- cards on the inner pages: soft glass, so the honeycomb shows faintly through ---------- */
+main.page .card, main.run-grid .card, main.run-grid .plan-col { background: rgba(255,255,255,.92); backdrop-filter: blur(8px); border: 1px solid rgba(35,35,63,.08); border-radius: 26px; box-shadow: var(--card-shadow); }
+main.page .card h2, main.run-grid .card h2 { font-size: 1.25rem; letter-spacing: -.02em; }
+.card-head { align-items: center; margin-bottom: 8px; }
+.search { min-width: 260px; background: #f6f8f7; border-color: transparent; } .search:focus { background: #fff; }
+
+/* ---------- empty states ---------- */
+.empty { display: grid; justify-items: center; gap: 4px; padding: 34px 20px 38px; border: 2px dashed #dbe9e2; border-radius: 22px; background: linear-gradient(180deg, #fbfefd, #f6fbf8); }
+.empty b { font-size: 1.125rem; margin-top: 8px; } .empty-art { animation: art-float 5s ease-in-out infinite; } @keyframes art-float { 50% { transform: translateY(-6px); } }
+
+/* ---------- history: one card per task, with a clear verdict icon ---------- */
+.history { display: grid; gap: 12px; margin-top: 8px; }
+.hist-day { list-style: none; padding: 14px 4px 0; font-size: .75rem; font-weight: 650; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); border: 0 !important; }
+.hist-day:first-child { padding-top: 4px; }
+.history li.hist { display: grid; grid-template-columns: 50px 1fr 28px; align-items: center; gap: 16px; padding: 16px 20px 16px 16px; border: 1px solid var(--line); border-radius: 20px; background: #fff; cursor: pointer;
+  transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, border-color .25s; position: relative; overflow: hidden; }
+.history li.hist::before { content: ''; position: absolute; left: 0; top: 14px; bottom: 14px; width: 4px; border-radius: 0 4px 4px 0; background: var(--line); }
+.history li.hist:hover { transform: translateY(-3px); border-color: var(--ok-line); box-shadow: 0 22px 40px -26px rgba(15,122,92,.45); }
+.hist-ico { width: 46px; height: 46px; border-radius: 15px; display: grid; place-items: center; background: #f1f3f5; color: #6b7280; } .hist-ico svg { width: 22px; height: 22px; }
+.hist-main { min-width: 0; display: grid; gap: 8px; }
+.history .linkbtn { font-size: 1.0625rem; font-weight: 600; text-align: left; line-height: 1.35; color: var(--ink); text-decoration: none; }
+.hist-go { color: #b6bcc6; transition: transform .25s, color .25s; display: grid; } .history li.hist:hover .hist-go { transform: translateX(4px); color: var(--ok); }
+.hist.v-VERIFIED::before { background: var(--ok); } .hist.v-VERIFIED .hist-ico { background: var(--ok-bg); color: var(--ok); }
+.hist.v-VERIFIED_WITH_GAPS::before { background: linear-gradient(var(--ok), var(--gap)); } .hist.v-VERIFIED_WITH_GAPS .hist-ico { background: var(--gap-bg); color: var(--gap); }
+.hist.v-FAILED::before { background: var(--bad); } .hist.v-FAILED .hist-ico { background: var(--bad-bg); color: var(--bad); }
+.hist.v-NEEDS_YOU::before { background: var(--need); } .hist.v-NEEDS_YOU .hist-ico { background: var(--need-bg); color: var(--need); }
+.hist.v-none .hist-ico { animation: hist-spin 1.6s linear infinite; } @keyframes hist-spin { to { transform: rotate(360deg); } }
+
+/* ---------- memory: sticky notes ---------- */
+.mem-form { padding: 16px; border-radius: 20px; background: linear-gradient(180deg, #f7fbf9, #f1f8f4); border: 1px solid #dcebe3; margin: 18px 0 22px; }
+.memory { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 16px; padding-top: 4px; }
+.memory li.note { display: flex; flex-direction: column; justify-content: space-between; gap: 14px; min-height: 130px; padding: 18px 18px 14px; border-radius: 6px 6px 18px 6px; border: 1px solid #efe3b1; background: linear-gradient(180deg, #fffbe9, #fff6d2);
+  box-shadow: 0 1px 2px rgba(120,90,0,.08), 0 18px 28px -18px rgba(120,90,0,.4); transform: rotate(var(--tilt, -.6deg)); transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s; position: relative; }
+.memory li.note:nth-child(even) { --tilt: .7deg; } .memory li.note:nth-child(3n) { --tilt: -1deg; }
+.memory li.note::before { content: ''; position: absolute; top: -9px; left: 50%; width: 54px; height: 16px; margin-left: -27px; background: rgba(255,255,255,.7); border: 1px solid rgba(0,0,0,.05); transform: rotate(-3deg); border-radius: 3px; }
+.memory li.note.from-run { background: linear-gradient(180deg, #f1f6ff, #e6eefc); border-color: #cddcf5; box-shadow: 0 1px 2px rgba(40,70,140,.08), 0 18px 28px -18px rgba(40,70,140,.4); }
+.memory li.note:hover { transform: rotate(0) translateY(-4px) scale(1.01); }
+.memory li.note strong { font-size: 1.0625rem; } .memory li.note .muted { color: #5b5a4a; margin-top: 6px; line-height: 1.5; } .memory li.note.from-run .muted { color: #4a5670; }
+.memory li.note .btn.warn { height: 34px; padding: 0 14px; align-self: flex-end; background: rgba(255,255,255,.7); }
+
+/* ---------- playbooks: a recipe card ---------- */
+.playbooks { gap: 22px; }
+.pbcard { padding: 26px; border-radius: 24px; border: 1px solid rgba(35,35,63,.09); background: #fff; box-shadow: var(--card-shadow); position: relative; overflow: hidden; }
+.pbcard::before { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 5px; background: linear-gradient(90deg, var(--ok), #6fd0a4, var(--ok)); background-size: 200% 100%; animation: pb-bar 6s linear infinite; }
+@keyframes pb-bar { to { background-position: -200% 0; } }
+.pb-title { font-size: 1.4rem; letter-spacing: -.02em; }
+.pb-perms .chip { height: 28px; padding: 0 12px 0 10px; gap: 7px; font-weight: 600; }
+.pb-perms .chip::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .75; }
+.pb-check { height: 36px; padding: 0 14px 0 12px; font-weight: 550; transition: background .2s, border-color .2s, transform .15s; } .pb-check:hover { transform: translateY(-1px); border-color: var(--ok-line); }
+.pb-check input { appearance: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #c3cad2; display: grid; place-items: center; background: #fff; margin: 0; }
+.pb-check input:checked { background: var(--ok); border-color: var(--ok); } .pb-check input:checked::after { content: ''; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: translateY(-1px) rotate(45deg); }
+.pb-check.on { border-color: var(--ok-line); background: var(--ok-bg); color: #0b5d46; }
+
+/* ---------- a task, step by step: the plan reads like a stepper ---------- */
+.plan { gap: 14px; position: relative; }
+.plan li.ticket { position: relative; border-radius: 20px; border: 1px solid var(--line); background: #fff; transition: transform .25s cubic-bezier(.2,.8,.2,1), box-shadow .25s, border-color .25s; }
+.plan li.ticket:not(:last-child)::after { content: ''; position: absolute; left: 27px; top: 100%; width: 2px; height: 14px; background: linear-gradient(var(--line), transparent); }
+.plan li.ticket:hover { transform: translateX(3px); box-shadow: 0 18px 34px -24px rgba(35,35,63,.45); border-color: #cfe3d9; }
+.ticket-btn { padding: 15px 16px; }
+.num { width: 30px; height: 30px; font-size: .8125rem; background: #eef1f4; transition: background .3s, color .3s; }
+.step-running .num, .step-verifying .num { background: var(--need-bg); color: var(--need); animation: step-pulse 1.5s ease-out infinite; }
+@keyframes step-pulse { 0% { box-shadow: 0 0 0 0 rgba(47,79,184,.35); } 100% { box-shadow: 0 0 0 11px rgba(47,79,184,0); } }
+.step-passed .num, .step-passed_with_gaps .num { font-size: 0; } .step-passed .num::before, .step-passed_with_gaps .num::before { content: '✓'; font-size: .95rem; font-weight: 800; }
+.step-passed .num { background: var(--ok-bg); color: var(--ok); } .step-passed_with_gaps .num { background: var(--gap-bg); color: var(--gap); }
+.step-failed .num, .step-blocked .num { font-size: 0; background: var(--bad-bg); color: var(--bad); } .step-failed .num::before, .step-blocked .num::before { content: '✕'; font-size: .85rem; font-weight: 800; }
+.step-awaiting_approval { border-color: var(--gap-line) !important; background: #fffaf0 !important; }
+.step-passed { border-color: #d3ebdd; }
+/* technical bits (rule codes, tool names) are still there for those who want them, but they no longer compete with the plain words */
+.ticket .chip.rule, .ticket-foot code { opacity: .55; font-weight: 600; } .ticket .chip.rule { background: #f1f3f5; } .ticket-foot code { font-size: .6875rem; }
+.ticket .chip { height: 26px; font-weight: 600; }
+.proof { font-size: .8438rem; }
+
+/* ---------- live activity as a timeline ---------- */
+.timeline { position: relative; gap: 4px; padding: 6px 4px 6px 0; }
+.timeline::before { content: ''; position: absolute; left: 13px; top: 10px; bottom: 10px; width: 2px; background: linear-gradient(var(--line), #eaf2ee, var(--line)); }
+.tl { position: relative; border: 0; background: transparent; padding: 11px 12px 11px 40px; border-radius: 14px; font-size: .96rem; line-height: 1.5; animation: tl-in .5s cubic-bezier(.2,.8,.2,1) backwards; }
+@keyframes tl-in { from { opacity: 0; transform: translateX(-10px); } }
+.tl::before { content: ''; position: absolute; left: 7px; top: 17px; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid #cbd5dd; box-shadow: 0 0 0 4px #fff; }
+.tl.good::before { border-color: var(--ok); background: var(--ok-bg); } .tl.bad::before { border-color: var(--bad); background: var(--bad-bg); }
+.tl.good { background: linear-gradient(90deg, #f3fbf7, transparent 70%); border: 0; } .tl.bad { background: linear-gradient(90deg, #fff3f1, transparent 70%); border: 0; }
+.tl-system { background: transparent; padding-top: 16px; font-weight: 650; font-size: 1.0125rem; } .tl-system::before { border-color: var(--ink); background: var(--ink); }
+.tl-step { background: #e9eef1; color: #53606b; font-weight: 650; border-radius: 6px; }
+.tl .chip.rule { opacity: .6; height: 20px; font-size: .6875rem; margin-right: 6px; }
+.thumb img { width: 140px; height: 88px; border-radius: 12px; transition: transform .25s, box-shadow .25s; } .thumb:hover img { transform: scale(1.04); box-shadow: 0 16px 28px -16px rgba(0,0,0,.4); }
+
+/* ---------- the result: the first thing you read ---------- */
+.result-hero { border-radius: 28px !important; padding: 28px 28px 24px; box-shadow: var(--card-shadow); border: 1px solid rgba(35,35,63,.08); position: relative; overflow: hidden; }
+.result-hero::after { content: ''; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgba(15,122,92,.14), transparent 68%); pointer-events: none; }
+.result-hero.tone-bad::after { background: radial-gradient(circle, rgba(179,38,30,.14), transparent 68%); } .result-hero.tone-blue::after { background: radial-gradient(circle, rgba(47,79,184,.14), transparent 68%); } .result-hero.tone-teal::after { background: radial-gradient(circle, rgba(167,97,0,.12), transparent 68%); }
+.result-hero h2 { font-size: 1.75rem; letter-spacing: -.03em; }
+.result-icon { width: 64px !important; height: 64px !important; border-radius: 22px !important; box-shadow: 0 16px 30px -16px currentColor; animation: result-pop .7s cubic-bezier(.2,1.4,.3,1) backwards; }
+@keyframes result-pop { from { transform: scale(.4) rotate(-12deg); opacity: 0; } }
+.metrics li { position: relative; padding: 16px 18px; border-radius: 18px !important; overflow: hidden; transition: transform .25s; } .metrics li:hover { transform: translateY(-3px); }
+.metrics li::before { content: ''; position: absolute; left: 0; top: 0; right: 0; height: 3px; background: var(--ok-line); }
+.metrics li.warn::before { background: var(--gap); } .metrics li.good::before { background: var(--ok); }
+.metrics b { font-size: 1.75rem; }
+.rtabs { padding: 5px; }
+
+/* ---------- chips: calmer, readable ---------- */
+.chip { font-weight: 600; }
+.chip.v-VERIFIED { background: var(--ok-bg); color: var(--ok); } .chip.v-VERIFIED_WITH_GAPS { background: var(--gap-bg); color: var(--gap); } .chip.v-FAILED { background: var(--bad-bg); color: var(--bad); } .chip.v-NEEDS_YOU { background: var(--need-bg); color: var(--need); }
+
+/* ---------- the approval card: unmistakable ---------- */
+.approval { border-radius: 26px; border: 1px solid var(--gap-line); background: linear-gradient(180deg, #fffaf0, #fff); box-shadow: 0 26px 50px -30px rgba(167,97,0,.5); animation: approval-in .6s cubic-bezier(.2,1.2,.3,1) backwards; position: relative; overflow: hidden; }
+.approval::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px; background: var(--gap); }
+@keyframes approval-in { from { opacity: 0; transform: translateY(-14px) scale(.98); } }
+
+@media (max-width: 760px) {
+  .pagehead h2 { font-size: 1.6rem; } .ph-stats { width: 100%; } .ph-stats li { flex: 1; }
+  .history li.hist { grid-template-columns: 42px 1fr; } .hist-go { display: none; } .hist-ico { width: 40px; height: 40px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ph-ico::after, .empty-art, .hist.v-none .hist-ico, .pbcard::before, .step-running .num, .tl, .result-icon, .approval { animation: none !important; }
+  .memory li.note { transform: none; }
+}
