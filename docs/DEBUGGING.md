@@ -23,7 +23,7 @@ Start here: `npm run doctor` (10 seconds). It checks the models, keys, server an
 
 ## Before you push
 
-Use Node 22 (the sqlite module is built for it): `npm run check` (typecheck + unit tests), `npm run ui:walkthrough` (UI), `npm run acceptance` (offline cases).
+Use Node 22 (the sqlite module is built for it): `npm run check` (typecheck + unit tests), `npm run ui:walkthrough` (UI), `npm run test:acceptance` (offline cases).
 
 ## Known limits
 
