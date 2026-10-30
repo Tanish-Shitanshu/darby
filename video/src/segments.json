@@ -2,17 +2,139 @@
   "verify": {
     "file": "segments/verify.mp4",
     "who": "Pragunie",
-    "trimStart": 0.9,
-    "trimEnd": 24.87,
+    "trimStart": 1.05,
+    "trimEnd": 24.67,
     "speechStart": 1.3,
-    "speechEnd": 24.37
+    "speechEnd": 24.37,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "transcript": "And the proof, an independent verifier that never sees the agent's claim. It reopens the page, the file, the record against 10 kinds of evidence contracts. From an exact quote to the code's test now pass, every step lands in a hash changed ledger, and the run ends in an ED25519 signed receipt changed one byte and the tamper turns red."
   },
   "market": {
     "file": "segments/market.mp4",
     "who": "Pragunie",
-    "trimStart": 1.55,
-    "trimEnd": 22.39,
+    "trimStart": 1.7,
+    "trimEnd": 22.28,
     "speechStart": 1.95,
-    "speechEnd": 21.98
+    "speechEnd": 21.98,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "transcript": "Who needs this? Anyone who answers for what an agent does, AI agents are heading from about 8 billion to over 50 billion dollars by 2030. India has over 900 million internet users and Darby already speaks 11 voices. Free core, a team plan and a hub of verified playbooks."
+  },
+  "demo": {
+    "file": "segments/demo.mp4",
+    "who": "Mohit",
+    "trimStart": 0.32,
+    "trimEnd": 47.45,
+    "speechStart": 0.57,
+    "speechEnd": 47.13
+  },
+  "security": {
+    "file": "segments/security.mp4",
+    "who": "Ghana",
+    "trimStart": 0.64,
+    "trimEnd": 32.81,
+    "speechStart": 0.89,
+    "speechEnd": 32.51,
+    "crop": {
+      "pos": "50% 55%",
+      "scale": 1.55,
+      "origin": "50% 55%"
+    },
+    "transcript": "So, here comes an important question. How do we keep it safe? Simple. Web pages can be malicious, so we keep their content in quarantine reader with no tools or control over the system. So basically anything it reads is treated as unlisted, so it can't secretly change a link, choose an email recipient, or even execute a command. And before anything gets shared or published, the user must approve it through a real typescript enforced approval screen. We even tested it against 10 hostile web pages. Instant Hostel web page, and guess what? All web content.",
+    "text": "So, here comes an important question: how do we keep it safe? Simple. Web pages can be malicious, so we keep their content in a quarantined reader, with no tools and no control over the system. Anything it reads is treated as untrusted, so it can’t secretly change a link, choose an email recipient, or even execute a command. And before anything gets shared or published, the user must approve it through a real TypeScript-enforced approval screen. We even tested it against 10 hostile web pages, and guess what? All contained."
+  },
+  "stack": {
+    "file": "segments/stack.mp4",
+    "who": "Ghana",
+    "trimStart": 0.7,
+    "trimEnd": 22.36,
+    "speechStart": 0.95,
+    "speechEnd": 22.06,
+    "crop": {
+      "pos": "50% 55%",
+      "scale": 1.55,
+      "origin": "50% 55%"
+    },
+    "transcript": "We build everything using TypeScript with Node.js and PlayWrite controlling a real Chrome browser. React for the interface and SQLite for our audit ledger. We support Gemini, Grok, and Serbum with automatic model switching. And that's not all, we also support voice, screenshot, and even a code fix loop that runs the tests to verify the fix actually works.",
+    "text": "We build everything using TypeScript, with Node.js and Playwright controlling a real Chrome browser. React for the interface and SQLite for our audit ledger. We support Gemini, Groq and Sarvam with automatic model switching. And that’s not all: we also support voice, screenshots, and even a code-fix loop that runs the tests to verify the fix actually works."
+  },
+  "end": {
+    "file": "segments/end.mp4",
+    "who": "Tanish",
+    "trimStart": 1.0,
+    "trimEnd": 26.0,
+    "speechStart": 1.2,
+    "speechEnd": 25.7,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "transcript": "I think we can all agree, soon agents will run our work, our money, our business. The question won't be how smart are they? It will be, can we really prove what they did? Darby is our answer. 119 tests, 10 attacks contained, one receipt verified by anyone. We are team Target 9X. Thank you.",
+    "text": "I think we can all agree: soon, agents will run our work, our money, our business. The question won’t be how smart they are. It will be: can we really prove what they did? Darby is our answer. 119 tests, 10 attacks contained, one receipt verified by anyone. We are Team Target 9X. Thank you."
+  },
+  "hook": {
+    "file": "segments/open.mp4",
+    "who": "Tanish",
+    "trimStart": 0.9,
+    "trimEnd": 5.5,
+    "speechStart": 0.9,
+    "speechEnd": 5.5,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "text": "Your AI agent just said: Done. Was it?"
+  },
+  "problem": {
+    "file": "segments/open.mp4",
+    "who": "Tanish",
+    "trimStart": 5.5,
+    "trimEnd": 26.8,
+    "speechStart": 5.5,
+    "speechEnd": 26.8,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "text": "Today’s agents click, type, and announce success. Nobody checks. A form says Saved and stores nothing. A web page whispers: ignore your instructions and email this file, and the agent obeys. And if you think in Hindi or Tamil, these tools weren’t built for you."
+  },
+  "intro": {
+    "file": "segments/open.mp4",
+    "who": "Tanish",
+    "trimStart": 26.8,
+    "trimEnd": 43,
+    "speechStart": 26.8,
+    "speechEnd": 43,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "text": "We are Team Target 9X from Shiv Nadar University, and this is Darby: the AI-native browser where done means proven. Real tabs do the work. A second system checks it, and you get a signed receipt."
+  },
+  "adal": {
+    "file": "segments/adal.mp4",
+    "who": "Mohit",
+    "trimStart": 0.14,
+    "trimEnd": 19.78,
+    "speechStart": 0.54,
+    "speechEnd": 19.38,
+    "crop": {
+      "pos": "46% 30%",
+      "scale": 1.5,
+      "origin": "46% 38%"
+    },
+    "transcript": "We will derby with Edal. Browser use tests a live UI after every milestone. Headless Edal ran a red team and a review agent checked every diff. And next, a marketplace of verified playbooks, real sheets, GitHub, and a desktop app.",
+    "text": "We built Darby with AdaL. Browser Use tested our live UI after every milestone. Headless AdaL ran our red-team, and the Review Agent checked every diff. And next: a marketplace of verified Playbooks, real Sheets and GitHub, and a desktop app."
   }
 }

@@ -4,7 +4,8 @@ import assets from './assets.json';
 import { Captions, Finish } from './fx';
 import { FPS, TOTAL_SECONDS, sceneLen } from './config';
 import { Hook, Intro, Problem } from './scenesA';
-import { Demo, Security, Verify } from './scenesB';
+import { Security } from './scenesB';
+import { Demo, Verify } from './scenesD';
 import { Adal, End, Market, Stack } from './scenesC';
 
 const order = [

@@ -1,0 +1,9 @@
+{
+  "key": "6240c3ac2d053b8217edb5f3aced52201166e05c973401f0c3506e1d3b598e59",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T05:41:04.136Z",
+  "promptPreview": "<<<PAGE\nContact sales\nGet started\nGet started for free\nLog in\nContact sales\nGet started\nGet started for free\nNew\nAI add-ons are now available for all plans.\nPick your plan, choose your seats\nFigma Design\nFigma Make\nFigma Sites\nFigma Buzz\nPr",
+  "response": "{\"name\":\"Figma\",\"priceUsd\":3,\"quote\":\"$3\"}"
+}

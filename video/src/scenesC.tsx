@@ -1,8 +1,8 @@
 import React from 'react';
-import { AbsoluteFill, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
+import { AbsoluteFill, Sequence, interpolate, useCurrentFrame, useVideoConfig } from 'remotion';
 import { C, Counter, Logo, Pill, Pop, Reveal, display, mono, sans } from './components';
 import { Glass, Icon, Words } from './fx';
-import { Footage } from './Footage';
+import { Screen } from './scenesD';
 import { Scene } from './scenesA';
 import { FPS, adalLines, market, proof, repoUrl, team } from './config';
 
@@ -12,6 +12,9 @@ const clamp = { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' } as const;
 /* ───────── STACK ───────── */
 export const Stack: React.FC = () => {
   const f = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const K = durationInFrames / (18 * FPS);
+  const sec = (x: number) => Math.round(x * K * FPS);
   const stack = ['TypeScript', 'Node', 'Playwright · real Chrome', 'React', 'SQLite ledger', 'zod contracts', 'Ed25519'];
   const gemDown = f > sec(8);
   const groqUp = f > sec(8.8);
@@ -77,8 +80,9 @@ export const Market: React.FC = () => {
         ))}
       </div>
       <div style={{ position: 'absolute', left: 120, top: 740, width: 1400 }}>
-        <Reveal at={sec(8)} style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 34 }}>
-          {market.languages.map((l) => <Pill key={l} color={C.mint} style={{ fontSize: 28 }}>{l}</Pill>)}
+        <Reveal at={sec(8)} style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap', marginBottom: 34 }}>
+          <Pill style={{ fontSize: 26, background: C.mint, color: '#fff', border: 'none' }}>VISION</Pill>
+          {market.vision.map((v, i) => (<React.Fragment key={v}>{i > 0 && <span style={{ color: C.mint, fontSize: 32 }}>→</span>}<span style={{ fontFamily: sans, fontWeight: 600, fontSize: 27, color: C.white }}>{v}</span></React.Fragment>))}
         </Reveal>
         <Reveal at={sec(12)} style={{ display: 'flex', gap: 22, alignItems: 'center' }}>
           {market.model.map((m, i) => (<React.Fragment key={m}>{i > 0 && <span style={{ color: C.mint, fontSize: 38 }}>→</span>}<Pill style={{ fontSize: 30, padding: '12px 26px' }}>{m}</Pill></React.Fragment>))}
@@ -89,43 +93,98 @@ export const Market: React.FC = () => {
   );
 };
 
-/* ───────── ADAL ───────── */
-export const Adal: React.FC = () => (
-  <Scene id="adal" glow={0.4}>
-    <Footage clip="adal" fallback={['docs/10-deny.png', 'docs/09-review.png']} label="Built with AdaL" zoomTo={1.04} />
-    <AbsoluteFill style={{ justifyContent: 'flex-end', alignItems: 'flex-start', padding: '0 0 56px 110px', gap: 12 }}>
-      {adalLines.map((l, i) => (
-        <Reveal key={l} at={sec(1 + i * 2.6)}>
-          <div style={{ fontFamily: sans, fontSize: 36, color: C.white, background: 'rgba(255,255,255,0.92)', border: '1.5px solid rgba(11,138,100,0.4)', padding: '14px 28px', borderRadius: 18, marginTop: 10 }}>✓ {l}</div>
-        </Reveal>
-      ))}
-    </AbsoluteFill>
-  </Scene>
-);
-
-/* ───────── END ───────── */
-export const End: React.FC = () => (
-  <Scene id="end" glow={0.95}>
-    <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 40, textAlign: 'center' }}>
-      <div style={{ display: 'flex', gap: 80 }}>
-        {proof.map((p, i) => (
-          <Pop key={p.label} at={4 + i * 6}>
-            <div>
-              <div style={{ fontFamily: display, fontWeight: 700, fontSize: 120, color: C.mint, lineHeight: 1 }}><Counter value={p.value} at={6 + i * 6} dur={30} /></div>
-              <div style={{ fontFamily: sans, fontSize: 28, color: C.mute, marginTop: 8 }}>{p.label}</div>
+/* ───────── ADAL (Mohit's words over the real AdaL sessions) ───────── */
+const adalWhere: [string, string, number][] = [
+  ['UI TESTING', 'Browser Use drove the live app after every milestone', 2.2],
+  ['RED-TEAM', 'headless AdaL (adal -q) attacked our 10 hostile pages', 6.0],
+  ['CODE REVIEW', 'Review Agent checked every diff before we tagged it', 9.2],
+];
+export const Adal: React.FC = () => {
+  const { durationInFrames } = useVideoConfig();
+  const K = durationInFrames / (19 * FPS);
+  const t = (x: number) => Math.round(x * K * FPS);
+  return (
+    <Scene id="adal" glow={0.4}>
+      <Screen src="rec/adal.mp4" from={0} to={29.5} zoom={1.03} ox="50%" oy="50%" />
+      <AbsoluteFill style={{ alignItems: 'flex-start', justifyContent: 'flex-start', padding: '14px 0 0 470px' }}>
+        <Reveal rise={10} dur={10}><div style={{ display: 'flex', alignItems: 'center', gap: 16 }}><Pill style={{ fontSize: 24, background: C.mint, color: '#fff', border: 'none', padding: '8px 22px' }}>REAL ADAL SESSIONS</Pill><span style={{ fontFamily: sans, fontSize: 24, color: C.mute }}>building and testing Darby</span></div></Reveal>
+      </AbsoluteFill>
+      <AbsoluteFill style={{ width: 1560, justifyContent: 'flex-end', alignItems: 'flex-start', padding: '0 0 120px 90px', gap: 8 }}>
+        {adalWhere.map(([where, how, at]) => (
+          <Reveal key={where} at={t(at)}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20, fontFamily: sans, fontSize: 30, color: C.white, background: 'rgba(255,255,255,0.97)', border: '1.5px solid rgba(11,138,100,0.4)', padding: '10px 24px', borderRadius: 18, marginTop: 6, boxShadow: '0 12px 40px rgba(10,31,24,0.16)' }}>
+              <span style={{ fontFamily: mono, fontSize: 21, color: '#fff', background: C.mint, padding: '4px 14px', borderRadius: 99, letterSpacing: 2 }}>{where}</span><span style={{ color: C.mint }}>→</span><span>{how}</span>
             </div>
-          </Pop>
+          </Reveal>
         ))}
-      </div>
-      <Reveal at={sec(3.8)}><div style={{ fontFamily: display, fontWeight: 700, fontSize: 80, color: 'rgba(10,31,24,0.45)', letterSpacing: -2, textDecoration: 'line-through', textDecorationColor: C.red }}>Other agents say “trust me.”</div></Reveal>
-      <Reveal at={sec(6)}><div style={{ fontFamily: display, fontWeight: 700, fontSize: 150, color: C.white, letterSpacing: -5 }}>Darby says: <span style={{ color: C.mint }}>check me.</span></div></Reveal>
-      <Reveal at={sec(9)} style={{ display: 'flex', alignItems: 'center', gap: 22, marginTop: 10 }}>
-        <Logo size={72} /><span style={{ fontFamily: mono, fontSize: 32, color: C.white }}>{repoUrl}</span>
-      </Reveal>
-      <Reveal at={sec(10.5)} style={{ display: 'flex', alignItems: 'center', gap: 18, fontFamily: sans, fontSize: 30, color: C.mute }}>
-        <span style={{ color: C.white, fontWeight: 700 }}>{team}</span>
-        {['Tanish Shitanshu', 'Sai Mohit Kotta', 'Ghana Polisetty', 'Pragunie Aditya'].map((n) => <span key={n}>· {n}</span>)}
-      </Reveal>
+        <Reveal at={t(13.4)}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, fontFamily: sans, fontWeight: 600, fontSize: 28, color: C.white, background: 'rgba(255,255,255,0.97)', border: '1.5px solid rgba(11,138,100,0.4)', padding: '10px 24px', borderRadius: 18, marginTop: 6, boxShadow: '0 12px 40px rgba(10,31,24,0.16)' }}>
+            <span style={{ fontFamily: mono, fontSize: 21, color: '#fff', background: C.mint, padding: '4px 14px', borderRadius: 99, letterSpacing: 2 }}>NEXT</span>
+            {market.vision.map((v, i) => (<React.Fragment key={v}>{i > 0 && <span style={{ color: C.mint }}>→</span>}<span>{v}</span></React.Fragment>))}
+          </div>
+        </Reveal>
+      </AbsoluteFill>
+    </Scene>
+  );
+};
+
+/* ───────── END (timed to Tanish's closing: "...can we really prove what they did? Darby is our answer.") ───────── */
+export const End: React.FC = () => (
+  <Scene id="end" glow={0.9}>
+    <AbsoluteFill style={{ width: 1560 }}>
+    <Sequence from={0} durationInFrames={sec(6.9)}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 26, textAlign: 'center', padding: '0 120px' }}>
+        <Reveal at={sec(0.4)}><div style={{ fontFamily: mono, fontSize: 30, color: C.mute, letterSpacing: 6 }}>SOON, AGENTS WILL RUN OUR</div></Reveal>
+        <div style={{ display: 'flex', gap: 56, alignItems: 'baseline' }}>
+          {[['work', 3.2], ['money', 4.5], ['business', 5.5]].map(([w, at]) => (
+            <Pop key={w as string} at={sec(at as number)}><div style={{ fontFamily: display, fontWeight: 800, fontSize: 170, letterSpacing: -6, color: C.mint }}>{w}</div></Pop>
+          ))}
+        </div>
+      </AbsoluteFill>
+    </Sequence>
+    <Sequence from={sec(6.9)} durationInFrames={sec(2.7)}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <Words text="How smart are they?" size={130} stagger={7} color="rgba(10,31,24,0.35)" />
+      </AbsoluteFill>
+    </Sequence>
+    <Sequence from={sec(9.6)} durationInFrames={sec(5.6)}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center', flexDirection: 'column', gap: 10 }}>
+        <Reveal at={2}><div style={{ fontFamily: mono, fontSize: 30, color: C.mute, letterSpacing: 6 }}>THE QUESTION IS</div></Reveal>
+        <Words text="Can we really prove what they did?" size={140} stagger={12} at={sec(1.2)} hot={['prove']} maxWidth={1500} />
+      </AbsoluteFill>
+    </Sequence>
+    <Sequence from={sec(15.2)} durationInFrames={sec(2.2)}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 24, textAlign: 'center' }}>
+        <Pop at={4}><Logo size={190} /></Pop>
+        <Reveal at={sec(0.5)}><div style={{ fontFamily: display, fontWeight: 800, fontSize: 120, letterSpacing: -4, color: C.white }}>Darby is our answer.</div></Reveal>
+      </AbsoluteFill>
+    </Sequence>
+    <Sequence from={sec(17.4)} durationInFrames={sec(4.4)}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+        <div style={{ display: 'flex', gap: 90 }}>
+          {[{ v: 119, l: 'tests passing', at: 0.2 }, { v: 10, l: 'attacks contained', at: 1.7 }, { v: 1, l: 'receipt anyone can verify', at: 2.7 }].map((p) => (
+            <Pop key={p.l} at={sec(p.at)}>
+              <div>
+                <div style={{ fontFamily: display, fontWeight: 800, fontSize: 210, color: C.mint, lineHeight: 1, letterSpacing: -6 }}><Counter value={p.v} at={sec(p.at) + 2} dur={24} /></div>
+                <div style={{ fontFamily: sans, fontSize: 34, color: C.mute, marginTop: 10 }}>{p.l}</div>
+              </div>
+            </Pop>
+          ))}
+        </div>
+      </AbsoluteFill>
+    </Sequence>
+    <Sequence from={sec(21.8)}>
+      <AbsoluteFill style={{ alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 28, textAlign: 'center' }}>
+        <Reveal at={2}><div style={{ fontFamily: display, fontWeight: 800, fontSize: 150, letterSpacing: -5, color: C.white }}>Team Target 9X</div></Reveal>
+        <Reveal at={sec(1)} style={{ display: 'flex', gap: 22, fontFamily: sans, fontSize: 32, color: C.mute }}>
+          {['Tanish Shitanshu', 'Sai Mohit Kotta', 'Ghana Polisetty', 'Pragunie Aditya'].map((n, i) => <span key={n}>{i > 0 ? '· ' : ''}{n}</span>)}
+        </Reveal>
+        <Reveal at={sec(2)} style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <Logo size={64} /><span style={{ fontFamily: mono, fontSize: 32, color: C.white }}>{repoUrl}</span>
+        </Reveal>
+        <Reveal at={sec(2.2)}><div style={{ fontFamily: display, fontWeight: 700, fontSize: 90, color: C.mint, letterSpacing: -3 }}>Thank you.</div></Reveal>
+      </AbsoluteFill>
+    </Sequence>
     </AbsoluteFill>
   </Scene>
 );

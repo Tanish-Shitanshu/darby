@@ -42,6 +42,7 @@ export const market = {
     { value: 11, prefix: '', suffix: '', label: 'voices live today', note: '10 Indian languages + English, via Sarvam' },
   ],
   model: ['Free core', 'Teams: shared receipts + approvals', 'Hub: verified Playbooks'],
+  vision: ['A marketplace of verified Playbooks', 'Real Sheets, Drive and GitHub', 'A desktop app'],
   languages: ['हिन्दी', 'বাংলা', 'தமிழ்', 'తెలుగు', 'ಕನ್ನಡ', 'മലയാളം', 'मराठी', 'ગુજરાતી', 'ਪੰਜਾਬੀ', 'ଓଡ଼ିଆ', 'English'],
 };
 
@@ -81,21 +82,44 @@ export const script: { from: number; to: number; text: string; who: string }[] =
 export const showCaptions = true;
 
 /* ───── recorded clips ───── */
-export type Seg = { file: string; who: string; trimStart: number; trimEnd: number; speechStart: number; speechEnd: number };
+export type Seg = { file: string; who: string; trimStart: number; trimEnd: number; speechStart: number; speechEnd: number; text?: string; crop?: { pos: string; scale: number; origin: string } };
 /** Added by `node scripts/segment.mjs <clip> <scene> <name>`. A scene with a clip lasts exactly as long as the speech. */
 export const segments = segs as Record<string, Seg | undefined>;
 export type SceneId = keyof typeof scenes;
 export const sceneIds = Object.keys(scenes) as SceneId[];
-export const sceneLen = (id: SceneId): number => { const s = segments[id]; return s ? +(s.trimEnd - s.trimStart).toFixed(2) : scenes[id]; };
+/** In the demo, Mohit's clip pauses right after his Hindi sentence while the real Hindi answer plays, then resumes. */
+export const demoPause = { at: 10.9, len: 7 };
+export const sceneLen = (id: SceneId): number => { const s = segments[id]; return s ? +(s.trimEnd - s.trimStart + (id === 'demo' ? demoPause.len : 0)).toFixed(2) : scenes[id]; };
+/** Scene time (s) of a moment in Mohit's clip: moments after the pause are pushed later by the pause length. */
+export const demoT = (m: number): number => { const s = segments.demo; return m - (s?.trimStart ?? 0) + (m >= demoPause.at ? demoPause.len : 0); };
+/** What Mohit actually says (from his recording), as clip seconds, for the captions. */
+export const demoLines: { m0: number; m1: number; text: string }[] = [
+  { m0: 1.5, m1: 5.0, text: 'Let’s watch it work. I’m going to give Darby the job in Hindi.' },
+  { m0: 5.5, m1: 10.7, text: 'Top 5 AI startups ki pricing research karo aur ek Excel sheet mein likh do.' },
+  { m0: 11.85, m1: 14.5, text: 'Sarvam AI turns my voice into text.' },
+  { m0: 15.1, m1: 23.0, text: 'Then the planner, which sees only the goal and never a web page, writes a plan, and plain code attaches a proof to every step.' },
+  { m0: 24.1, m1: 28.5, text: 'Now it runs in real Chrome tabs, driven by Playwright.' },
+  { m0: 29.3, m1: 32.4, text: 'Every price arrives with the exact quote from the page.' },
+  { m0: 33.1, m1: 37.9, text: 'When a price isn’t public, the row says NOT FOUND. It never guesses.' },
+  { m0: 38.75, m1: 43.9, text: 'The Excel sheet is ready, and Darby reads the findings back in Hindi.' },
+  { m0: 44.2, m1: 47.05, text: 'Voice in. Voice out. Proof in between.' },
+];
+/** English for the Hindi answer that plays during the pause. */
+export const hindiAnswerEnglish = [
+  'Darby searched the web for pricing of five AI startups.',
+  'ElevenLabs: $6 a month. Runway: $15 a month.',
+  'Perplexity, Jasper and Midjourney: no public price confirmed. Marked NOT FOUND, never guessed.',
+];
 export const TOTAL_SECONDS = sceneIds.reduce((a, id) => a + sceneLen(id), 0);
 
 const planned: Record<string, number> = {};
 const actual: Record<string, number> = {};
 { let p = 0, a = 0; for (const id of sceneIds) { planned[id] = p; actual[id] = a; p += scenes[id]; a += sceneLen(id); } }
 /** The script re-timed to the real scene lengths, so captions follow what was actually recorded. */
-export const finalScript = script.map((l) => {
+export const finalScript: { from: number; to: number; who: string; text: string }[] = [...script.filter((l) => !(segments.demo && l.from >= 45 && l.to <= 100)), ...(segments.demo ? demoLines.map((d) => ({ from: 0, to: 0, who: 'Mohit', text: d.text, _d: d })) : [])].map((l: any) => {
+  if (l._d) { const st = actual['demo'] ?? 0; return { from: st + demoT(l._d.m0), to: st + demoT(l._d.m1), who: l.who, text: l.text }; }
   const id = sceneIds.find((i) => l.from >= planned[i]! - 0.01 && l.from < planned[i]! + scenes[i] - 0.001) ?? 'end';
   const seg = segments[id];
-  if (seg) return { ...l, from: actual[id]! + (seg.speechStart - seg.trimStart), to: actual[id]! + (seg.speechEnd - seg.trimStart) };
+  if (seg) return { ...l, text: seg.text || l.text, from: actual[id]! + (seg.speechStart - seg.trimStart), to: actual[id]! + (seg.speechEnd - seg.trimStart) };
   return { ...l, from: actual[id]! + (l.from - planned[id]!), to: actual[id]! + (l.to - planned[id]!) };
 });

@@ -129,13 +129,13 @@ export const Presenter: React.FC<{ id: keyof typeof scenes }> = ({ id }) => {
   const seg = segments[id];
   const f = useCurrentFrame();
   const { fps } = useVideoConfig();
-  if (!seg) return null;
+  if (!seg || id === 'demo') return null;
   const s = spring({ frame: f - 6, fps, config: { damping: 14, stiffness: 110 } });
   return (
     <_A style={{ pointerEvents: 'none' }}>
       <div style={{ position: 'absolute', right: 50, bottom: 96, width: 330, transform: `scale(${0.5 + 0.5 * s})`, opacity: s, transformOrigin: '100% 100%', textAlign: 'center' }}>
         <div style={{ width: 330, height: 330, borderRadius: 999, overflow: 'hidden', border: `5px solid ${C.mint}`, boxShadow: '0 20px 60px rgba(10,31,24,0.25)', background: '#e9efec' }}>
-          <OffthreadVideo src={staticFile(seg.file)} startFrom={Math.round(seg.trimStart * FPS)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: '46% 30%', transform: 'scale(1.5)', transformOrigin: '46% 38%' }} />
+          <OffthreadVideo src={staticFile(seg.file)} startFrom={Math.round(seg.trimStart * FPS)} style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: seg.crop?.pos ?? '46% 30%', transform: `scale(${seg.crop?.scale ?? 1.5})`, transformOrigin: seg.crop?.origin ?? '46% 38%' }} />
         </div>
         <div style={{ display: 'inline-block', marginTop: -26, position: 'relative', fontFamily: sans, fontWeight: 600, fontSize: 32, color: C.ink, background: C.mint, padding: "6px 26px", borderRadius: 999 }}>{seg.who}</div>
       </div>

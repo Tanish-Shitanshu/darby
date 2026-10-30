@@ -1,0 +1,9 @@
+{
+  "key": "e36c33b944d8e04ce0b423c976f3b28e4ed80541b2037de2c6c6438f30878b9b",
+  "role": "planner",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:31:43.323Z",
+  "promptPreview": "USER REQUEST: Find the monthly price of this product and tell me.\n\nWEB PAGE TEXT:\nFathom\nFathom\nResearch copilot for analysts\nWhat it does\nResearch copilot for analysts\nWorks with the tools you already use\nSOC 2 in progress\nPricing\nFree: $0",
+  "response": "{\"tool\":\"answer\",\"args\":{\"text\":\"The monthly price for the Analyst plan is $59 per month.\"}}"
+}

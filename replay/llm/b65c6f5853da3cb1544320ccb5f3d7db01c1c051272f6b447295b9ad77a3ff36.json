@@ -1,0 +1,9 @@
+{
+  "key": "b65c6f5853da3cb1544320ccb5f3d7db01c1c051272f6b447295b9ad77a3ff36",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T05:41:04.174Z",
+  "promptPreview": "<<<PAGE\nMagic Formulas\nAll Canva AI\nPlans\nPlans\nPlans\nCompare pricing\nPro\nCanva for business\nContact Sales\nBusiness plans\nCanva Enterprise\nCanva Business\nCanva for Education\nCanva for students\nEducation plans\nK-12 education\nK-12 education\nD",
+  "response": "{\"name\":\"Canva\",\"priceUsd\":null,\"quote\":null}"
+}

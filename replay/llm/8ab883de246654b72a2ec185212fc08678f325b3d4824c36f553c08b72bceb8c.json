@@ -1,0 +1,9 @@
+{
+  "key": "8ab883de246654b72a2ec185212fc08678f325b3d4824c36f553c08b72bceb8c",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T19:58:25.095Z",
+  "promptPreview": "<<<PAGE\nSkip to main content\nLog in\nInstagram brings you closer to the people and things you\nlove\nunderline\nTry it now\nShare what you’re into with the people who get you with all our\nfeatures →\nProtect your account and peace-of-mind with ou",
+  "response": "{\"name\":\"Instagram\",\"priceUsd\":null,\"quote\":null}"
+}

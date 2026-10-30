@@ -1,0 +1,9 @@
+{
+  "key": "19503216355b91b312e54a7c9061a8a1d718d551ece07fb2edaba60ba8406368",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T05:41:03.198Z",
+  "promptPreview": "<<<PAGE\nSupport\nContact Sales\nSign Up Free\nZoom Workplace\nView All\nWorkplace\nBasic\nFree\nSign Up Free\nHighlights:\nMeetings\n100 participants per meeting\nAI features\nMeeting summaries (for 3 hosted meetings per month)\nAI queries (20 per month)",
+  "response": "{\"name\":\"Zoom Workplace\",\"priceUsd\":null,\"quote\":null,\"note\":\"No USD pricing displayed; only INR amounts are shown.\"}"
+}

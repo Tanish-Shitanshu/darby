@@ -1,0 +1,9 @@
+{
+  "key": "f7276aa8ac19f182451c7034ef5563968126770d47699771af4800844d384397",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T19:58:25.499Z",
+  "promptPreview": "<<<PAGE\nFor business\nSearch\nKashipur\nWhere:\nFind:\nLog In\nIndia\n/\nKashipur, Uttarakhand\n/\nMaani's Bakery\nMaani's Bakery\nAdd to wishlist\nAdd to compare\nShare\n783 votes\n#87 of 249\nrestaurants\nin Kashipur\nDiscover more\nRestaurant booking servic",
+  "response": "{\"name\":\"Maani's Bakery\",\"priceUsd\":null,\"quote\":null}"
+}

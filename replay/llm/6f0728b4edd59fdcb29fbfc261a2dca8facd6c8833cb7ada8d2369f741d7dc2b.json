@@ -1,0 +1,9 @@
+{
+  "key": "6f0728b4edd59fdcb29fbfc261a2dca8facd6c8833cb7ada8d2369f741d7dc2b",
+  "role": "creative",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T05:41:22.129Z",
+  "promptPreview": "{\"goal\":\"Notion, Slack, Zoom, Figma and Canva's monthly pricing research and put it in an Excel sheet.\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found and wrote the spreadsheet. 4 of 4 steps were pro",
+  "response": "{\"summary\":\"The AI browser agent looked up the monthly pricing for Notion, Slack, Zoom, Figma and Canva and recorded the results in an Excel sheet. It confirmed that Figma costs $3 per month, making it the cheapest, while Notion is $10 per month, the most expensive of the confirmed prices. Prices for Slack, Zoom and Canva couldn't be found, so those entries are marked as NOT FOUND. The spreadsheet now contains five rows with the available data.\"}"
+}

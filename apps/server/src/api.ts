@@ -12,6 +12,7 @@ import { redactSecrets } from './llm/providers';
 import { completeJson } from './llm/llm';
 import { isEnglish, languageName, LANGUAGES, sarvamEnabled, sarvamSpeak, sarvamTranscribe, sarvamTranslate, sarvamTranslateDetect, SarvamError } from './voice/sarvam';
 import { buildSummary } from './voice/summary';
+import { LAB_PAGES, runInjectionLab } from './lab/injection-lab';
 import { RepairError, type RunManager } from './runs/manager';
 import { listPlaybooks, loadPlaybook, playbookFromRun, PlaybookError, savePlaybook, type PlaybookView } from './playbooks/playbook';
 
@@ -178,6 +179,13 @@ export function createApi(manager: RunManager): Router {
     else if ((!lang || lang === 'auto') && !looksEnglish) await translateGoal('auto');
     const id = await manager.start(goal, { mode: body.data.mode });
     res.status(202).json({ id, goal, understood, language: language ?? 'en-IN' });
+  }));
+
+  // The injection lab (presentation aid): the same hostile pages and the same model, a normal tool-using agent vs Darby's real reader and policy engine.
+  r.get('/lab/pages', (_req, res) => { res.json(LAB_PAGES); });
+  r.post('/lab/attack', express.json(), wrap(async (req, res) => {
+    const only = Array.isArray(req.body?.pages) ? (req.body.pages as unknown[]).map(String).slice(0, 5) : undefined;
+    res.json(await runInjectionLab(deps, only, req.body?.assumeFooled === true));
   }));
 
   r.get('/runs', (_req, res) => {

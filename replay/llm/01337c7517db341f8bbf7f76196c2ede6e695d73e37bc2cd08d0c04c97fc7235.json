@@ -1,0 +1,9 @@
+{
+  "key": "01337c7517db341f8bbf7f76196c2ede6e695d73e37bc2cd08d0c04c97fc7235",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T05:41:02.379Z",
+  "promptPreview": "<<<PAGE\nClose navigation\nChoose a paid subscription that’s built for businesses.\nOr start with the basics for free, and upgrade at any time.\nThe world’s leading businesses rely on Slack\nRecommended for you\nFree\nA simpler way to chat and col",
+  "response": "{\"name\":\"Slack\",\"priceUsd\":null,\"quote\":null,\"note\":\"Page lists prices in INR only, no USD monthly price found.\"}"
+}

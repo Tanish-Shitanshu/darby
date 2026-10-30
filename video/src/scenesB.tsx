@@ -78,6 +78,9 @@ const Arrow: React.FC<{ x1: number; x2: number; y: number; at: number; color?: s
 
 export const Security: React.FC = () => {
   const f = useCurrentFrame();
+  const { durationInFrames } = useVideoConfig();
+  const K = durationInFrames / (32 * FPS);   // designed for 32 s; follows the recorded length
+  const sec = (x: number) => Math.round(x * K * FPS);
   const bounce = interpolate(f, [sec(11.2), sec(11.8), sec(12.4)], [0, 1, 0], clamp);
   const passed = interpolate(f, [sec(12), sec(14)], [0, 1], clamp);
   return (
@@ -118,7 +121,7 @@ export const Security: React.FC = () => {
       <Arrow x1={1290} x2={1500} y={500} at={sec(12)} />
 
       {/* typed record */}
-      <div style={{ position: 'absolute', left: 1510, top: 360, width: 330, opacity: passed }}>
+      <div style={{ position: 'absolute', left: 1440, top: 320, width: 330, opacity: passed }}>
         <Glass style={{ padding: '22px 24px', fontFamily: mono, fontSize: 22, color: C.mint, lineHeight: 1.5 }}>
           {'{'}<br />&nbsp;"name": "Acme",<br />&nbsp;"priceUsd": 29,<br />&nbsp;"quote": "Pro $29/mo"<br />{'}'}
           <div style={{ marginTop: 12 }}><Pill color={C.amber} style={{ fontSize: 20 }}>TAINTED</Pill></div>
@@ -129,7 +132,7 @@ export const Security: React.FC = () => {
       <Reveal at={sec(16)} style={{ position: 'absolute', left: 120, top: 640, width: 760 }}>
         <div style={{ fontFamily: sans, fontSize: 34, color: C.white, maxWidth: 760, lineHeight: 1.35 }}>Tainted values can <span style={{ color: C.red }}>never</span> become a recipient, a link or a command.</div>
       </Reveal>
-      <div style={{ position: 'absolute', left: 1000, top: 650, width: 820 }}>
+      <div style={{ position: 'absolute', left: 780, top: 650, width: 730 }}>
         <Pop at={sec(21)}>
           <Glass style={{ padding: '26px 34px' }} border="rgba(255,200,87,0.5)">
             <div style={{ fontFamily: mono, fontSize: 22, color: C.amber, letterSpacing: 4 }}>APPROVAL NEEDED · EXT-001</div>

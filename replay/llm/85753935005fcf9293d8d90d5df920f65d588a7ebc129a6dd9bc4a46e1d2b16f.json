@@ -1,0 +1,9 @@
+{
+  "key": "85753935005fcf9293d8d90d5df920f65d588a7ebc129a6dd9bc4a46e1d2b16f",
+  "role": "creative",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-29T19:58:32.077Z",
+  "promptPreview": "{\"goal\":\"Do pricing research on the top five AI startups and write it down in an Excel sheet.\",\"verdict\":\"VERIFIED_WITH_GAPS\",\"facts\":\"Darby searched the web, read the pages it found and wrote the spreadsheet. 4 of 4 steps were proven by in",
+  "response": "{\"summary\":\"The AI browser agent searched the web and compiled an Excel sheet with pricing info for five AI startups. It confirmed prices for ElevenLabs at $6 per month and Runway at $15 per month, marking those as the cheapest and most expensive. Prices for Perplexity, Jasper, and Midjourney could not be found and are listed as NOT FOUND. The spreadsheet includes these details across five rows.\"}"
+}

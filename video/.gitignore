@@ -8,3 +8,4 @@ src/assets.json
 public/segments/*
 !public/segments/.gitkeep
 work/
+public/rec/*
