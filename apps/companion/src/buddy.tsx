@@ -42,7 +42,6 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
   const pos = useRef({ x: 0, y: 0 });
   const [shown, setShown] = useState<BuddyMode | null>(null);
   const [leaving, setLeaving] = useState(false);
-  const parked = useRef(false);   // while Dabo speaks it stays where it is, so the Stop button is never chased away by the cursor
 
   // stay mounted briefly after the mode ends so it can wave goodbye
   useEffect(() => {
@@ -55,13 +54,21 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
   }, [mode]);
 
   const active = !!shown;
-  parked.current = shown === 'speaking';
   useEffect(() => {
     if (!active) return;
     const still = reduced();
     const home = () => ({ x: window.innerWidth - 110, y: window.innerHeight - 150 });
     if (!pos.current.x && !pos.current.y) { pos.current = home(); target.current = { ...pos.current }; }
-    const onMove = (e: PointerEvent) => { if (parked.current) return; target.current = still ? home() : { x: Math.min(e.clientX + 34, window.innerWidth - 90), y: Math.min(e.clientY + 30, window.innerHeight - 100) }; };
+    // while Dabo speaks, the Stop button travels with it; when the cursor comes close, Dabo waits so the button can be reached and clicked
+    const reachable = (e: PointerEvent) => {
+      if (!box.current?.querySelector('.buddy-stop')) return false;
+      const rs = [box.current.querySelector('.buddy-bubble'), box.current.querySelector('.buddy-svg')].map((n) => n?.getBoundingClientRect()).filter((r): r is DOMRect => !!r);
+      if (!rs.length) return false;
+      const m = 56;
+      const l = Math.min(...rs.map((r) => r.left)) - m, r = Math.max(...rs.map((r) => r.right)) + m, t = Math.min(...rs.map((r) => r.top)) - m, b = Math.max(...rs.map((r) => r.bottom)) + m;
+      return e.clientX > l && e.clientX < r && e.clientY > t && e.clientY < b;
+    };
+    const onMove = (e: PointerEvent) => { if (reachable(e)) return; target.current = still ? home() : { x: Math.min(e.clientX + 34, window.innerWidth - 90), y: Math.min(e.clientY + 30, window.innerHeight - 100) }; };
     const onResize = () => { if (still) target.current = home(); };
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('resize', onResize);
@@ -93,7 +100,6 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
   if (!shown) return null;
   const text = shown === 'speaking' ? (speech.length > 170 ? `${speech.slice(0, 167)}…` : speech) : line;
   return (
-    <>
     <div ref={box} className={`buddy buddy-${shown}${leaving ? ' leaving' : ''}`} data-testid="buddy" data-mode={shown} role="status" aria-live="polite" aria-label={text || 'Darby companion'}>
       <div className="buddy-pop" onClick={speaking && onStop ? onStop : undefined} title={speaking ? 'Click to stop' : undefined}>
         {text && (
@@ -136,7 +142,5 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
         {(shown === 'thinking' || shown === 'working') && <span className="buddy-dots" aria-hidden="true"><i /><i /><i /></span>}
       </div>
     </div>
-    {speaking && onStop && <button className="buddy-stop-fixed" onClick={onStop} data-testid="buddy-stop-fixed">Stop speaking <kbd>Esc</kbd></button>}
-    </>
   );
 }
