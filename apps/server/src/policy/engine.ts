@@ -76,6 +76,10 @@ export class TaintTracker {
     for (const m of c.matchAll(URL_RE)) {
       const u = m[0].replace(/[.,;]+$/, '');
       this.tokens.add(u);
+      // The same address without its query/fragment is just as much "an address the page gave us": an agent that was told to append something may drop it.
+      // Only with a real path: a bare origin ("http://host/") would taint every page of a trusted site.
+      const bare = u.split(/[?#]/)[0]!;
+      if (bare !== u) { try { if (new URL(bare).pathname.length > 1) this.tokens.add(bare); } catch { /* not a URL */ } }
       const h = hostOf(u);
       if (h) this.addDomain(h);
     }

@@ -43,20 +43,40 @@ export interface Hit { url: string; query: string; label: string }
 /** "Anthropic Claude pricing" -> "Anthropic Claude": the company the query was about, used as the row name so a row exists for every company asked for. */
 export const labelOf = (query: string): string => query.replace(/\b(pricing|prices?|plans?|cost|costs|subscription|per month|official site)\b/gi, ' ').replace(/\s+/g, ' ').trim().slice(0, 80) || query;
 
-/** Run one query in the given tab and return up to `perQuery` hits from distinct sites. `searchUrl` (a test fixture) replaces the live engine. */
+export interface SearchOutcome {
+  hits: Hit[];
+  /** The search page itself came back empty (blocked, throttled or never loaded). That company was NOT searched, which is not the same as "no result". */
+  blank: boolean;
+}
+
+/** A page with (almost) no text at all: the engine never drew anything. A page that shows the query and an empty result list is NOT blank. */
+const isBlankPage = async (page: Page): Promise<boolean> => ((await page.evaluate(() => (document.body?.innerText ?? '').trim().length).catch(() => 0)) as number) < 20;
+
+/** Same as searchDetailed, hits only (kept for callers that do not care why nothing was found). */
 export async function searchOnce(page: Page, query: string, perQuery: number, searchUrl?: string | null): Promise<Hit[]> {
+  return (await searchDetailed(page, query, perQuery, searchUrl)).hits;
+}
+
+/** Run one query in the given tab and return up to `perQuery` hits from distinct sites. `searchUrl` (a test fixture) replaces the live engine. */
+export async function searchDetailed(page: Page, query: string, perQuery: number, searchUrl?: string | null): Promise<SearchOutcome> {
   const url = searchUrl ? `${searchUrl}${searchUrl.includes('?') ? '&' : '?'}q=${encodeURIComponent(query)}` : `https://www.bing.com/search?q=${encodeURIComponent(query)}&setlang=en-US`;
   const sel = searchUrl ? 'a.result__a' : 'li.b_algo h2 a';
   let hrefs: string[] = [];
-  // Bing sometimes redirects mid-load ("Execution context was destroyed"): wait for the result list and try once more before giving up
-  for (let attempt = 1; attempt <= 2; attempt++) {
+  let blank = false;
+  // Bing sometimes redirects mid-load ("Execution context was destroyed") and sometimes answers an automated tab with an empty white page:
+  // wait for the result list and try again (a longer pause each time) before giving up.
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 20_000 });
       await page.waitForSelector(sel, { timeout: 8_000 }).catch(() => undefined);
       hrefs = await page.$$eval(sel, (as) => as.slice(0, 12).map((a) => (a as HTMLAnchorElement).href));
-      break;
+      blank = false;
+      if (hrefs.length) break;
+      blank = await isBlankPage(page);
+      if (!blank || attempt === 3) break;      // a real "no result" page is final; only an empty page is worth another try
+      await page.waitForTimeout(2_500 * attempt);
     } catch (e) {
-      if (attempt === 2) throw e;
+      if (attempt === 3) throw e;
       await page.waitForTimeout(800);
     }
   }
@@ -89,5 +109,5 @@ export async function searchOnce(page: Page, query: string, perQuery: number, se
     hits.push({ url: target, query, label: labelOf(query) });
     if (hits.length >= perQuery) break;
   }
-  return hits;
+  return { hits, blank: blank && hits.length === 0 };
 }
