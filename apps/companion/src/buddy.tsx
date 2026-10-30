@@ -42,6 +42,7 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
   const pos = useRef({ x: 0, y: 0 });
   const [shown, setShown] = useState<BuddyMode | null>(null);
   const [leaving, setLeaving] = useState(false);
+  const parked = useRef(false);   // while Dabo speaks it stays where it is, so the Stop button is never chased away by the cursor
 
   // stay mounted briefly after the mode ends so it can wave goodbye
   useEffect(() => {
@@ -54,12 +55,13 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
   }, [mode]);
 
   const active = !!shown;
+  parked.current = shown === 'speaking';
   useEffect(() => {
     if (!active) return;
     const still = reduced();
     const home = () => ({ x: window.innerWidth - 110, y: window.innerHeight - 150 });
     if (!pos.current.x && !pos.current.y) { pos.current = home(); target.current = { ...pos.current }; }
-    const onMove = (e: PointerEvent) => { target.current = still ? home() : { x: Math.min(e.clientX + 34, window.innerWidth - 90), y: Math.min(e.clientY + 30, window.innerHeight - 100) }; };
+    const onMove = (e: PointerEvent) => { if (parked.current) return; target.current = still ? home() : { x: Math.min(e.clientX + 34, window.innerWidth - 90), y: Math.min(e.clientY + 30, window.innerHeight - 100) }; };
     const onResize = () => { if (still) target.current = home(); };
     window.addEventListener('pointermove', onMove, { passive: true });
     window.addEventListener('resize', onResize);
@@ -80,11 +82,20 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
     return () => { cancelAnimationFrame(raf); window.removeEventListener('pointermove', onMove); window.removeEventListener('resize', onResize); };
   }, [active]);
 
+  const speaking = shown === 'speaking';
+  useEffect(() => {
+    if (!speaking || !onStop) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onStop(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [speaking, onStop]);
+
   if (!shown) return null;
   const text = shown === 'speaking' ? (speech.length > 170 ? `${speech.slice(0, 167)}…` : speech) : line;
   return (
+    <>
     <div ref={box} className={`buddy buddy-${shown}${leaving ? ' leaving' : ''}`} data-testid="buddy" data-mode={shown} role="status" aria-live="polite" aria-label={text || 'Darby companion'}>
-      <div className="buddy-pop">
+      <div className="buddy-pop" onClick={speaking && onStop ? onStop : undefined} title={speaking ? 'Click to stop' : undefined}>
         {text && (
           <div className="buddy-bubble">
             <span>{text}</span>
@@ -125,5 +136,7 @@ export function Buddy({ mode, line, speech, onStop }: { mode: BuddyMode | null; 
         {(shown === 'thinking' || shown === 'working') && <span className="buddy-dots" aria-hidden="true"><i /><i /><i /></span>}
       </div>
     </div>
+    {speaking && onStop && <button className="buddy-stop-fixed" onClick={onStop} data-testid="buddy-stop-fixed">Stop speaking <kbd>Esc</kbd></button>}
+    </>
   );
 }

@@ -7,6 +7,18 @@ export interface VoiceConfig { sarvam: boolean; languages: VoiceLang[] }
 export interface SummaryText { summary: string; highlights: string[] }
 export interface RunSummary { english: SummaryText; local: SummaryText | null; lang: string; translated: boolean; polished: boolean }
 
+const SCRIPTS: [RegExp, string][] = [
+  [/[\u0900-\u097F]/, 'hi-IN'], [/[\u0980-\u09FF]/, 'bn-IN'], [/[\u0A00-\u0A7F]/, 'pa-IN'], [/[\u0A80-\u0AFF]/, 'gu-IN'], [/[\u0B00-\u0B7F]/, 'od-IN'],
+  [/[\u0B80-\u0BFF]/, 'ta-IN'], [/[\u0C00-\u0C7F]/, 'te-IN'], [/[\u0C80-\u0CFF]/, 'kn-IN'], [/[\u0D00-\u0D7F]/, 'ml-IN'], [/[\u0600-\u06FF]/, 'ur-IN'],
+];
+/** The language of a spoken request. Speech-to-text sometimes labels mixed speech (Hindi with English words) as English while the words are written in
+ *  an Indian script: the script is the better witness, so the reply, the summary and the voice follow it. */
+export function languageOf(code: string | undefined | null, transcript: string): string {
+  if (code && !/^en(-|$)/i.test(code)) return code;
+  for (const [re, c] of SCRIPTS) if (re.test(transcript)) return c;
+  return code || 'en-IN';
+}
+
 export function useVoiceConfig(): VoiceConfig {
   const [cfg, setCfg] = useState<VoiceConfig>({ sarvam: false, languages: [{ code: 'en-IN', name: 'English', native: 'English', tts: true }] });
   useEffect(() => { fetch('/api/voice/config').then((r) => (r.ok ? r.json() : null)).then((c) => c && setCfg(c)).catch(() => undefined); }, []);

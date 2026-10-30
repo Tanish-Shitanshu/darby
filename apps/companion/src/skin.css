@@ -137,3 +137,14 @@ main.page .card h2, main.run-grid .card h2 { font-size: 1.25rem; letter-spacing:
   .ph-ico::after, .empty-art, .hist.v-none .hist-ico, .pbcard::before, .step-running .num, .tl, .result-icon, .approval { animation: none !important; }
   .memory li.note { transform: none; }
 }
+
+
+/* ----- Dabo: always a way to make it stop talking ----- */
+.buddy-speaking .buddy-pop { pointer-events: auto; cursor: pointer; }
+.buddy-speaking .buddy-stop { pointer-events: auto; padding: 5px 14px; font-size: .875rem; }
+.buddy-stop-fixed { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 140; display: inline-flex; align-items: center; gap: 10px; height: 46px; padding: 0 20px;
+  border: 1px solid #f1b9b3; border-radius: 999px; background: #fff; color: #a1281d; font: inherit; font-weight: 600; cursor: pointer; box-shadow: 0 12px 30px rgba(21,21,43,.16); animation: stop-in .35s cubic-bezier(.2,1.2,.3,1) backwards; }
+.buddy-stop-fixed:hover { background: #fdecea; }
+.buddy-stop-fixed kbd { font: inherit; font-size: .75rem; padding: 2px 7px; border-radius: 6px; background: #fdecea; border: 1px solid #f1b9b3; }
+@keyframes stop-in { from { opacity: 0; transform: translateX(-50%) translateY(14px); } }
+@media (prefers-reduced-motion: reduce) { .buddy-stop-fixed { animation: none; } }

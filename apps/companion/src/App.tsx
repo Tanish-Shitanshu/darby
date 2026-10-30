@@ -3,7 +3,7 @@ import { ApprovalCard, EvidenceDrawer, History, Hub, Lightbox, Memory, PlanList,
 import { Icon, ResultHero, SheetPreview } from './extras';
 import { Buddy, useBuddyLine, type BuddyMode } from './buddy';
 import { DepthField, useDepthEffects } from './depth';
-import { SummaryCard, useSpeaker, useVoiceConfig } from './voice';
+import { SummaryCard, languageOf, useSpeaker, useVoiceConfig } from './voice';
 import { useDarby, type Link, type RunDetail, type VerifyResult } from './useDarby';
 import demoGoals from '../../../fixtures/demo-goals.json';
 
@@ -87,16 +87,17 @@ export function App() {
           const j = await res.json();
           if (!res.ok) throw new Error(j?.error?.message ?? j?.message ?? 'The recording could not be transcribed.');
           if (!j.transcript) { setNote('No speech was heard. Try again, or type the goal.'); return; }
-          const spoken = j.languageName && j.languageName !== 'English' ? ` (${j.languageName})` : '';
+          const heard = languageOf(j.language, j.transcript);   // the script of the words wins over a wrong 'English' label
+          const spoken = heard !== 'en-IN' && j.languageName && j.languageName !== 'English' ? ` (${j.languageName})` : '';
           if (voiceReplies) {   // voice chat: the spoken request runs straight away and Darby answers aloud when it is done
             setGoal(j.transcript);
-            if (j.language) setTalkLang(j.language);
+            setTalkLang(heard);
             setNote(`Heard${spoken}: “${j.transcript}”${j.english && j.english !== j.transcript ? ` → understood as: “${j.english}”` : ''}. Working on it…`);
-            void submit({ goal: j.transcript, lang: j.language, voice: true });
+            void submit({ goal: j.transcript, lang: heard, voice: true });
           } else {
             setGoal((g) => (g ? `${g} ${j.transcript}` : j.transcript));
             setNote(`Heard${spoken}: “${j.transcript}”. Check the text, then press Plan & run.`);
-            if (j.language && j.language !== 'en-IN') setLang(j.language);
+            if (heard !== 'en-IN') setLang(heard);
           }
         } catch (e) { setNote(`${(e as Error).message} Type the goal instead.`); }
         finally { setTranscribing(false); }
@@ -342,8 +343,9 @@ export function App() {
                 </section>
               </div>
               <div hidden={rtab !== 'result'} className="stack">
+                {run.receipt && (runMeta[run.id]?.lang ?? 'en-IN') !== 'en-IN' && <SummaryCard runId={run.id} lang={runMeta[run.id]?.lang ?? 'en-IN'} sarvam={voiceCfg.sarvam} autoSpeak={voiceReplies && !!runMeta[run.id]?.voice} speaker={speaker} />}
                 {run.receipt && <ResultHero run={run} />}
-                {run.receipt && <SummaryCard runId={run.id} lang={runMeta[run.id]?.lang ?? 'en-IN'} sarvam={voiceCfg.sarvam} autoSpeak={voiceReplies && !!runMeta[run.id]?.voice} speaker={speaker} />}
+                {run.receipt && (runMeta[run.id]?.lang ?? 'en-IN') === 'en-IN' && <SummaryCard runId={run.id} lang={runMeta[run.id]?.lang ?? 'en-IN'} sarvam={voiceCfg.sarvam} autoSpeak={voiceReplies && !!runMeta[run.id]?.voice} speaker={speaker} />}
                 {run.receipt && <SheetPreview run={run} />}
                 {isLaunch && <ReviewPanel run={run} detail={detail} />}
                 {run.receipt && (

@@ -103,8 +103,10 @@ export async function buildSummary(deps: Deps, runId: string, lang: string): Pro
   let translated = false;
   if (!isEnglish(lang) && sarvamEnabled()) {
     try {
-      const t = async (s: string) => sarvamTranslate(s, 'en-IN', lang);
-      local = { summary: await t(english.summary), highlights: await Promise.all(english.highlights.map(t)) };
+      // one retry per sentence: a single hiccup must not turn the whole summary back into English
+      const t = async (s: string) => { try { return await sarvamTranslate(s, 'en-IN', lang); } catch { return sarvamTranslate(s, 'en-IN', lang); } };
+      local = { summary: await t(english.summary), highlights: [] };
+      for (const h of english.highlights) local.highlights.push(await t(h));
       translated = true;
     } catch { local = null; }
   }
