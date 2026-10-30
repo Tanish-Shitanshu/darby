@@ -28,6 +28,15 @@ describe('searchDetailed: a blank page is not the same as "no result"', () => {
     expect(f.gotos()).toBe(1);
   });
 
+  it('ranks an official plans page ahead of an unrelated plans result', async () => {
+    const f = fakePage([{
+      text: 'Notion plans results',
+      hrefs: ['https://www.example-reviews.com/plans', 'https://www.notion.com/plans'],
+    }]);
+    const r = await searchDetailed(f.page, 'Notion plans', 1, null);
+    expect(r.hits.map((h) => h.url)).toEqual(['https://www.notion.com/plans']);
+  });
+
   it('a page with the query but an empty result list is a real "no result": final, no retry, not blank', async () => {
     const f = fakePage([{ text: 'Zorblax Quantum Cloud pricing ALL IMAGES VIDEOS', hrefs: [] }]);
     const r = await searchDetailed(f.page, 'Zorblax Quantum Cloud pricing', 1, null);
