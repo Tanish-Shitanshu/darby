@@ -6,7 +6,7 @@ import { writeLocalSheet, type SheetRow } from '../adapters/sheets-local';
 import { grantLocalShare } from '../adapters/share-local';
 import { readPage } from '../reader/reader';
 import { slugOf } from '../tools/registry';
-import { isPublicWebUrl, labelOf, searchOnce, type Hit } from './websearch';
+import { isPublicWebUrl, labelOf, searchDetailed, type Hit } from './websearch';
 import { codeFix, codeTest } from './code-tools';
 import { checkClaim, parsePrices } from '../verifier/verifier';
 import { pMap } from '../util/pmap';
@@ -83,20 +83,24 @@ async function webSearch(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   const { queries, perQuery } = step.args as { queries: string[]; perQuery: number };
   const hits: Hit[] = [];
   const missed: string[] = [];
+  /** labels whose search page came back blank or blocked: they were NOT searched, which is different from "nothing found" */
+  const blocked: string[] = [];
   const shots: { rel: string }[] = [];
   ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Searching the public web for ${queries.length} topics (one real tab, results are untrusted)` });
   let n = 0;
   for (const q of queries) {
     await ctx.checkpoint();
     n++;
+    // the live engine answers a burst of automated searches with empty pages: space them out a little (the fixture search needs no pause)
+    if (n > 1 && !ctx.deps.cfg.searchUrl) await new Promise((r) => setTimeout(r, 1_500));
     const page = await ctx.deps.browser.newPage();
     try {
-      const found = await searchOnce(page, q, perQuery, ctx.deps.cfg.searchUrl);
+      const { hits: found, blank } = await searchDetailed(page, q, perQuery, ctx.deps.cfg.searchUrl);
       const shot = await ctx.screenshot(page, step.id, `search-${n}`);
       shots.push({ rel: shot.rel });
       found.forEach((h) => { hits.push(h); ctx.taint.addValue(h.url); });
-      if (!found.length) missed.push(labelOf(q));
-      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: found.length ? `Search “${q}” → ${found.map((h) => new URL(h.url).hostname.replace(/^www\./, '')).join(', ')}` : `Search “${q}” → no usable result (skipped, not guessed)`, screenshotPath: shot.url });
+      if (!found.length) { missed.push(labelOf(q)); if (blank) blocked.push(labelOf(q)); }
+      ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: found.length ? `Search “${q}” → ${found.map((h) => new URL(h.url).hostname.replace(/^www\./, '')).join(', ')}` : blank ? `Search “${q}” → the search page came back BLANK after 3 tries (blocked or not loaded). This company was not searched: it is a gap, not proof that it does not exist.` : `Search “${q}” → no usable result (skipped, not guessed)`, screenshotPath: shot.url });
     } catch (e) {
       if (ctx.signal.aborted) throw e;
       missed.push(labelOf(q));
@@ -105,17 +109,17 @@ async function webSearch(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
       await page.close().catch(() => undefined);
     }
   }
-  if (!hits.length) throw new ToolError('The web search returned no usable pages (the search engine may be blocking automated searches). Nothing was guessed.', 'needs_you');
-  ctx.outputs.set(step.id, { hits, missed });
+  if (!hits.length) throw new ToolError(blocked.length ? 'The search engine answered with blank pages (it is probably blocking automated searches right now). Nothing was searched and nothing was guessed. Try again in a few minutes.' : 'The web search returned no usable pages (the search engine may be blocking automated searches). Nothing was guessed.', 'needs_you');
+  ctx.outputs.set(step.id, { hits, missed, blocked });
   return {
-    summary: `${hits.length} pages found for ${queries.length} searches`,
+    summary: `${hits.length} pages found for ${queries.length} searches${blocked.length ? `; ${blocked.length} search page${blocked.length === 1 ? '' : 's'} came back blank (not searched)` : ''}`,
     contracts: shots.map((s) => ({ kind: 'file_exists' as const, path: s.rel, minBytes: 2000, mime: 'image/png' })),
     result: { queries, hits: hits.map((h) => ({ query: h.query, host: new URL(h.url).hostname })) },
   };
 }
 
 async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
-  const fromSearch = typeof step.args.fromStep === 'string' ? (ctx.outputs.get(step.args.fromStep) as { hits?: Hit[]; missed?: string[] } | undefined) : undefined;
+  const fromSearch = typeof step.args.fromStep === 'string' ? (ctx.outputs.get(step.args.fromStep) as { hits?: Hit[]; missed?: string[]; blocked?: string[] } | undefined) : undefined;
   const fixtureOrigin = ctx.deps.cfg.searchUrl ? new URL(ctx.deps.cfg.searchUrl).origin : null;
   const okUrl = (u: string) => ctx.deps.cfg.allowedOrigins.includes(new URL(u).origin) || isPublicWebUrl(u) || (fixtureOrigin !== null && new URL(u).origin === fixtureOrigin);
   // one group per company (search query): its best hit first, the next hit as a fallback; on the fixture web every URL is its own group
@@ -125,7 +129,7 @@ async function readPages(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
   if (!groups.length) throw new ToolError('No URLs to read.', 'failed');
   ctx.emit({ type: 'step.action', runId: ctx.runId, stepId: step.id, description: `Opening ${groups.length} pages in real browser tabs (${Math.min(MAX_TABS, groups.length)} at a time)` });
   const skipped: string[] = [];
-  const unread: { label: string; url: string; reason: string }[] = (fromSearch?.missed ?? []).map((label) => ({ label, url: '', reason: 'The web search found no usable page for this company.' }));
+  const unread: { label: string; url: string; reason: string }[] = (fromSearch?.missed ?? []).map((label) => ({ label, url: '', reason: fromSearch?.blocked?.includes(label) ? 'The search page came back blank (blocked or not loaded), so this company was NOT searched. Try again later.' : 'The web search found no usable page for this company.' }));
   // A search hit is usually a company's home page. The only address Darby derives from it is the same site's /pricing (a fixed path, never taken
   // from page text); it is tried first and the hit itself is the fallback. Both are public reads of the same origin.
   const PRICE_HINT = /\$\s?\d|\bUSD\b|per (user|seat|month)|\/\s?mo\b|monthly/i;

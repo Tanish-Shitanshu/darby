@@ -255,7 +255,8 @@ async function finalize(ctx: RunContext, plan: Plan | null, outcomes: StepOutcom
       ...(ctx.opts.repairOf ? { repairOf: ctx.opts.repairOf } : {}),
       chainHead: head.hash, labels, ...(cause ? { cause } : {}),
       ...(verdict === 'FAILED' && outcomes.length ? { recovery: 'Nothing was retried automatically. Safe options: let Darby re-plan with a different documented route (at most 2 repair attempts, each with its own proof), or take over and do it by hand.' } : {}),
-      llm: { provider: llm.providerName, model: llm.model, liveCalls: live, replayedCalls: replayed },
+      // name the model(s) that REALLY answered this run's live calls: in "auto" mode llm.model is only the first of several fallbacks
+      llm: { provider: llm.providerName, model: [...new Set(ctx.llmResults.filter((r) => r.source === 'live').map((r) => r.model))].join(' + ') || llm.model, liveCalls: live, replayedCalls: replayed },
     },
     signer,
   );

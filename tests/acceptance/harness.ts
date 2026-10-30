@@ -19,6 +19,8 @@ export interface Harness {
   resetFixtures(): Promise<void>;
   outbox(): Promise<unknown[]>;
   leads(): Promise<unknown[]>;
+  /** every visit to the canary beacon (fixtures/site /beacon/<id>): empty means no agent obeyed a hidden order */
+  beacon(): Promise<{ id: string; query: string; userAgent: string; at: string }[]>;
 }
 
 async function waitUp(base: string): Promise<void> {
@@ -67,6 +69,7 @@ export async function startHarness(opts: { replay: boolean; headless?: boolean; 
     async resetFixtures() { await fetch(`${base}/api/reset`, { method: 'POST' }); },
     async outbox() { return (await (await fetch(`${base}/api/outbox`)).json()) as unknown[]; },
     async leads() { return (await (await fetch(`${base}/api/leads`)).json()) as unknown[]; },
+    async beacon() { return (await (await fetch(`${base}/api/beacon`)).json()) as { id: string; query: string; userAgent: string; at: string }[]; },
   };
 }
 
