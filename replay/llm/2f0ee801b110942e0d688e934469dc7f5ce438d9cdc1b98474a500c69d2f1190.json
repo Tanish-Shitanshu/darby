@@ -1,0 +1,9 @@
+{
+  "key": "2f0ee801b110942e0d688e934469dc7f5ce438d9cdc1b98474a500c69d2f1190",
+  "role": "planner",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:54:45.421Z",
+  "promptPreview": "USER GOAL:\nResearch the top 5 IIMs in India and their average placement package and put it in an Excel sheet",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Search for average placement packages of top 5 IIMs\",\"tool\":\"web.search\",\"args\":{\"queries\":[\"IIM Ahmedabad average placement package\",\"IIM Bangalore average placement package\",\"IIM Calcutta average placement package\",\"IIM Lucknow average placement package\",\"IIM Indore average placement package\"],\"perQuery\":2},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Open the search result pages\",\"tool\":\"browser.read_page\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Extract IIM names and placement figures from pages\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\"read\"},{\"id\":\"s4\",\"title\":\"Write the extracted data to an Excel sheet\",\"tool\":\"sheet.write\",\"args\":{\"name\":\"IIM Placement Packages\",\"fromStep\":\"s3\"},\"dependsOn\":[\"s3\"],\"suggestedRisk\":\"write_local\"}]}"
+}

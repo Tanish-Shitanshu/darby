@@ -244,6 +244,10 @@ async function extract(ctx: RunContext, step: PlanStep): Promise<ToolResult> {
         rec = { name: rec.name, priceUsd: fb.price, quote: fb.quote.slice(0, 200) };
       }
     }
+    if (rec.priceUsd === null && p.label && !rec.note) {   // say the TRUE reason for a gap: the page does show prices, just not in US dollars
+      const cur = /(?:₹|\bRs\.?|\bINR)\s?\d/.test(p.text) ? 'rupees (₹)' : /€\s?\d/.test(p.text) ? 'euros (€)' : /£\s?\d/.test(p.text) ? 'pounds (£)' : null;
+      if (cur) rec = { ...rec, note: `This page shows prices in ${cur}. Darby reads US-dollar prices only, so it flagged this instead of converting or guessing.` };
+    }
     if (rec.priceUsd !== null) {   // the maker checks the reader's claim against the text it read before anything is written; the independent verifier still re-checks later
       const own = checkClaim(p.text, { field: 'priceUsd', value: String(rec.priceUsd), quote: rec.quote });
       if (own.status === 'fail') {
@@ -282,7 +286,7 @@ async function writeSheet(ctx: RunContext, step: PlanStep): Promise<ToolResult> 
   const runDir = path.join(ctx.deps.cfg.workspaceDir, ctx.runId);
   const file = path.join(runDir, `${name}.xlsx`);
   if (path.relative(runDir, file).startsWith('..')) throw new ToolError('The document path escapes the Darby workspace.', 'failed');
-  const rows: SheetRow[] = src.items.map((i) => ({ name: i.record.name, priceUsd: i.record.priceUsd, quote: i.record.quote, url: i.url, ...(i.unread && i.record.note ? { note: i.record.note } : {}) }));
+  const rows: SheetRow[] = src.items.map((i) => ({ name: i.record.name, priceUsd: i.record.priceUsd, quote: i.record.quote, url: i.url, ...(i.record.note && (i.unread || i.record.priceUsd === null) ? { note: i.record.note } : {}) }));
   await ctx.checkpoint();
   const { matrix, range } = await writeLocalSheet(file, name, rows);
   const ref = ctx.relative(file);

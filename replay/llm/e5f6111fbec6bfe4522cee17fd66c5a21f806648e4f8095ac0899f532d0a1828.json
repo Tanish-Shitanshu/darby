@@ -1,0 +1,9 @@
+{
+  "key": "e5f6111fbec6bfe4522cee17fd66c5a21f806648e4f8095ac0899f532d0a1828",
+  "role": "planner",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:54:44.626Z",
+  "promptPreview": "USER GOAL:\nResearch the monthly pricing of ElevenLabs, Runway, Notion, Figma and Perplexity and put it in an Excel sheet",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Search pricing pages for each company\",\"tool\":\"web.search\",\"args\":{\"queries\":[\"ElevenLabs pricing\",\"Runway pricing\",\"Notion pricing\",\"Figma pricing\",\"Perplexity pricing\"],\"perQuery\":2},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Read the search result pages\",\"tool\":\"browser.read_page\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Extract pricing data from pages\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\"read\"},{\"id\":\"s4\",\"title\":\"Write pricing data to an Excel sheet\",\"tool\":\"sheet.write\",\"args\":{\"name\":\"AI Pricing\",\"fromStep\":\"s3\"},\"dependsOn\":[\"s3\"],\"suggestedRisk\":\"write_local\"}]}"
+}

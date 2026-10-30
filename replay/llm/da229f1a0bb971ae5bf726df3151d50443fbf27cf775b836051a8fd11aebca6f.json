@@ -1,0 +1,9 @@
+{
+  "key": "da229f1a0bb971ae5bf726df3151d50443fbf27cf775b836051a8fd11aebca6f",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:49:39.161Z",
+  "promptPreview": "<<<PAGE\n×\nWhat Safety Looks Like at Trek The Himalayas\nSafety isn't an add-on at Trek The Himalayas. It is built into the way we plan, prepare, and operate every trek.\nPre-Trek Safety\nWe provide complete guidance on itinerary, terrain, weat",
+  "response": "{\"name\":\"Trek The Himalayas\",\"priceUsd\":null,\"quote\":null}"
+}

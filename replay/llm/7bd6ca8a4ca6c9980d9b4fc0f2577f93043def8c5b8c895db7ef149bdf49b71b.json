@@ -1,0 +1,9 @@
+{
+  "key": "7bd6ca8a4ca6c9980d9b4fc0f2577f93043def8c5b8c895db7ef149bdf49b71b",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:49:40.864Z",
+  "promptPreview": "<<<PAGE\nto refresh your session.\nDismiss alert\nPlans & Pricing\nTry the Copilot-powered platform\nWe get it, there's a lot you can do with GitHub. That's why we've packed all of it into a single risk-free trial that includes GitHub Enterprise",
+  "response": "{\"name\":\"GitHub\",\"priceUsd\":4,\"quote\":\"$4 USD per user / month\"}"
+}

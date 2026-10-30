@@ -1,0 +1,9 @@
+{
+  "key": "83409bea42856d0bd2f6428baabc55eb69766caf024a12b4b27a5586fe54a444",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:49:40.096Z",
+  "promptPreview": "<<<PAGE\nLowyat.NET forums\nLowyat.NET\nKopitiam\nGarage Sales\nLowyat.NET Rules and Regulations\nFAQ\nHelp\nSearch\nMembers\nWelcome Guest\n(\nLog In\n|\nRegister\n)\nLowyat.NET\n->\nKopitiam\n->\nSerious Kopitiam\nBump Topic\nAdd Reply\nRSS Feed\nBottom\n0\nnew po",
+  "response": "{\"name\":\"Lowyat.NET\",\"priceUsd\":null,\"quote\":null}"
+}

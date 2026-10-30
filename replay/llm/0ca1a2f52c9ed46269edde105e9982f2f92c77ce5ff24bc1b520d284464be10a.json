@@ -1,0 +1,9 @@
+{
+  "key": "0ca1a2f52c9ed46269edde105e9982f2f92c77ce5ff24bc1b520d284464be10a",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:49:39.802Z",
+  "promptPreview": "<<<PAGE\nIcon\nAward-winning electric trail mountain bikes\nFrom $4,799.99\nTurbo Kenevo\nIcon\nMost-capable electric trail mountain bike, 170mm travel\nFrom $5,999.99\nElectric Road Bikes\nIcon\nIcon\nUltra-capable electric road & gravel bike\nFrom $4",
+  "response": "{\"name\":\"Icon\",\"priceUsd\":null,\"quote\":null}"
+}

@@ -1,0 +1,9 @@
+{
+  "key": "c3d55f498ba56cbf88e7861baa964f51bf8d033ddaab1eda1238245e76541ee2",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:55:38.214Z",
+  "promptPreview": "<<<PAGE\nRequest a demo\nLog in\nGet Notion free\nOne tool to run your company.\nTrusted by teams at\nSelect payment mode:\nPay monthly\nPay yearly\nSave up to 20% with yearly\nPrice in\nUSD\nEssentials for staying organized.\nFree\n$0\nper member / month",
+  "response": "{\"name\":\"Notion\",\"priceUsd\":10,\"quote\":\"Plus $10 per member / month\",\"note\":\"Lowest paid monthly tier is the Plus plan\"}"
+}

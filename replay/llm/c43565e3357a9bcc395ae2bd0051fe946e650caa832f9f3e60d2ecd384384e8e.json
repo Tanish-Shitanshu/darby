@@ -1,0 +1,9 @@
+{
+  "key": "c43565e3357a9bcc395ae2bd0051fe946e650caa832f9f3e60d2ecd384384e8e",
+  "role": "creative",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:49:51.204Z",
+  "promptPreview": "{\"goal\":\"Research top 5 stylish bikes\",\"verdict\":\"NEEDS_YOU\",\"facts\":\"Darby searched the web, read the pages it found. 2 of 4 steps were proven by independent checks. Result: waiting for you.\",\"highlights\":[\"Search for stylish bike pricing:",
+  "response": "{\"summary\":\"The AI browser agent searched the web for stylish bike pricing and captured screenshots of the results. It successfully read the pages and saved the images, confirming two of the four steps. However, when trying to extract bike names, prices and quotes, the fetch from trekthehimalayas.com hit a 429 error, so that data is still pending. The agent is now waiting for your decision to continue.\"}"
+}

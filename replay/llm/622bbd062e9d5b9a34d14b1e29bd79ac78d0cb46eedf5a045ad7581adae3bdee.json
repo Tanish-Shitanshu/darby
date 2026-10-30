@@ -1,0 +1,9 @@
+{
+  "key": "622bbd062e9d5b9a34d14b1e29bd79ac78d0cb46eedf5a045ad7581adae3bdee",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:49:41.203Z",
+  "promptPreview": "<<<PAGE\nEn\nHello there.\nHow can we help you today?\nTap a suggestion, use your mic or type to explore!\nDownload\nWatch on TV\nParental Control\nGet a Subscription\nManage Devices\nBy chatting with us, you agree to our\nPrivacy Policy\nHome\nChat\nHel",
+  "response": "{\"name\":null,\"priceUsd\":null,\"quote\":null}"
+}

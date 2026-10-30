@@ -1,0 +1,9 @@
+{
+  "key": "dbb8a6d1e2d3c7a5322ede9127da966b6da8bf5adf34835cdc339e5b80ce5b67",
+  "role": "reader",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:55:37.841Z",
+  "promptPreview": "<<<PAGE\nlowyat.net\n1h ago\nBinance Confirms US$6.3 Billion Security Breach, Says User Funds Are Safe\nlowyat.net\n2h ago\nlowyat.net\n21h ago\nSamsung Galaxy Buds On Earclips To Launch Globally In November; Gets a US$229 Price Tag\nlowyat.net\n21h ",
+  "response": "{\"name\":\"lowyat.net\",\"priceUsd\":null,\"quote\":null,\"note\":\"No paid monthly USD price found on the page.\"}"
+}

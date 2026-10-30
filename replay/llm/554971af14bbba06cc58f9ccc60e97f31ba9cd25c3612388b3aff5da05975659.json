@@ -1,0 +1,9 @@
+{
+  "key": "554971af14bbba06cc58f9ccc60e97f31ba9cd25c3612388b3aff5da05975659",
+  "role": "planner",
+  "provider": "auto",
+  "model": "openai/gpt-oss-120b",
+  "recordedAt": "2026-10-30T06:47:57.582Z",
+  "promptPreview": "USER GOAL:\nResearch top 5 stylish bikes",
+  "response": "{\"steps\":[{\"id\":\"s1\",\"title\":\"Search for stylish bike pricing\",\"tool\":\"web.search\",\"args\":{\"queries\":[\"Specialized S-Works pricing\",\"Trek Madone pricing\",\"Cervélo R5 pricing\",\"Pinarello Dogma pricing\",\"Bianchi Oltre pricing\"],\"perQuery\":2},\"dependsOn\":[],\"suggestedRisk\":\"read\"},{\"id\":\"s2\",\"title\":\"Read pages for bike pricing\",\"tool\":\"browser.read_page\",\"args\":{\"fromStep\":\"s1\"},\"dependsOn\":[\"s1\"],\"suggestedRisk\":\"read\"},{\"id\":\"s3\",\"title\":\"Extract bike name, price and quote\",\"tool\":\"reader.extract\",\"args\":{\"fromStep\":\"s2\"},\"dependsOn\":[\"s2\"],\"suggestedRisk\":\"read\"},{\"id\":\"s4\",\"title\":\"Write bike research to spreadsheet\",\"tool\":\"sheet.write\",\"args\":{\"name\":\"Stylish Bikes\",\"fromStep\":\"s3\"},\"dependsOn\":[\"s3\"],\"suggestedRisk\":\"write_local\"}]}"
+}
