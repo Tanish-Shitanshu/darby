@@ -159,6 +159,14 @@ npm run demo:check            # preflight
 npm run demo:offline          # starts everything and opens Darby (no internet, no key)
 ```
 
+On Windows PowerShell, create the environment file with:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Then set `LLM_PROVIDER=replay` in `.env` before running the offline demo.
+
 | Command | What it does |
 |---|---|
 | `npm run demo` | Live model (put `GEMINI_API_KEY` in your own `.env`, set `LLM_PROVIDER=gemini`) |
