@@ -91,9 +91,9 @@ export async function searchDetailed(page: Page, query: string, perQuery: number
   const score = (u: string) => {
     try {
       const url = new URL(u);
-      if (searchUrl) return wantsPricing && /pric|plans?|subscribe|billing/i.test(url.pathname) ? 0 : 1;   // fixture search keeps the simple rule
+      if (searchUrl) return wantsPricing && /pric|plans?\b|subscribe|billing/i.test(url.pathname) ? 0 : 1;   // fixture search keeps the simple rule
       const official = tokens.length > 0 && tokens.some((t) => url.hostname.toLowerCase().replace(/[^a-z0-9.]/g, '').includes(t));
-      const pricingPath = wantsPricing && /pric|plans?|subscribe|billing/i.test(url.pathname);
+      const pricingPath = wantsPricing && /pric|plans?\b|subscribe|billing/i.test(url.pathname);
       return official ? (pricingPath ? 0 : 1) : 2;
     } catch { return 2; }
   };
