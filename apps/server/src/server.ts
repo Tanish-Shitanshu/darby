@@ -27,13 +27,39 @@ export function buildServer(manager?: RunManager): DarbyServer {
   const app = express();
   app.disable('x-powered-by');
 
+  // Hosted copy only (both off by default): DARBY_BASIC_AUTH="user:password" puts a login in front of everything,
+  // DARBY_STATIC_DIR serves the built companion (apps/companion/dist) from this same server.
+  const basicAuth = process.env.DARBY_BASIC_AUTH ? `Basic ${Buffer.from(process.env.DARBY_BASIC_AUTH).toString('base64')}` : null;
   app.get('/health', (_req, res) => {
     res.json({ ok: true, service: SERVICE, version: VERSION, uptimeSec: Math.round(process.uptime()) });
   });
+  if (basicAuth) {
+    app.use((req, res, next) => {
+      if (req.headers.authorization === basicAuth) return next();
+      res.set('WWW-Authenticate', 'Basic realm="Darby"').status(401).send('Login required');
+    });
+  }
   if (manager) app.use('/api', createApi(manager));
+  // Hosted copy: viewers cannot reach the server's own localhost:4010, so the test pages shown in the lab are passed through at /fx.
+  if (manager && process.env.DARBY_FIXTURE_PROXY === '1') {
+    const base = manager.deps.cfg.fixtureBase.replace(/\/$/, '');
+    app.get('/fx/*path', async (req, res) => {
+      try {
+        const r = await fetch(`${base}${req.url.slice('/fx'.length)}`, { redirect: 'manual' });
+        res.status(r.status).type(r.headers.get('content-type') ?? 'text/html').send(Buffer.from(await r.arrayBuffer()));
+      } catch { res.status(502).send('test page unavailable'); }
+    });
+  }
+  const staticDir = process.env.DARBY_STATIC_DIR;
+  if (staticDir) app.use(express.static(staticDir));
 
   const http = createServer(app);
-  const wss = new WebSocketServer({ server: http, path: '/ws', maxPayload: 1_000_000 });
+  const wss = new WebSocketServer({
+    server: http,
+    path: '/ws',
+    maxPayload: 1_000_000,
+    verifyClient: basicAuth ? (info: { req: { headers: { authorization?: string } } }) => info.req.headers.authorization === basicAuth : undefined,
+  });
 
   const unsubscribe = manager?.deps.bus.subscribe((ev) => {
     const msg = JSON.stringify(ev);

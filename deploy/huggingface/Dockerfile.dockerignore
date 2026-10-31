@@ -1,0 +1,15 @@
+.git
+.env
+.env.*
+!.env.example
+secrets
+node_modules
+**/node_modules
+.darby
+workspace
+video
+docs/evidence
+docs/submission
+*.mp4
+*.log
+dist

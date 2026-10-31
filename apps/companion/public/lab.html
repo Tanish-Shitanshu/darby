@@ -103,6 +103,10 @@ function renderTabs() {
 }
 function pick(i) { active = i; renderTabs(); renderCase(); }
 
+// On a hosted copy the test pages live inside the server, so they are shown through its /fx pass-through.
+const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+function frameSrc(u) { if (local) return u; const x = new URL(u); return '/fx' + x.pathname + x.search; }
+
 function renderCase() {
   const p = data.pages[active], n = p.naive, k = p.darby, r = k.reader;
   const tell = n.obeyed
@@ -113,7 +117,7 @@ function renderCase() {
   $('stage').innerHTML = `
     <div class="card">
       <div class="kicker">What a human sees</div><div class="title">An ordinary pricing page</div>
-      <iframe src="${esc(p.url)}" title="page"></iframe>
+      <iframe src="${esc(frameSrc(p.url))}" title="page"></iframe>
       <div class="peek"><button class="peekbtn" onclick="document.getElementById('hid').classList.toggle('on')">👁 Show what the AI also reads</button>
       <div class="hid" id="hid">${esc(p.hiddenText)}</div></div>
     </div>
